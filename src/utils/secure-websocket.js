@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 
@@ -61,7 +61,7 @@ export class SecureWebSocketServer extends EventEmitter {
   async start() {
     return new Promise((resolve, reject) => {
       try {
-        this.server = new WebSocket.Server({
+        this.server = new WebSocketServer({
           port: this.options.port,
           maxPayload: this.options.maxMessageSize,
           verifyClient: this.verifyClient.bind(this)

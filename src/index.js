@@ -27,11 +27,14 @@ program
 program
   .command('init')
   .description('🚀 Interactive project initialization with Spec\'s guidance')
+  .option('-i, --interactive', 'Start interactive consultation (default)', true)
   .option('-s, --swarm', 'Enable agent swarm orchestration')
   .option('-c, --cloud', 'Setup cloud integration')
   .action(async (options) => {
     await spec.greet();
-    await consultation.startGuidedSetup(options);
+    if (options.interactive !== false) {
+      await consultation.startGuidedSetup(options);
+    }
   });
 
 program
