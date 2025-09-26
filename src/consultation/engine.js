@@ -94,8 +94,8 @@ export class ConsultationEngine {
   async startGuidedSetup(options = {}) {
     await this.spec.greet();
 
-    console.log(chalk.cyan('🗣️ Let\'s have a conversation about your project!'));
-    console.log(chalk.gray('Instead of filling out forms, I\'ll ask questions and we\'ll build your spec together.\\n'));
+    console.log(chalk.cyan("🗣️ Let's have a conversation about your project!"));
+    console.log(chalk.gray("Instead of filling out forms, I'll ask questions and we'll build your spec together.\\n"));
 
     this.currentSession = {
       id: Date.now(),
@@ -188,7 +188,7 @@ export class ConsultationEngine {
   }
 
   async exploreRequirements() {
-    await this.spec.show('working', 'Now let\\'s dive into the technical details...');
+    await this.spec.show('working', 'Now let's dive into the technical details...');
 
     const projectConfig = this.knowledgeBase.projectTypes[this.projectContext.type];
 
@@ -370,7 +370,7 @@ export class ConsultationEngine {
   }
 
   async reviewAndRefine() {
-    await this.spec.show('celebrating', 'Great! Let me show you what we\\'ve planned so far...');
+    await this.spec.show('celebrating', 'Great! Let me show you what we\'ve planned so far...');
 
     // Display a summary of decisions
     console.log(chalk.yellow('\\n📋 Project Summary:'));
@@ -405,7 +405,7 @@ export class ConsultationEngine {
   }
 
   async refineChoices() {
-    await this.spec.show('helpful', 'No problem! Let\\'s adjust what needs changing...');
+    await this.spec.show('helpful', 'No problem! Let\'s adjust what needs changing...');
 
     const whatToChange = await this.spec.askQuestion(
       'What would you like to change?',
@@ -712,7 +712,7 @@ export class ConsultationEngine {
     if (matchedKeyword) {
       await this.spec.show('helpful', responses[matchedKeyword]);
     } else {
-      await this.spec.show('thinking', 'That\\'s an interesting question! Let me think about that...');
+      await this.spec.show('thinking', 'That\'s an interesting question! Let me think about that...');
       // Could integrate with AI service for more intelligent responses
     }
   }
@@ -720,7 +720,7 @@ export class ConsultationEngine {
   async analyzeProject(projectPath = null) {
     if (!projectPath) {
       const userPath = await this.spec.askQuestion(
-        'What\\'s the path to your project?',
+        'What\'s the path to your project?',
         { type: 'input', default: process.cwd() }
       );
 
@@ -761,7 +761,7 @@ export class ConsultationEngine {
           console.log(chalk.gray(`   Dependencies: ${Object.keys(packageData.dependencies).length}`));
         }
       } else {
-        await this.spec.show('thinking', 'I don\\'t see a package.json file. This might not be a Node.js project.');
+        await this.spec.show('thinking', 'I don\'t see a package.json file. This might not be a Node.js project.');
       }
 
       // Offer to create a spec for the existing project
@@ -805,7 +805,7 @@ export class ConsultationEngine {
         if (this.spec.voiceEnabled) {
           await this.spec.voice.createVoiceDemo();
         } else {
-          await this.spec.show('thinking', 'Voice synthesis isn\\'t setup yet, but here\\'s how it would work...');
+          await this.spec.show('thinking', 'Voice synthesis isn\'t setup yet, but here\'s how it would work...');
         }
         break;
       case 'character':
