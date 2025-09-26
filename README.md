@@ -7,18 +7,20 @@
 
 ## 🎯 Project Status
 
-**⚠️ Currently in development** - Basic functionality working, full CLI requires syntax fixes.
+**✅ Core functionality working** - CLI operational, consultation working, agent UI functional.
 
 ### ✅ What Works
 - ✅ **Character system** - Spec the Golden Retriever with ASCII art and personality
-- ✅ **Basic demo** - Interactive character demonstration
+- ✅ **CLI commands** - All help menus and command structure functional
+- ✅ **Interactive consultation** - Full conversation flow with Spec
+- ✅ **Agent swarm UI** - Deployment interface with progress tracking
 - ✅ **Security architecture** - Comprehensive security fixes implemented
-- ✅ **Project structure** - Full codebase with agent swarm, cloud integration, oversight system
+- ✅ **Syntax clean** - All JavaScript files pass validation
 
 ### 🚧 Known Issues
-- 🚧 **CLI syntax errors** - Escaped apostrophes causing JavaScript parsing failures
-- 🚧 **Interactive consultation** - Requires syntax fixes to run
-- 🚧 **Agent swarm** - Core logic implemented but CLI access blocked by syntax errors
+- 🟡 **Agent swarm persistence** - Agents deploy but don't persist between sessions
+- 🟡 **WebSocket verification** - Server claims to start but needs verification
+- 🟡 **Interactive consultation** - Works but crashes on forced termination (expected behavior)
 
 ## 🚀 Installation & Testing
 
@@ -33,16 +35,24 @@ cd spec-kit-assistant
 npm install
 ```
 
-### Test What Works
+### How to Use
+
 ```bash
-# Test basic functionality
-node test-basic.js
-
-# Demo the character system
-node demo.js
-
-# Test individual components (once syntax is fixed)
+# 1. View all available commands
 node src/index.js --help
+
+# 2. Start interactive consultation with Spec
+node src/index.js init
+
+# 3. Deploy agent swarm (UI functional)
+node src/index.js swarm --deploy --scale 2
+
+# 4. Monitor agent status
+node src/index.js swarm --monitor
+
+# 5. Test character demos
+node demo.js
+node test-basic.js
 ```
 
 ## 🐕 Meet Spec - Your Golden Retriever Guide
