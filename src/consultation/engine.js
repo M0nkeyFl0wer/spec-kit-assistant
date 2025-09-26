@@ -188,7 +188,7 @@ export class ConsultationEngine {
   }
 
   async exploreRequirements() {
-    await this.spec.show('working', 'Now let's dive into the technical details...');
+    await this.spec.show('working', 'Now let us dive into the technical details...');
 
     const projectConfig = this.knowledgeBase.projectTypes[this.projectContext.type];
 
@@ -233,7 +233,7 @@ export class ConsultationEngine {
         choices: [
           { name: '🌱 Beginner - This is new to me', value: 'beginner' },
           { name: '📚 Intermediate - I have some experience', value: 'intermediate' },
-          { name: '🎯 Advanced - I'm quite experienced', value: 'advanced' },
+          { name: '🎯 Advanced - I am quite experienced', value: 'advanced' },
           { name: '🚀 Expert - I could teach others', value: 'expert' }
         ]
       }
@@ -405,7 +405,7 @@ export class ConsultationEngine {
   }
 
   async refineChoices() {
-    await this.spec.show('helpful', 'No problem! Let\'s adjust what needs changing...');
+    await this.spec.show('helpful', 'No problem! Let us adjust what needs changing...');
 
     const whatToChange = await this.spec.askQuestion(
       'What would you like to change?',
@@ -712,7 +712,7 @@ export class ConsultationEngine {
     if (matchedKeyword) {
       await this.spec.show('helpful', responses[matchedKeyword]);
     } else {
-      await this.spec.show('thinking', 'That\'s an interesting question! Let me think about that...');
+      await this.spec.show('thinking', 'That is an interesting question! Let me think about that...');
       // Could integrate with AI service for more intelligent responses
     }
   }
@@ -761,7 +761,7 @@ export class ConsultationEngine {
           console.log(chalk.gray(`   Dependencies: ${Object.keys(packageData.dependencies).length}`));
         }
       } else {
-        await this.spec.show('thinking', 'I don\'t see a package.json file. This might not be a Node.js project.');
+        await this.spec.show('thinking', 'I do not see a package.json file. This might not be a Node.js project.');
       }
 
       // Offer to create a spec for the existing project

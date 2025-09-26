@@ -749,7 +749,7 @@ export class SwarmOrchestrator extends EventEmitter {
       return;
     }
 
-    await this.spec.show('happy', 'Here\\'s your current swarm status!');
+    await this.spec.show('happy', 'Here is your current swarm status!');
 
     console.log(chalk.yellow('\\n🤖 Agent Swarm Overview'));
     console.log(chalk.cyan(`Total Agents: ${this.agents.size}`));
