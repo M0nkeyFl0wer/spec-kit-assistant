@@ -7,6 +7,7 @@ import { CloudRunClient } from '@google-cloud/run';
 import axios from 'axios';
 import { SpecCharacter } from '../character/spec.js';
 import { MultimediaGenerator } from '../multimedia/multimedia-generator.js';
+import { secureWriteFile, secureEnsureDir } from '../utils/secure-path.js';
 
 export class CloudIntegration {
   constructor() {

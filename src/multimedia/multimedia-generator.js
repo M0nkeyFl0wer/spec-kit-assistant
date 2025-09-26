@@ -1,29 +1,27 @@
 import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
-import sharp from 'sharp';
-import puppeteer from 'puppeteer';
-import GIFEncoder from 'gifencoder';
-import { Canvas, createCanvas, loadImage } from 'canvas';
+import { secureWriteFile, secureEnsureDir } from '../utils/secure-path.js';
 
 export class MultimediaGenerator {
   constructor() {
-    this.assetsPath = path.join(process.cwd(), 'assets');
-    this.outputPath = path.join(this.assetsPath, 'generated');
-    this.templates = {
-      character: path.join(this.assetsPath, 'templates', 'character'),
-      demos: path.join(this.assetsPath, 'templates', 'demos'),
-      animations: path.join(this.assetsPath, 'templates', 'animations')
-    };
-
+    // Use secure directory initialization
     this.initializeDirectories();
   }
 
   async initializeDirectories() {
-    await fs.ensureDir(this.outputPath);
-    await fs.ensureDir(this.templates.character);
-    await fs.ensureDir(this.templates.demos);
-    await fs.ensureDir(this.templates.animations);
+    try {
+      // Create secure multimedia directories
+      await secureEnsureDir('generated', 'output');
+      await secureEnsureDir('character', 'templates');
+      await secureEnsureDir('demos', 'templates');
+      await secureEnsureDir('animations', 'templates');
+
+      console.log(chalk.green('✅ Multimedia directories initialized securely'));
+    } catch (error) {
+      console.error(chalk.red(`Failed to initialize multimedia directories: ${error.message}`));
+      throw error;
+    }
   }
 
   async generateCharacterArt(mood = 'happy', style = 'ascii') {

@@ -5,6 +5,7 @@ import path from 'path';
 import yaml from 'yaml';
 import { SpecCharacter } from '../character/spec.js';
 import { MultimediaGenerator } from '../multimedia/multimedia-generator.js';
+import { secureWriteFile, secureReadFile, validateProjectPath } from '../utils/secure-path.js';
 
 export class ConsultationEngine {
   constructor() {
@@ -466,11 +467,19 @@ export class ConsultationEngine {
       }
     };
 
-    // Save specification
-    const specPath = path.join(process.cwd(), 'spec.yaml');
-    await fs.writeFile(specPath, yaml.stringify(spec, { indent: 2 }));
+    // Save specification securely
+    try {
+      const specPath = await secureWriteFile('spec.yaml', yaml.stringify(spec, { indent: 2 }), 'workspace', {
+        allowedExtensions: ['.yaml', '.yml'],
+        maxSize: 1024 * 1024, // 1MB max
+        preventOverwrite: false
+      });
 
-    console.log(chalk.green(`\\n✅ Specification saved to: ${specPath}`));
+      console.log(chalk.green(`\\n✅ Specification saved to: ${path.basename(specPath)}`));
+    } catch (error) {
+      console.error(chalk.red(`Failed to save specification: ${error.message}`));
+      throw new Error(`Specification save failed: ${error.message}`);
+    }
 
     // Offer to show the spec
     const showSpec = await this.spec.askQuestion(
@@ -710,21 +719,38 @@ export class ConsultationEngine {
 
   async analyzeProject(projectPath = null) {
     if (!projectPath) {
-      projectPath = await this.spec.askQuestion(
+      const userPath = await this.spec.askQuestion(
         'What\\'s the path to your project?',
         { type: 'input', default: process.cwd() }
       );
+
+      // Validate the project path for security
+      try {
+        projectPath = validateProjectPath(userPath);
+      } catch (error) {
+        await this.spec.show('concerned', `Invalid project path: ${error.message}`);
+        return;
+      }
     }
 
-    await this.spec.work(`Analyzing project at ${projectPath}`, 2000);
+    await this.spec.work(`Analyzing project at ${path.basename(projectPath)}`, 2000);
 
-    // Basic project analysis (would be more sophisticated in real implementation)
+    // Basic project analysis with secure file operations
     try {
       const packageJsonPath = path.join(projectPath, 'package.json');
       const hasPackageJson = await fs.pathExists(packageJsonPath);
 
       if (hasPackageJson) {
-        const packageData = await fs.readJson(packageJsonPath);
+        // Securely read package.json with size limits
+        const packageContent = await fs.readFile(packageJsonPath, 'utf8');
+
+        // Validate JSON size (max 1MB for package.json)
+        if (packageContent.length > 1024 * 1024) {
+          await this.spec.show('concerned', 'Package.json file is too large to analyze safely.');
+          return;
+        }
+
+        const packageData = JSON.parse(packageContent);
         await this.spec.show('happy', 'Found a Node.js project!');
 
         console.log(chalk.cyan('📦 Project Details:'));

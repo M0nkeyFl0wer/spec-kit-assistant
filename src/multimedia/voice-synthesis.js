@@ -2,14 +2,41 @@ import fs from 'fs-extra';
 import path from 'path';
 import axios from 'axios';
 import chalk from 'chalk';
+import { secureConfig } from '../utils/secure-config.js';
+import { secureWriteFile, secureEnsureDir } from '../utils/secure-path.js';
 
 export class VoiceSynthesis {
-  constructor() {
-    this.enabled = false;
-    this.apiKey = process.env.ELEVENLABS_API_KEY;
-    this.voiceId = process.env.SPEC_VOICE_ID || 'default_golden_retriever'; // Custom voice ID
-    this.audioPath = path.join(process.cwd(), 'assets', 'audio');
+  async constructor() {
+    await this.initializeSecurely();
+  }
+
+  async initializeSecurely() {
+    // Load secure configuration
+    await secureConfig.loadConfig();
+    const voiceConfig = secureConfig.getVoiceConfig();
+
+    this.enabled = voiceConfig.enabled;
+    this.apiKey = voiceConfig.apiKey;
+    this.voiceId = voiceConfig.voiceId; // No hardcoded fallback
+    this.maxMessageLength = voiceConfig.maxMessageLength;
+    this.timeout = voiceConfig.timeout;
     this.apiUrl = 'https://api.elevenlabs.io/v1/text-to-speech';
+
+    // Validate configuration
+    if (this.enabled && !this.apiKey) {
+      console.warn(chalk.yellow('⚠️ Voice synthesis enabled but no API key provided'));
+      console.warn(chalk.gray('Set ELEVENLABS_API_KEY environment variable to enable voice'));
+      this.enabled = false;
+    }
+
+    if (this.enabled && !this.voiceId) {
+      console.warn(chalk.yellow('⚠️ Voice synthesis enabled but no voice ID provided'));
+      console.warn(chalk.gray('Set SPEC_VOICE_ID environment variable for custom voice'));
+      this.enabled = false;
+    }
+
+    // Initialize secure audio directory
+    await this.initializeAudioDirectory();
 
     // Voice characteristics for Spec the Golden Retriever
     this.voiceSettings = {
@@ -47,11 +74,16 @@ export class VoiceSynthesis {
       }
     };
 
-    this.initializeAudioDirectory();
   }
 
   async initializeAudioDirectory() {
-    await fs.ensureDir(this.audioPath);
+    try {
+      await secureEnsureDir('audio', 'output');
+      console.log(chalk.green('✅ Secure audio directory initialized'));
+    } catch (error) {
+      console.error(chalk.red(`Failed to initialize audio directory: ${error.message}`));
+      this.enabled = false;
+    }
   }
 
   async checkSetup() {

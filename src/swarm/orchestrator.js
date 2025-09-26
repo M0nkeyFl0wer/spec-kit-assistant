@@ -4,6 +4,8 @@ import WebSocket from 'ws';
 import fs from 'fs-extra';
 import path from 'path';
 import { SpecCharacter } from '../character/spec.js';
+import { SecureWebSocketServer } from '../utils/secure-websocket.js';
+import { secureWriteFile, secureEnsureDir } from '../utils/secure-path.js';
 
 export class SwarmOrchestrator extends EventEmitter {
   constructor() {
@@ -139,48 +141,80 @@ export class SwarmOrchestrator extends EventEmitter {
     await this.spec.show('happy', 'Swarm infrastructure ready!');
   }
 
-  setupCommunicationChannels() {
-    // WebSocket server for agent communication
-    this.wsServer = new WebSocket.Server({ port: 8080 + Math.floor(Math.random() * 1000) });
+  async setupCommunicationChannels() {
+    try {
+      // Initialize secure WebSocket server
+      this.wsServer = new SecureWebSocketServer({
+        port: 8080 + Math.floor(Math.random() * 1000),
+        authRequired: true,
+        maxConnections: this.swarmConfig.maxAgents,
+        messageRateLimit: 10, // 10 messages per second per agent
+        maxMessageSize: 64 * 1024, // 64KB max message size
+        heartbeatInterval: 30000 // 30 second heartbeat
+      });
 
-    this.wsServer.on('connection', (ws, req) => {
-      const agentId = req.headers['agent-id'];
+      // Set up secure event handlers
+      this.wsServer.on('agent-authenticated', (connectionId, agentId, agentType) => {
+        this.connections.set(agentId, connectionId);
+        console.log(chalk.green(`🔒 Agent ${agentId} authenticated securely`));
+      });
 
-      if (agentId) {
-        this.connections.set(agentId, ws);
+      this.wsServer.on('message', (connectionId, message, connectionInfo) => {
+        if (connectionInfo.authenticated && connectionInfo.agentId) {
+          this.handleAgentMessage(connectionInfo.agentId, message);
+        }
+      });
 
-        ws.on('message', (message) => {
-          this.handleAgentMessage(agentId, JSON.parse(message));
-        });
+      this.wsServer.on('disconnection', (connectionId, connectionInfo) => {
+        if (connectionInfo.agentId) {
+          this.connections.delete(connectionInfo.agentId);
+          this.handleAgentDisconnection(connectionInfo.agentId);
+        }
+      });
 
-        ws.on('close', () => {
-          this.connections.delete(agentId);
-          this.handleAgentDisconnection(agentId);
-        });
-      }
-    });
+      this.wsServer.on('error', (error) => {
+        console.error(chalk.red('Secure WebSocket server error:'), error);
+      });
 
-    console.log(chalk.blue(`🔗 Agent communication server running on port ${this.wsServer.options.port}`));
+      // Start the secure server
+      await this.wsServer.start();
+
+      console.log(chalk.blue(`🔒 Secure agent communication server running on port ${this.wsServer.options.port}`));
+
+    } catch (error) {
+      console.error(chalk.red('Failed to setup secure communication channels:'), error);
+      throw error;
+    }
   }
 
   async initializeSharedResources() {
-    // Create shared workspace
-    const workspacePath = path.join(process.cwd(), '.spec-assistant', 'swarm-workspace');
-    await fs.ensureDir(workspacePath);
+    try {
+      // Create secure shared workspace
+      await secureEnsureDir('swarm-workspace', 'workspace');
 
-    // Create shared task queue
-    const taskQueuePath = path.join(workspacePath, 'task-queue.json');
-    await fs.writeJson(taskQueuePath, { tasks: [], completedTasks: [] });
+      // Create shared task queue with secure file operations
+      await secureWriteFile('task-queue.json', JSON.stringify({
+        tasks: [],
+        completedTasks: []
+      }, null, 2), 'workspace', {
+        allowedExtensions: ['.json']
+      });
 
-    // Create shared knowledge base
-    const knowledgeBasePath = path.join(workspacePath, 'knowledge-base.json');
-    await fs.writeJson(knowledgeBasePath, {
-      projectContext: {},
-      learnings: [],
-      bestPractices: []
-    });
+      // Create shared knowledge base
+      await secureWriteFile('knowledge-base.json', JSON.stringify({
+        projectContext: {},
+        learnings: [],
+        bestPractices: []
+      }, null, 2), 'workspace', {
+        allowedExtensions: ['.json']
+      });
 
-    this.workspacePath = workspacePath;
+      console.log(chalk.green('✅ Secure swarm workspace initialized'));
+
+    } catch (error) {
+      console.error(chalk.red('Failed to initialize shared resources:'), error);
+      throw error;
+    }
   }
 
   async setupMonitoringDashboard() {
