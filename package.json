@@ -1,0 +1,47 @@
+{
+  "name": "spec-kit-assistant",
+  "version": "1.0.0",
+  "description": "Intelligent Spec Kit Assistant with Golden Retriever Guide and Agent Swarm Orchestration",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test test/**/*.test.js",
+    "lint": "eslint src/",
+    "build": "node scripts/build.js",
+    "setup": "node scripts/setup.js",
+    "swarm:deploy": "node src/agents/swarm-manager.js deploy",
+    "swarm:monitor": "node src/agents/swarm-manager.js monitor",
+    "cloud:setup": "node src/cloud/gcp-setup.js",
+    "cloud:optimize": "node src/cloud/cost-optimizer.js",
+    "spec:guided": "node src/consultation/guided.js",
+    "character:generate": "node src/character/art-generator.js",
+    "multimedia:demo": "node src/multimedia/demo-generator.js",
+    "voice:generate": "node src/multimedia/voice-synthesis.js"
+  },
+  "keywords": ["spec-kit", "ai-assistant", "agent-swarm", "cloud-integration", "guided-development"],
+  "author": "M0nkeyFl0wer",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "inquirer": "^9.2.0",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "boxen": "^7.1.1",
+    "figlet": "^1.7.0",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.14.0",
+    "@google-cloud/compute": "^4.7.0",
+    "@google-cloud/run": "^1.3.0",
+    "axios": "^1.6.0",
+    "fs-extra": "^11.2.0",
+    "yaml": "^2.4.5",
+    "express": "^4.21.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
