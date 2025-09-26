@@ -134,7 +134,7 @@ export class OversightSystem {
 
     // Ask about time preference
     const timePreference = await this.spec.askQuestion(
-      'What\\'s more important to you right now?',
+      'What's more important to you right now?',
       {
         type: 'list',
         choices: [
@@ -185,7 +185,7 @@ export class OversightSystem {
       'beginner-simple-learning': {
         mode: 'strategic',
         name: 'Strategic Checkpoints',
-        reasoning: 'Perfect for learning while still making good progress. You\\'ll see key decisions without getting overwhelmed.'
+        reasoning: 'Perfect for learning while still making good progress. You'll see key decisions without getting overwhelmed.'
       },
       'beginner-simple-speed': {
         mode: 'trust-verify',
@@ -195,7 +195,7 @@ export class OversightSystem {
       'beginner-medium-learning': {
         mode: 'full-control',
         name: 'Full Control',
-        reasoning: 'Medium complexity projects are great learning opportunities. You\\'ll understand every decision.'
+        reasoning: 'Medium complexity projects are great learning opportunities. You'll understand every decision.'
       },
       'intermediate-medium-balance': {
         mode: 'strategic',
@@ -379,7 +379,7 @@ export class OversightSystem {
           { name: '🔧 Modify - I want to change something first', value: 'modify' },
           { name: '📖 Explain - Tell me more about this', value: 'explain' },
           { name: '⏸️ Pause - Skip this for now', value: 'skip' },
-          { name: '❌ Reject - Don\\'t do this task', value: 'reject' }
+          { name: '❌ Reject - Don't do this task', value: 'reject' }
         ]
       }
     );
@@ -405,7 +405,7 @@ export class OversightSystem {
         return await this.requestApproval(assessment); // Ask again after explanation
 
       case 'skip':
-        await this.spec.show('happy', 'No problem! We\\'ll come back to this later.');
+        await this.spec.show('happy', 'No problem! We'll come back to this later.');
         break;
 
       case 'reject':
@@ -427,7 +427,7 @@ export class OversightSystem {
     await this.spec.show('thinking', 'What modifications would you like to make?');
 
     const modifications = await this.spec.askQuestion(
-      'Please describe the changes you\\'d like:',
+      'Please describe the changes you'd like:',
       { type: 'input' }
     );
 
@@ -439,7 +439,7 @@ export class OversightSystem {
       modifiedAt: new Date()
     };
 
-    await this.spec.show('happy', 'Got it! I\\'ll apply those modifications.');
+    await this.spec.show('happy', 'Got it! I'll apply those modifications.');
 
     return modifiedTask;
   }
@@ -596,7 +596,7 @@ export class OversightSystem {
   }
 
   async showExecutionSummary(results, stats) {
-    await this.spec.show('celebrating', 'Execution complete! Here\\'s what we accomplished:');
+    await this.spec.show('celebrating', 'Execution complete! Here's what we accomplished:');
 
     console.log(chalk.yellow('\\n📊 Execution Summary'));
     console.log(chalk.green(`✅ Approved: ${stats.approved} tasks`));

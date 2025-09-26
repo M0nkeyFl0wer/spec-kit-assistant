@@ -49,7 +49,7 @@ program
   .description('🗣️ Start interactive consultation with Spec')
   .option('-p, --project <path>', 'Analyze existing project')
   .action(async (options) => {
-    await consultation.startInteractiveSession(options);
+    await consultation.startGuidedSetup(options);
   });
 
 program

@@ -2,8 +2,9 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import fs from 'fs-extra';
 import path from 'path';
-import { Compute } from '@google-cloud/compute';
-import { CloudRunClient } from '@google-cloud/run';
+// Temporarily commented out for CLI functionality
+// import { Compute } from '@google-cloud/compute';
+// import { CloudRunClient } from '@google-cloud/run';
 import axios from 'axios';
 import { SpecCharacter } from '../character/spec.js';
 import { MultimediaGenerator } from '../multimedia/multimedia-generator.js';
@@ -86,7 +87,7 @@ export class CloudIntegration {
     await this.spec.show('thinking', 'Let me help you choose the best cloud provider...');
 
     const priorities = await this.spec.askQuestion(
-      'What\\'s most important for your project?',
+      'What is most important for your project?',
       {
         type: 'checkbox',
         choices: [
@@ -218,9 +219,9 @@ export class CloudIntegration {
         type: 'list',
         choices: [
           { name: '🌐 Download installer - Official Google installer', value: 'installer' },
-          { name: '📦 Package manager - Use your system\\'s package manager', value: 'package' },
+          { name: '📦 Package manager - Use your system package manager', value: 'package' },
           { name: '🐳 Docker - Use containerized version', value: 'docker' },
-          { name: '📖 Show me instructions - I\\'ll install it myself', value: 'instructions' }
+          { name: '📖 Show me instructions - I will install it myself', value: 'instructions' }
         ]
       }
     );
@@ -299,7 +300,7 @@ export class CloudIntegration {
 
     if (hasExistingProject) {
       const projectId = await this.spec.askQuestion(
-        'What\\'s your Google Cloud project ID?',
+        'What is your Google Cloud project ID?',
         {
           type: 'input',
           validate: (input) => input.length > 0 || 'Please enter your project ID'
@@ -417,7 +418,7 @@ export class CloudIntegration {
   }
 
   async guideBillingSetup() {
-    await this.spec.show('helpful', 'Don\\'t worry! GCP offers $300 in free credits for new users.');
+    await this.spec.show('helpful', 'Do not worry! GCP offers $300 in free credits for new users.');
 
     console.log(chalk.blue('\\n💳 Setting up billing (with free credits):'));
 
@@ -425,7 +426,7 @@ export class CloudIntegration {
       '1. Go to: https://console.cloud.google.com/billing',
       '2. Click "Link a billing account"',
       '3. Create a new billing account (free credits will be applied)',
-      '4. Add a payment method (required but won\\'t be charged during free tier)',
+      '4. Add a payment method (required but will not be charged during free tier)',
       '5. Link the billing account to your project'
     ];
 
@@ -782,7 +783,7 @@ CMD ["node", "index.js"]
   }
 
   async showGCPNextSteps() {
-    await this.spec.show('celebrating', 'GCP integration is ready! Here\\'s what you can do next:');
+    await this.spec.show('celebrating', 'GCP integration is ready! Here is what you can do next:');
 
     const nextSteps = [
       {
@@ -836,7 +837,7 @@ CMD ["node", "index.js"]
           { name: '📊 Set up monitoring dashboard', value: 'setup-monitoring' },
           { name: '🤖 Configure agent swarm deployment', value: 'setup-agents' },
           { name: '📚 Show me tutorials and documentation', value: 'show-docs' },
-          { name: '✅ I\\'m all set for now', value: 'complete' }
+          { name: '✅ I am all set for now', value: 'complete' }
         ]
       }
     );
@@ -923,7 +924,7 @@ CMD ["node", "index.js"]
       await this.spec.celebrate('Deployment test successful');
 
     } catch (error) {
-      await this.spec.show('concerned', 'Test failed, but that\\'s okay! Let me help troubleshoot...');
+      await this.spec.show('concerned', 'Test failed, but that is okay! Let me help troubleshoot...');
       console.log(chalk.red(`Test error: ${error.message}`));
     }
   }
@@ -1037,7 +1038,7 @@ CMD ["node", "index.js"]
     });
 
     const keyPath = await this.spec.askQuestion(
-      'What\\'s the path to your service account key file?',
+      'What is the path to your service account key file?',
       {
         type: 'input',
         default: './gcp-service-account.json'
@@ -1065,7 +1066,7 @@ CMD ["node", "index.js"]
         type: 'list',
         choices: [
           { name: '🐳 Use Docker containers - No local GCP CLI needed', value: 'docker' },
-          { name: '🌐 Manual setup - I\\'ll configure it myself', value: 'manual' },
+          { name: '🌐 Manual setup - I will configure it myself', value: 'manual' },
           { name: '⏸️ Skip for now - Continue without cloud integration', value: 'skip' }
         ]
       }

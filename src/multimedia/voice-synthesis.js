@@ -6,8 +6,16 @@ import { secureConfig } from '../utils/secure-config.js';
 import { secureWriteFile, secureEnsureDir } from '../utils/secure-path.js';
 
 export class VoiceSynthesis {
-  async constructor() {
-    await this.initializeSecurely();
+  constructor() {
+    this.initialized = false;
+  }
+
+  async init() {
+    if (!this.initialized) {
+      await this.initializeSecurely();
+      this.initialized = true;
+    }
+    return this;
   }
 
   async initializeSecurely() {

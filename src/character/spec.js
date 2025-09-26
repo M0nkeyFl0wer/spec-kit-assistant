@@ -19,40 +19,40 @@ export class SpecCharacter {
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( ◕     ◕ )')}
       ${chalk.yellow('\\  ^___^  /')}  ${chalk.cyan('Woof! Ready to help!')}
-       ${chalk.brown('\\   ---   /')}
-        ${chalk.brown('^^^     ^^^')}
+       ${chalk.gray('\\   ---   /')}
+        ${chalk.gray('^^^     ^^^')}
       `,
 
       thinking: `
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( •     • )')}
       ${chalk.yellow('\\    ?    /')}  ${chalk.blue('Let me think about that...')}
-       ${chalk.brown('\\   ---   /')}
-        ${chalk.brown('^^^     ^^^')}
+       ${chalk.gray('\\   ---   /')}
+        ${chalk.gray('^^^     ^^^')}
       `,
 
       celebrating: `
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( ★     ★ )')}
       ${chalk.yellow('\\   ∪∪∪   /')}  ${chalk.green('Fantastic work!')}
-       ${chalk.brown('\\   ---   /')}
-        ${chalk.brown('^^^  ^^^  ^^^')}  ${chalk.yellow('*tail wagging*')}
+       ${chalk.gray('\\   ---   /')}
+        ${chalk.gray('^^^  ^^^  ^^^')}  ${chalk.yellow('*tail wagging*')}
       `,
 
       concerned: `
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( ◕     ◕ )')}
       ${chalk.yellow('\\    ∩    /')}  ${chalk.red('Hmm, let me help with that...')}
-       ${chalk.brown('\\   ---   /')}
-        ${chalk.brown('^^^     ^^^')}
+       ${chalk.gray('\\   ---   /')}
+        ${chalk.gray('^^^     ^^^')}
       `,
 
       working: `
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( ◔     ◔ )')}
       ${chalk.yellow('\\  ≡≡≡≡≡  /')}  ${chalk.cyan('Working on it...')}
-       ${chalk.brown('\\   ---   /')}
-        ${chalk.brown('^^^     ^^^')}
+       ${chalk.gray('\\   ---   /')}
+        ${chalk.gray('^^^     ^^^')}
       `
     };
 
