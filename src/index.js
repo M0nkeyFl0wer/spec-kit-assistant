@@ -7,6 +7,7 @@ import { SpecCharacter } from './character/spec.js';
 import { ConsultationEngine } from './consultation/engine.js';
 import { SwarmOrchestrator } from './swarm/orchestrator.js';
 import { CloudIntegration } from './cloud/integration.js';
+import { SpecKitIntegration } from './spec-kit/integration.js';
 import { WarpBridge } from './integrations/warp/bridge.js';
 
 const program = new Command();
@@ -14,6 +15,7 @@ const spec = new SpecCharacter();
 const consultation = new ConsultationEngine();
 const swarm = new SwarmOrchestrator();
 const cloud = new CloudIntegration();
+const specKit = new SpecKitIntegration();
 const warpBridge = new WarpBridge();
 
 // Welcome message with Spec character
