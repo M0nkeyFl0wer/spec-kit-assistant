@@ -1,33 +1,46 @@
-# Hi! I'm Spec, your Spec Kit support dog
+# Hi! I'm Spec, your GitHub Spec Kit assistant
 
 ```
                     ╭─────────────────────────╮
-                    │    SPEC KIT CLI v2.0    │
+                    │  GITHUB SPEC KIT CLI    │
+                    │       ASSISTANT         │
                     ╰─────────────────────────╯
                            ∩───∩
                           (  ^   ^  )
                            \   o   /
                             \_\_/_/
 
-        I help you turn ideas into project specifications
-        and generate working code from those specs.
+        I'm an AI assistant that helps you use GitHub's Spec Kit
+        to turn ideas into specifications and working code.
 ```
 
 ## What I Do
 
-I help with two things:
-- **Ideation**: Turn rough ideas into clear project specifications
-- **Implementation**: Generate code based on those specifications
+I'm designed to make [GitHub's Spec Kit](https://github.com/github/spec-kit) easier to use by providing:
+
+- **Interactive consultation**: Ask questions to help you create better specs
+- **Spec generation**: Turn your ideas into proper GitHub Spec Kit format
+- **Code implementation**: Generate working code from your specifications
 
 ```
-    💡 Idea → 📋 Spec → 💻 Code
+    💡 Your Idea → 📋 GitHub Spec Kit Format → 💻 Working Code
 
     "I want to build a habit tracker"
               ↓
-    Clear requirements and design
+    Proper GitHub Spec Kit specification
               ↓
     Working application code
 ```
+
+## About GitHub Spec Kit
+
+[GitHub's Spec Kit](https://github.com/github/spec-kit) is a toolkit for creating project specifications. It provides templates and guidelines for writing clear, actionable project specs.
+
+I act as your friendly assistant to:
+- Guide you through the Spec Kit process
+- Ask the right questions to flesh out your ideas
+- Generate specifications in the correct format
+- Turn those specs into working code
 
 ## How It Works
 
@@ -59,19 +72,20 @@ I'll ask for details to understand your requirements.
           \_\_/_/
 ```
 
-### 3. I Create a Specification
+### 3. I Create a GitHub Spec Kit Specification
 
-I generate a detailed project specification document.
+I generate a detailed specification using GitHub Spec Kit format and templates.
 
 ```
     ╭──────────────────────────────────────╮
-    │           PROJECT SPEC               │
+    │        GITHUB SPEC KIT SPEC          │
     │                                      │
     │  📋 Requirements                     │
     │  🏗️  Architecture                    │
-    │  🎨 UI Design                        │
+    │  🎨 UI/UX Design                     │
     │  🔧 Implementation Plan              │
     │  ✅ Acceptance Criteria              │
+    │  📊 Success Metrics                  │
     ╰──────────────────────────────────────╯
 ```
 
