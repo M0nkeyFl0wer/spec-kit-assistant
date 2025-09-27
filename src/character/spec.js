@@ -3,6 +3,7 @@ import ora from 'ora';
 import inquirer from 'inquirer';
 import { MultimediaGenerator } from '../multimedia/multimedia-generator.js';
 import { VoiceSynthesis } from '../multimedia/voice-synthesis.js';
+import { DogArt, MoodArt, DogAnimations } from './dog-art.js';
 
 export class SpecCharacter {
   constructor() {
@@ -13,41 +14,40 @@ export class SpecCharacter {
     this.multimedia = new MultimediaGenerator();
     this.voice = new VoiceSynthesis();
 
-    // Character art states
+    // Use the amazing new dog art collection!
     this.art = {
-      happy: `
-${chalk.yellow('      /^-----^')}\\
-     ${chalk.yellow('( ◕     ◕ )')}
-      ${chalk.yellow('\\  ^___^  /')}  ${chalk.cyan('Woof! Ready to help!')}
-       ${chalk.gray('\\   ---   /')}
-        ${chalk.gray('^^^     ^^^')}
-      `,
+      // Enhanced with colors and messages
+      happy: chalk.yellow(MoodArt.happy) + chalk.cyan('\n  Woof! Ready to help!'),
 
-      thinking: `
-${chalk.yellow('      /^-----^')}\\
-     ${chalk.yellow('( •     • )')}
-      ${chalk.yellow('\\    ?    /')}  ${chalk.blue('Let me think about that...')}
-       ${chalk.gray('\\   ---   /')}
-        ${chalk.gray('^^^     ^^^')}
-      `,
+      thinking: chalk.blue(MoodArt.thinking) + chalk.gray('\n  Let me think about that...'),
 
-      celebrating: `
-${chalk.yellow('      /^-----^')}\\
-     ${chalk.yellow('( ★     ★ )')}
-      ${chalk.yellow('\\   ∪∪∪   /')}  ${chalk.green('Fantastic work!')}
-       ${chalk.gray('\\   ---   /')}
-        ${chalk.gray('^^^  ^^^  ^^^')}  ${chalk.yellow('*tail wagging*')}
-      `,
+      celebrating: chalk.green(MoodArt.celebrating) + chalk.yellow('\n  *excited tail wagging*'),
 
-      concerned: `
-${chalk.yellow('      /^-----^')}\\
-     ${chalk.yellow('( ◕     ◕ )')}
-      ${chalk.yellow('\\    ∩    /')}  ${chalk.red('Hmm, let me help with that...')}
-       ${chalk.gray('\\   ---   /')}
-        ${chalk.gray('^^^     ^^^')}
-      `,
+      concerned: chalk.red(MoodArt.happy.replace('◕', '◔')) + chalk.red('\n  Hmm, let me help with that...'),
 
-      working: `
+      working: chalk.cyan(MoodArt.builder) + chalk.blue('\n  *coding intensely*'),
+
+      greeting: chalk.magenta(MoodArt.banner),
+
+      matrix: chalk.green(MoodArt.matrix) + chalk.green('\n  C Y B E R   S P E C   O N L I N E'),
+
+      cyber: chalk.cyan(MoodArt.cyber) + chalk.cyan('\n  RETRO MODE ACTIVATED'),
+
+      love: chalk.red(MoodArt.love) + chalk.red('\n  Much love! Such wow!'),
+
+      graduate: chalk.yellow(MoodArt.graduate) + chalk.yellow('\n  Spec-certified!'),
+
+      detective: chalk.blue(MoodArt.detective) + chalk.blue('\n  Investigating your code...'),
+
+      pixel: chalk.green(MoodArt.pixel) + chalk.green('\n  8-bit Spec activated!'),
+
+      realistic: chalk.yellow(MoodArt.realistic) + chalk.yellow('\n  Golden Retriever mode!'),
+
+      chibi: chalk.magenta(MoodArt.chibi) + chalk.magenta('\n  Kawaii Spec desu!'),
+
+      mini: chalk.cyan(MoodArt.mini),
+
+      sleeping: chalk.gray(MoodArt.sleeping) + chalk.gray('\n  Zzz... dreaming of perfect specs...'),
 ${chalk.yellow('      /^-----^')}\\
      ${chalk.yellow('( ◔     ◔ )')}
       ${chalk.yellow('\\  ≡≡≡≡≡  /')}  ${chalk.cyan('Working on it...')}
