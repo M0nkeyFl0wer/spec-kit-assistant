@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import chalk from 'chalk';
-import { DogArt } from './src/character/dog-art.js';
+import { DogArt, MoodArt } from './src/character/dog-art.js';
 import { EnhancedConsultationEngine } from './src/consultation/enhanced-consultation-engine.js';
 import { IntelligentSwarmOrchestrator } from './src/swarm/intelligent-orchestrator.js';
 import { PrototypeGenerator } from './src/prototype/generator.js';
