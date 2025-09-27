@@ -243,3 +243,92 @@ process.on('unhandledRejection', (error) => {
 });
 
 program.parse();
+
+// === GITHUB SPEC KIT INTEGRATION COMMANDS ===
+
+// Generate specification using GitHub Spec Kit format
+program
+  .command('spec <feature-name>')
+  .description('📋 Generate GitHub Spec Kit specification for a feature')
+  .option('-d, --description <desc>', 'Feature description')
+  .option('-i, --interactive', 'Interactive mode with questions')
+  .action(async (featureName, options) => {
+    try {
+      console.log(chalk.cyan(`📋 Generating GitHub Spec Kit specification for: ${featureName}`));
+
+      let description = options.description || 'User provided feature name without description';
+      let clarifications = {};
+
+      if (options.interactive || !options.description) {
+        console.log(chalk.yellow('🐕 Starting interactive consultation...'));
+        await spec.greet();
+        description = `Feature: ${featureName}. ${description}`;
+      }
+
+      const spec_content = await specKit.generateSpec(featureName, description, clarifications);
+      const saved = await specKit.saveSpec(featureName, spec_content, 'spec');
+
+      // Validate Spec Kit format
+      const validation = specKit.validateSpecFormat(spec_content);
+
+      console.log(chalk.green('✅ Specification generated using GitHub Spec Kit format!'));
+      console.log(chalk.gray(`File: ${saved.relativePath}`));
+
+      if (!validation.isValid) {
+        console.log(chalk.yellow('⚠️  Validation warnings:'));
+        validation.issues.forEach(issue => console.log(chalk.gray(`  - ${issue}`)));
+      }
+
+    } catch (error) {
+      console.error(chalk.red('Error generating specification:'), error.message);
+    }
+  });
+
+// Generate implementation plan using GitHub Spec Kit format
+program
+  .command('plan <feature-name>')
+  .description('🏗️  Generate GitHub Spec Kit implementation plan')
+  .action(async (featureName) => {
+    try {
+      console.log(chalk.cyan(`🏗️  Generating implementation plan for: ${featureName}`));
+
+      const specPath = `specs/${specKit.generateBranchName(featureName)}/spec.md`;
+      const plan = await specKit.generatePlan(featureName, specPath);
+      const saved = await specKit.saveSpec(featureName, plan, 'plan');
+
+      console.log(chalk.green('✅ Implementation plan generated using GitHub Spec Kit format!'));
+      console.log(chalk.gray(`File: ${saved.relativePath}`));
+
+    } catch (error) {
+      console.error(chalk.red('Error generating plan:'), error.message);
+    }
+  });
+
+// List all Spec Kit projects
+program
+  .command('list')
+  .description('📂 List all GitHub Spec Kit projects')
+  .action(async () => {
+    try {
+      const projects = await specKit.getProjectStructure();
+
+      if (projects.length === 0) {
+        console.log(chalk.yellow('No Spec Kit projects found. Run "spec-kit init" first.'));
+        return;
+      }
+
+      console.log(chalk.cyan('📂 GitHub Spec Kit Projects:'));
+      projects.forEach(project => {
+        console.log(chalk.green(`  ${project.branch}/`));
+        project.files.forEach(file => {
+          console.log(chalk.gray(`    - ${file}`));
+        });
+      });
+
+    } catch (error) {
+      console.error(chalk.red('Error listing projects:'), error.message);
+    }
+  });
+
+
+program.parse();
