@@ -155,7 +155,7 @@ describe('Spec Kit Assistant - Core Functionality', () => {
     assert.ok(typeof recommendation.demo === 'boolean');
   });
 
-  test('Task assessment in oversight system', () => {
+  test('Task assessment in oversight system', async () => {
     const oversight = new OversightSystem();
 
     const testTask = {
@@ -164,7 +164,7 @@ describe('Spec Kit Assistant - Core Functionality', () => {
       description: 'Fix code formatting issues'
     };
 
-    const assessment = oversight.assessTask(testTask);
+    const assessment = await oversight.assessTask(testTask);
 
     assert.ok(assessment.taskId);
     assert.ok(assessment.task);
@@ -228,17 +228,19 @@ describe('Error Handling and Edge Cases', () => {
     assert.strictEqual(spec.currentMood, 'invalid-mood');
   });
 
-  test('OversightSystem handles unknown agent types', () => {
+  test('OversightSystem handles unknown agent types', async () => {
     const oversight = new OversightSystem();
 
     const unknownTask = {
+      id: 'unknown-task-1',
       type: 'unknown-task-type',
       description: 'This is an unknown task type'
     };
 
-    const assessment = oversight.assessTask(unknownTask);
+    const assessment = await oversight.assessTask(unknownTask);
     assert.ok(assessment);
     assert.ok(typeof assessment.risk === 'number');
+    assert.ok(assessment.taskId);
   });
 
   test('SwarmOrchestrator handles agent not found', () => {
