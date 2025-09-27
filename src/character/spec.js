@@ -47,13 +47,7 @@ export class SpecCharacter {
 
       mini: chalk.cyan(MoodArt.mini),
 
-      sleeping: chalk.gray(MoodArt.sleeping) + chalk.gray('\n  Zzz... dreaming of perfect specs...'),
-${chalk.yellow('      /^-----^')}\\
-     ${chalk.yellow('( ◔     ◔ )')}
-      ${chalk.yellow('\\  ≡≡≡≡≡  /')}  ${chalk.cyan('Working on it...')}
-       ${chalk.gray('\\   ---   /')}
-        ${chalk.gray('^^^     ^^^')}
-      `
+      sleeping: chalk.gray(MoodArt.sleeping) + chalk.gray('\n  Zzz... dreaming of perfect specs...')
     };
 
     // Personality responses
