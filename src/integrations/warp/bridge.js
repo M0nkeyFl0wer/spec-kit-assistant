@@ -31,7 +31,7 @@ export class WarpBridge {
       execSync('which warp', { stdio: 'ignore' });
       return true;
     } catch (error) {
-      console.log(chalk.yellow('⚠️  Warp Code not found. Integration will prepare configs for when Warp is available.'));
+      // Warp integration disabled - using swarm stack instead
       return false;
     }
   }

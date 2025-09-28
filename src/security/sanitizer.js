@@ -15,7 +15,8 @@ export class SecuritySanitizer {
       /<object[^>]*>.*?<\/object>/gi,
 
       // Path traversal patterns
-      /\.\.\/|\.\.\\|\.\.\//g,
+      /\.\.\/|\.\.\\/g,
+      /\.\.\//g,
 
       // Control characters
       /[\x00-\x1f\x7f-\x9f]/g
@@ -46,7 +47,7 @@ export class SecuritySanitizer {
 
     // Additional safety measures
     sanitized = sanitized
-      .replace(/[<>"']/g, '') // Remove quotes and brackets
+      .replace(/[<>"\']/g, '') // Remove quotes and brackets
       .replace(/\s+/g, '-')     // Replace spaces with dashes
       .replace(/[^a-zA-Z0-9-_]/g, '') // Only allow safe characters
       .toLowerCase()
