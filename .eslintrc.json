@@ -1,0 +1,44 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true,
+    "jest": true
+  },
+  "extends": [
+    "airbnb-base"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "no-console": ["error", { "allow": ["warn", "error", "info"] }],
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-underscore-dangle": ["error", { "allow": ["_id"] }],
+    "import/extensions": ["error", "ignorePackages"],
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": ["test/**", "**/*.test.js", "**/*.spec.js"] }],
+    "max-len": ["error", { "code": 120, "ignoreComments": true, "ignoreStrings": true }],
+    "consistent-return": "error",
+    "no-param-reassign": ["error", { "props": false }],
+    "prefer-destructuring": ["error", { "object": true, "array": false }],
+    "complexity": ["error", 10],
+    "max-depth": ["error", 4],
+    "max-lines": ["error", 1000],
+    "max-lines-per-function": ["error", 100],
+    "max-params": ["error", 4],
+    "no-magic-numbers": ["error", { "ignore": [0, 1, -1, 2], "ignoreArrayIndexes": true }]
+  },
+  "overrides": [
+    {
+      "files": ["*.test.js", "*.spec.js"],
+      "rules": {
+        "max-lines": "off",
+        "max-lines-per-function": "off",
+        "no-magic-numbers": "off"
+      }
+    }
+  ]
+}

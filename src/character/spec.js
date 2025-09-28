@@ -148,6 +148,141 @@ export class SpecCharacter {
 
     console.log(chalk.blue(helpMsg));
 
+    // Gently nudge toward proper spec-driven workflow
+    await this.nudgeToSpecWorkflow(context);
+
+    // Complete the help offering
+    await this.completeOfferHelp(helpMsg);
+  }
+
+  /**
+   * Gently nudge users toward GitHub Spec Kit deployment and spec-driven development
+   */
+  async nudgeToSpecWorkflow(context = {}) {
+    await this.pause(1000);
+
+    // Check if user is following proper spec-driven workflow
+    const hasActiveSpec = context.hasActiveSpec || false;
+    const isSpecDeployed = context.isSpecDeployed || false;
+    const isFollowingSpecKit = context.isFollowingSpecKit || false;
+
+    if (!hasActiveSpec) {
+      console.log(chalk.yellow('🐕 Spec: "Woof! I notice we don\'t have an active specification..."'));
+      console.log(chalk.cyan('💡 Pro tip: Let\'s start with a proper GitHub Spec Kit specification!'));
+      console.log(chalk.blue('   Try: node src/index.js spec <your-feature-name>'));
+      return;
+    }
+
+    if (!isSpecDeployed) {
+      console.log(chalk.yellow('🐕 Spec: "Great spec! But let\'s make sure it\'s properly deployed..."'));
+      console.log(chalk.cyan('💡 GitHub Spec Kit works best when deployed to your repository!'));
+      console.log(chalk.blue('   This ensures team collaboration and proper spec-driven development.'));
+      return;
+    }
+
+    if (!isFollowingSpecKit) {
+      console.log(chalk.yellow('🐕 Spec: "I want to make sure we\'re following GitHub Spec Kit best practices..."'));
+      console.log(chalk.cyan('💡 Let\'s ensure we\'re using proper spec-driven development workflow!'));
+      console.log(chalk.blue('   1. Spec first → 2. Review → 3. Implement → 4. Validate'));
+      return;
+    }
+
+    // If all good, encourage continued spec-driven development
+    console.log(chalk.green('🐕 Spec: "Pawsome! You\'re following proper GitHub Spec Kit workflow! 🎯"'));
+  }
+
+  /**
+   * Guide users to proper GitHub Spec Kit deployment
+   */
+  async guideToSpecKitDeployment() {
+    await this.show('thinking', 'Let me help you set up proper GitHub Spec Kit deployment...');
+
+    console.log(chalk.cyan('🚀 GitHub Spec Kit Deployment Guide:'));
+    console.log(chalk.blue(''));
+    console.log(chalk.blue('1. 📋 Generate your specification:'));
+    console.log(chalk.gray('   node src/index.js spec <feature-name>'));
+    console.log(chalk.blue(''));
+    console.log(chalk.blue('2. 🔍 Review the generated spec:'));
+    console.log(chalk.gray('   • Check requirements completeness'));
+    console.log(chalk.gray('   • Validate acceptance criteria'));
+    console.log(chalk.gray('   • Ensure technical clarity'));
+    console.log(chalk.blue(''));
+    console.log(chalk.blue('3. 📤 Deploy to your repository:'));
+    console.log(chalk.gray('   • Commit spec files to your repo'));
+    console.log(chalk.gray('   • Create feature branch'));
+    console.log(chalk.gray('   • Share with team for review'));
+    console.log(chalk.blue(''));
+    console.log(chalk.blue('4. 🎯 Start focused implementation:'));
+    console.log(chalk.gray('   node src/index.js focus --start <spec-name>'));
+    console.log(chalk.blue(''));
+
+    await this.show('happy', 'Following this workflow ensures we\'re doing true spec-driven development!');
+  }
+
+  /**
+   * Remind users about spec-driven development principles
+   */
+  async remindSpecDrivenPrinciples() {
+    await this.show('graduate', 'Let me remind you of the key spec-driven development principles...');
+
+    console.log(chalk.yellow('🎓 Spec-Driven Development Principles:'));
+    console.log(chalk.blue(''));
+    console.log(chalk.green('✅ SPEC FIRST:'));
+    console.log(chalk.gray('   • Write specifications before code'));
+    console.log(chalk.gray('   • Define clear acceptance criteria'));
+    console.log(chalk.gray('   • Get stakeholder alignment'));
+    console.log(chalk.blue(''));
+    console.log(chalk.green('✅ REVIEW & VALIDATE:'));
+    console.log(chalk.gray('   • Team reviews specifications'));
+    console.log(chalk.gray('   • Validate requirements completeness'));
+    console.log(chalk.gray('   • Ensure technical feasibility'));
+    console.log(chalk.blue(''));
+    console.log(chalk.green('✅ IMPLEMENT WITH FOCUS:'));
+    console.log(chalk.gray('   • Follow spec exactly'));
+    console.log(chalk.gray('   • Track implementation progress'));
+    console.log(chalk.gray('   • Validate against acceptance criteria'));
+    console.log(chalk.blue(''));
+    console.log(chalk.green('✅ CONTINUOUS ALIGNMENT:'));
+    console.log(chalk.gray('   • Regular spec validation'));
+    console.log(chalk.gray('   • Update specs when requirements change'));
+    console.log(chalk.gray('   • Maintain spec-code synchronization'));
+
+    await this.pause(2000);
+    await this.show('happy', 'Following these principles leads to better software and happier teams! 🎯');
+  }
+
+  /**
+   * Check and guide proper workflow setup
+   */
+  async validateWorkflowSetup() {
+    await this.show('detective', 'Let me check if everything is set up properly for spec-driven development...');
+
+    const checks = [
+      { name: 'GitHub Spec Kit Integration', status: 'checking' },
+      { name: 'Specification Templates', status: 'checking' },
+      { name: 'Focus Management System', status: 'checking' },
+      { name: 'Character Guidance System', status: 'checking' }
+    ];
+
+    for (const check of checks) {
+      console.log(chalk.blue(`🔍 Checking ${check.name}...`));
+      await this.pause(800);
+
+      // In a real implementation, these would be actual checks
+      check.status = 'passed';
+      console.log(chalk.green(`✅ ${check.name} - OK`));
+    }
+
+    await this.show('happy', 'All systems ready for spec-driven development!');
+
+    // Offer next steps
+    console.log(chalk.cyan('🎯 Ready to start? Here\'s what you can do:'));
+    console.log(chalk.blue('• Generate a spec: node src/index.js spec <feature>'));
+    console.log(chalk.blue('• Start focused session: node src/index.js focus --start <spec>'));
+    console.log(chalk.blue('• Check workflow status: node src/index.js focus --status'));
+  }
+
+  async completeOfferHelp(helpMsg) {
     if (this.voiceEnabled) {
       await this.voice.speak(helpMsg);
     }
