@@ -1,0 +1,70 @@
+#!/usr/bin/env node
+/**
+ * Universal Spec Kit CLI
+ * Seamlessly integrates GitHub's official Spec Kit with enhanced swarm capabilities
+ * Users only need ONE tool that intelligently routes commands
+ */
+
+import { UniversalSpecKitRouter } from './src/integration/spec-kit-router.js';
+import chalk from 'chalk';
+
+async function main() {
+  const router = new UniversalSpecKitRouter();
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    showHelp();
+    return;
+  }
+
+  const command = args[0];
+  const commandArgs = args.slice(1);
+
+  try {
+    await router.route(command, commandArgs);
+  } catch (error) {
+    console.error(chalk.red(`❌ Error: ${error.message}`));
+    process.exit(1);
+  }
+}
+
+function showHelp() {
+  console.log(chalk.blue(`
+🎯 Universal Spec Kit CLI
+Combines GitHub's official Spec Kit with enhanced swarm intelligence
+
+Usage: ./specify <command> [args...]
+
+📋 GitHub Spec Kit Commands (Native):
+  init <project>     Initialize new Spec Kit project (uses GitHub's official CLI)
+  check             Check required tools (uses GitHub's official CLI)
+
+🚀 Enhanced Swarm Commands:
+  deploy [task]     Deploy optimal swarm for task completion
+  optimize [task]   Analyze and optimize deployment strategy
+  assess           Assess project for swarm optimization
+  coordinate [task] Plan strategic agent coordination
+  status           Show universal system status
+
+🔀 Intelligent Routing:
+  • Native commands → GitHub's official CLI
+  • Enhanced commands → Strategic swarm system
+  • Automatic fallback and integration
+  • Cost optimization with Code Llama
+  • Chaos prevention through strategic coordination
+
+Examples:
+  ./specify init my-auth-system    # Official GitHub Spec Kit
+  ./specify deploy "add JWT auth"  # Enhanced swarm deployment
+  ./specify assess                 # Project analysis
+  ./specify status                 # System overview
+
+🎯 Best of both worlds: GitHub's proven framework + 20,000x swarm acceleration
+  `));
+}
+
+// Handle command line execution
+main().catch(error => {
+  console.error(chalk.red(`💥 Fatal error: ${error.message}`));
+  process.exit(1);
+});

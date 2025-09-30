@@ -1,0 +1,98 @@
+component: ContextState
+description: Shared observable state store for context synchronization between Spec Kit and Claude
+version: 1.0.0
+
+operations:
+  - name: getState
+    description: Retrieve current or specific version of context state
+    input:
+      version:
+        type: string
+        optional: true
+        format: semver
+        description: "Specific version to retrieve (omit for current)"
+    output:
+      state:
+        type: ContextState
+        description: "Complete context state object"
+      version:
+        type: string
+        description: "Version of returned state"
+    errors:
+      - VersionNotFound: "Requested version does not exist in history"
+      - StateCorrupted: "State file corrupted or invalid JSON"
+    performance:
+      target: "< 50ms for current state, < 200ms for historical version"
+    requirements:
+      - FR-001
+      - FR-002
+
+  - name: updateState
+    description: Update context state and increment version
+    input:
+      updates:
+        type: ContextStateUpdates
+        required: true
+        fields:
+          requirements: { type: array, optional: true }
+          assumptions: { type: array, optional: true }
+          constraints: { type: array, optional: true }
+          successCriteria: { type: array, optional: true }
+      triggeredBy:
+        type: string
+        required: true
+        enum: [user, specKit, claude, reconciliation]
+    output:
+      newVersion:
+        type: string
+        format: semver
+        description: "Incremented version number"
+      changelog:
+        type: array
+        description: "List of changes made"
+    errors:
+      - ConstitutionViolation: "Update violates constitutional principles"
+      - InvalidUpdate: "Update format invalid or empty"
+    performance:
+      target: "< 100ms including file persistence"
+    sideEffects:
+      - emits: "stateUpdated event with {version, triggeredBy}"
+      - persists: "State to .specify/state/context-state.json"
+      - creates: "New ContextVersion in version-history/"
+    requirements:
+      - FR-001
+      - FR-003
+
+  - name: checkAlignment
+    description: Compare Spec Kit and Claude context versions for divergence
+    input:
+      specKitVersion:
+        type: string
+        required: true
+        format: semver
+      claudeVersion:
+        type: string
+        required: true
+        format: semver
+    output:
+      aligned:
+        type: boolean
+        description: "True if versions match"
+      divergenceSince:
+        type: Date
+        nullable: true
+        description: "When divergence was first detected (null if aligned)"
+    errors:
+      - InvalidVersion: "One or both versions not valid semver"
+    performance:
+      target: "< 10ms (lightweight comparison)"
+    requirements:
+      - FR-002
+      - FR-003
+
+testability:
+  - Contract test must verify getState returns valid ContextState structure
+  - Contract test must verify updateState increments version correctly (major/minor/patch)
+  - Contract test must verify updateState emits stateUpdated event
+  - Contract test must verify checkAlignment detects divergence accurately
+  - Performance test must verify all operations meet timing requirements

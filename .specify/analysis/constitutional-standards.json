@@ -1,0 +1,213 @@
+{
+  "version": "1.0.0",
+  "constitutionalPrinciples": {
+    "swarm-first": {
+      "id": "I",
+      "name": "Swarm-First Architecture",
+      "enforcement": "NON-NEGOTIABLE",
+      "description": "Every feature MUST use the existing enhanced swarm orchestrator rather than creating custom coordinators",
+      "requirements": [
+        "Use enhanced-swarm-orchestrator.js for task coordination",
+        "Follow specialized swarm patterns (data-science, production-readiness, security-fix, builder-ux, red-team-unit-test)",
+        "Support SSH deployment to remote systems",
+        "No custom coordinators or bypassing swarm stack"
+      ],
+      "violations": [
+        "Creating custom coordinators",
+        "Bypassing swarm orchestrator",
+        "Direct task execution without swarm coordination",
+        "Missing swarm integration in complex tasks"
+      ]
+    },
+    "spec-driven": {
+      "id": "II",
+      "name": "Spec-Driven Development",
+      "enforcement": "MANDATORY",
+      "description": "All features begin with complete specification before implementation",
+      "requirements": [
+        "Complete spec.md with resolved NEEDS CLARIFICATION markers",
+        "Approved plan.md and tasks.md artifacts",
+        "Dedicated clarification sessions for ambiguities",
+        "No implementation without approved specifications"
+      ],
+      "violations": [
+        "Implementation before specification approval",
+        "Unresolved NEEDS CLARIFICATION markers",
+        "Missing spec.md, plan.md, or tasks.md",
+        "Bypassing specification pipeline"
+      ]
+    },
+    "test-first": {
+      "id": "III",
+      "name": "Test-First Development",
+      "enforcement": "NON-NEGOTIABLE",
+      "description": "TDD is mandatory: Tests written → User approved → Tests fail → Then implement",
+      "requirements": [
+        "Red-Green-Refactor cycle strictly enforced",
+        "Contract tests for all major components",
+        "Integration tests validate user scenarios",
+        "Unit tests cover edge cases",
+        "Performance tests verify timing requirements"
+      ],
+      "violations": [
+        "Implementation before test creation",
+        "Missing contract tests for components",
+        "Tests that pass before implementation",
+        "Insufficient test coverage"
+      ]
+    },
+    "character-ux": {
+      "id": "IV",
+      "name": "Character-Driven UX",
+      "enforcement": "MANDATORY",
+      "description": "Spec the Golden Retriever personality must be consistent across all user interactions",
+      "requirements": [
+        "Friendly, honest, fun, not cringe personality",
+        "ASCII animations and visual feedback",
+        "Contextual responses with character consistency",
+        "Terminal compatibility with graceful fallback",
+        "Character experience is core to user engagement"
+      ],
+      "violations": [
+        "Inconsistent character personality",
+        "Missing character interactions",
+        "Cringe or overly effusive language",
+        "Missing terminal fallback modes",
+        "Technical-only responses without character"
+      ]
+    },
+    "production-ready": {
+      "id": "V",
+      "name": "Production Readiness Standards",
+      "enforcement": "MANDATORY",
+      "description": "All code must meet enterprise standards",
+      "requirements": [
+        "Security scanning and vulnerability prevention",
+        "Performance validation and monitoring",
+        "Comprehensive logging and error handling",
+        "Offline capability for core functionality",
+        "Token optimization with hybrid processing",
+        "Real-time monitoring and health checks",
+        "Measurable performance metrics supporting 20,000x acceleration claim"
+      ],
+      "violations": [
+        "Missing security scanning",
+        "Inadequate error handling",
+        "Internet dependencies for core features",
+        "Missing performance validation",
+        "Insufficient logging"
+      ]
+    },
+    "complexity": {
+      "id": "VI",
+      "name": "Incremental Complexity Justification",
+      "enforcement": "MANDATORY",
+      "description": "Start simple and justify complexity with documented alternatives",
+      "requirements": [
+        "Document simpler alternatives considered",
+        "Justify why simpler approaches were insufficient",
+        "Integrate with existing components rather than recreating",
+        "Avoid over-engineering while maintaining standards"
+      ],
+      "violations": [
+        "Unjustified architectural complexity",
+        "Recreation of existing functionality",
+        "Missing alternatives analysis",
+        "Over-engineering without justification"
+      ]
+    }
+  },
+  "performanceStandards": {
+    "animation": {
+      "maxDuration": 500,
+      "unit": "milliseconds",
+      "description": "Animation responses must complete within 500ms"
+    },
+    "installScript": {
+      "maxDuration": 120,
+      "unit": "seconds",
+      "description": "Install script completion within 120 seconds"
+    },
+    "memoryUsage": {
+      "maxUsage": 50,
+      "unit": "megabytes",
+      "description": "Memory usage ≤50MB for animation assets"
+    },
+    "cpuUsage": {
+      "maxUsage": 10,
+      "unit": "percent",
+      "description": "CPU usage ≤10% during normal operation"
+    },
+    "networkTimeout": {
+      "maxTimeout": 30,
+      "unit": "seconds",
+      "description": "Network timeouts ≤30 seconds"
+    },
+    "analysisTime": {
+      "maxDuration": 100,
+      "unit": "milliseconds",
+      "description": "Constitutional compliance analysis ≤100ms"
+    },
+    "refinementTime": {
+      "maxDuration": 500,
+      "unit": "milliseconds",
+      "description": "Requirement refinement processing ≤500ms"
+    },
+    "responseTime": {
+      "maxDuration": 1000,
+      "unit": "milliseconds",
+      "description": "General response time ≤1 second"
+    }
+  },
+  "platformCompatibility": {
+    "supportedPlatforms": ["linux", "darwin"],
+    "terminalSupport": {
+      "colorSupport": "optional",
+      "animationSupport": "optional",
+      "fallbackMode": "required",
+      "minWidth": 60,
+      "minHeight": 20
+    },
+    "deployment": {
+      "sshCapable": true,
+      "nodeJsRequired": "18+",
+      "offlineCapable": true
+    }
+  },
+  "violationSeverityLevels": {
+    "CRITICAL": {
+      "description": "Blocks implementation, violates NON-NEGOTIABLE principle",
+      "action": "Immediate remediation required",
+      "examples": ["Missing swarm integration", "Implementation before tests"]
+    },
+    "HIGH": {
+      "description": "Significant impact on quality or compliance",
+      "action": "Address before proceeding",
+      "examples": ["Missing character consistency", "Performance violations"]
+    },
+    "MEDIUM": {
+      "description": "Quality improvement needed",
+      "action": "Address in current phase",
+      "examples": ["Incomplete documentation", "Minor performance issues"]
+    },
+    "LOW": {
+      "description": "Enhancement opportunity",
+      "action": "Address in polish phase",
+      "examples": ["Style improvements", "Minor optimization opportunities"]
+    }
+  },
+  "analysisConfiguration": {
+    "enabledChecks": [
+      "swarm-first-validation",
+      "test-first-ordering",
+      "character-consistency",
+      "performance-compliance",
+      "complexity-justification"
+    ],
+    "reportFormat": "markdown",
+    "includeRemediation": true,
+    "severityThreshold": "LOW",
+    "maxAnalysisTime": 2000,
+    "cacheResults": true
+  }
+}

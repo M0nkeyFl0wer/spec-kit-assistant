@@ -7,6 +7,8 @@
 import { SwarmOrchestrator } from './src/swarm/orchestrator.js';
 import { GeminiCoordinatorAgent } from './gemini-coordinator-agent.js';
 import { SpecCharacter } from './src/character/spec.js';
+import { StrategicTaskCoordinator } from './src/core/strategic-task-coordinator.js';
+import { IntelligentDeploymentOptimizer } from './src/core/intelligent-deployment-optimizer.js';
 import chalk from 'chalk';
 
 class EnhancedSwarmOrchestrator extends SwarmOrchestrator {
@@ -14,6 +16,8 @@ class EnhancedSwarmOrchestrator extends SwarmOrchestrator {
     super();
     this.queenCoordinator = new GeminiCoordinatorAgent();
     this.spec = new SpecCharacter();
+    this.strategicCoordinator = new StrategicTaskCoordinator();
+    this.deploymentOptimizer = new IntelligentDeploymentOptimizer();
 
     // Enhanced agent types including all our swarms
     this.agentTypes = {

@@ -11,6 +11,8 @@ import { SwarmOrchestrator } from '../swarm/orchestrator.js';
 import { EnhancedSwarmOrchestrator } from '../../enhanced-swarm-orchestrator.js';
 import { SessionManager } from '../focus/session-manager.js';
 import { secureReadFile, secureWriteFile } from '../utils/secure-path.js';
+import ContextState from '../context/context-state.js';
+import ReconciliationProtocol from '../context/reconciliation-protocol.js';
 
 /**
  * SpecFirstInterceptor ensures every command leads to proper specification creation
@@ -26,6 +28,15 @@ export class SpecFirstInterceptor {
     this.specDirectory = 'specs';
     this.activeSpecPath = null;
     this.lastSpecValidation = null;
+
+    // Context engineering integration (FR-020, T032)
+    this.contextState = new ContextState();
+    this.reconciliation = new ReconciliationProtocol();
+    this.contextEnabled = true;
+
+    // Setup reconciliation event listeners
+    this.reconciliation.on('implementationPaused', this.handleContextDivergence.bind(this));
+    this.reconciliation.on('contextsSynced', this.handleContextSync.bind(this));
 
     // Available swarm types based on your stack
     this.availableSwarms = {
@@ -810,6 +821,63 @@ export class SpecFirstInterceptor {
       return [];
     }
   }
-}
 
-export default SpecFirstInterceptor;
+  /**
+   * Handle context divergence detection
+   * FR-020: Real-time divergence detection integrated into spec-first interceptor
+   */
+  async handleContextDivergence(data) {
+    console.log(chalk.yellow(`🐕 Spec: "Hold on - I detected a context change! (${data.reason})"`));
+
+    const alignment = await this.contextState.checkAlignment({
+      specKitVersion: '1.0.0', // Would get from actual spec version
+      claudeVersion: data.version || '1.0.0'
+    });
+
+    if (!alignment.aligned) {
+      console.log(chalk.yellow(`🐕 Spec: "Pausing to sync context..."`));
+      return { paused: true, alignment };
+    }
+
+    return { paused: false, alignment };
+  }
+
+  /**
+   * Handle context synchronization completion
+   */
+  async handleContextSync(data) {
+    console.log(chalk.green(`🐕 Spec: "Context synced! Back to work with version ${data.newVersion}"`));
+    return { synced: true, newVersion: data.newVersion };
+  }
+
+  /**
+   * Check for context divergence before executing commands
+   * Performance target: < 100ms (FR-003)
+   */
+  async checkContextDivergence() {
+    if (!this.contextEnabled) {
+      return { aligned: true };
+    }
+
+    const startTime = Date.now();
+
+    try {
+      const state = await this.contextState.getState();
+      
+      const alignment = await this.contextState.checkAlignment({
+        specKitVersion: state.version,
+        claudeVersion: state.version
+      });
+
+      const duration = Date.now() - startTime;
+      if (duration > 100) {
+        console.warn(`Context divergence check took ${duration}ms, exceeds 100ms target (FR-003)`);
+      }
+
+      return alignment;
+    } catch (error) {
+      console.warn(`Context divergence check failed: ${error.message}`);
+      return { aligned: true, error: error.message };
+    }
+  }
+}

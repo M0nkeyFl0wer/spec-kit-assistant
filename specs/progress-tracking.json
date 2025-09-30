@@ -1,0 +1,40 @@
+{
+  "startDate": "2025-09-28T14:19:10.662Z",
+  "lastUpdated": "2025-09-28T14:19:10.662Z",
+  "overallProgress": 0,
+  "phaseProgress": [
+    {
+      "name": "Specification Phase",
+      "progress": 0,
+      "completedTasks": 0,
+      "totalTasks": 4
+    },
+    {
+      "name": "Foundation Phase",
+      "progress": 0,
+      "completedTasks": 0,
+      "totalTasks": 4
+    },
+    {
+      "name": "Development Phase",
+      "progress": 0,
+      "completedTasks": 0,
+      "totalTasks": 4
+    },
+    {
+      "name": "Integration Phase",
+      "progress": 0,
+      "completedTasks": 0,
+      "totalTasks": 4
+    },
+    {
+      "name": "Deployment Phase",
+      "progress": 0,
+      "completedTasks": 0,
+      "totalTasks": 4
+    }
+  ],
+  "recentActivity": [],
+  "blockers": [],
+  "risks": []
+}

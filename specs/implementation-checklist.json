@@ -1,0 +1,161 @@
+{
+  "metadata": {
+    "projectName": "Test Project",
+    "projectType": "web-app",
+    "generated": "2025-09-28T14:19:10.660Z",
+    "totalTasks": 20,
+    "completedTasks": 0
+  },
+  "phases": [
+    {
+      "name": "Specification Phase",
+      "description": "Review and finalize specifications",
+      "tasks": [
+        {
+          "id": "spec-001",
+          "title": "Review problem statement",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "spec-002",
+          "title": "Validate solution approach",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "spec-003",
+          "title": "Approve technical specification",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "spec-004",
+          "title": "Finalize implementation plan",
+          "completed": false,
+          "assignee": null
+        }
+      ]
+    },
+    {
+      "name": "Foundation Phase",
+      "description": "Set up development infrastructure",
+      "tasks": [
+        {
+          "id": "found-001",
+          "title": "Initialize project repository",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "found-002",
+          "title": "Set up development environment",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "found-003",
+          "title": "Configure build pipeline",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "found-004",
+          "title": "Set up testing framework",
+          "completed": false,
+          "assignee": null
+        }
+      ]
+    },
+    {
+      "name": "Development Phase",
+      "description": "Implement core features",
+      "tasks": [
+        {
+          "id": "dev-001",
+          "title": "User authentication system",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "dev-002",
+          "title": "Database models and migrations",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "dev-003",
+          "title": "API endpoint implementation",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "dev-004",
+          "title": "Frontend component development",
+          "completed": false,
+          "assignee": null
+        }
+      ]
+    },
+    {
+      "name": "Integration Phase",
+      "description": "Integrate components and test",
+      "tasks": [
+        {
+          "id": "integ-001",
+          "title": "Frontend-backend integration",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "integ-002",
+          "title": "Database integration",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "integ-003",
+          "title": "Third-party service integration",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "integ-004",
+          "title": "End-to-end testing",
+          "completed": false,
+          "assignee": null
+        }
+      ]
+    },
+    {
+      "name": "Deployment Phase",
+      "description": "Deploy to production",
+      "tasks": [
+        {
+          "id": "deploy-001",
+          "title": "Production environment setup",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "deploy-002",
+          "title": "Security configuration",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "deploy-003",
+          "title": "Monitoring setup",
+          "completed": false,
+          "assignee": null
+        },
+        {
+          "id": "deploy-004",
+          "title": "Go-live deployment",
+          "completed": false,
+          "assignee": null
+        }
+      ]
+    }
+  ]
+}

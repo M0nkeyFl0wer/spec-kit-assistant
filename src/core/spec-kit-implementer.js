@@ -4,6 +4,9 @@ import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { DogArt } from '../character/dog-art.js';
 import { GitHubSpecKitIntegration } from './github-spec-kit-integration.js';
+import { ConsultationSession } from './consultation-session.js';
+import { GitHubSpecKit } from '../spec-kit/github-integration.js';
+import { GitHubSpecKitConfig } from './github-spec-kit-config.js';
 
 /**
  * 🔧 Spec Kit Implementer
@@ -12,10 +15,20 @@ import { GitHubSpecKitIntegration } from './github-spec-kit-integration.js';
 export class SpecKitImplementer {
   constructor() {
     this.specKit = new GitHubSpecKitIntegration();
+    this.githubSpecKit = new GitHubSpecKit();
+    this.config = new GitHubSpecKitConfig();
+    this.consultationSession = null;
     this.specKitTemplatesUrl = 'https://github.com/github/spec-kit';
     this.workingDir = process.cwd();
     this.specDir = path.join(this.workingDir, 'specs');
     this.taskSystem = null;
+    this.implementationState = {
+      phase: 'initialization',
+      progress: 0,
+      milestones: [],
+      issues: [],
+      currentSpec: null
+    };
   }
 
   async initializeSpecKit(projectContext) {
@@ -24,11 +37,22 @@ export class SpecKitImplementer {
     console.log('');
 
     try {
+      // Initialize enhanced consultation if not provided
+      if (!this.consultationSession) {
+        await this.initializeEnhancedConsultation(projectContext);
+      }
+
+      // Configure GitHub Spec Kit based on consultation
+      await this.configureFromConsultation();
+
       // Download and setup spec kit templates
       await this.downloadSpecKitTemplates();
 
-      // Generate spec files using templates
+      // Generate spec files using templates and consultation
       const specFiles = await this.generateSpecKitFiles(projectContext);
+
+      // Generate GitHub-compatible implementation
+      const githubImplementation = await this.generateGitHubImplementation();
 
       // Initialize GitHub Spec Kit task system
       await this.initializeTaskSystem(specFiles);
@@ -37,12 +61,109 @@ export class SpecKitImplementer {
       await this.setupImplementationTracking(projectContext);
 
       console.log(chalk.green('✅ GitHub Spec Kit fully implemented!'));
-      return specFiles;
+      return { specFiles, githubImplementation };
 
     } catch (error) {
       console.log(chalk.red('❌ Spec Kit setup failed:'), error.message);
       throw error;
     }
+  }
+
+  /**
+   * Initialize enhanced consultation for project discovery
+   * @param {Object} projectContext - Initial project context
+   */
+  async initializeEnhancedConsultation(projectContext) {
+    console.log(chalk.cyan('🐕 Spec: "Starting enhanced consultation process..."'));
+
+    this.consultationSession = new ConsultationSession();
+
+    // Start multi-phase discovery
+    const discoveryResult = await this.consultationSession.startDiscovery({
+      projectPath: this.workingDir,
+      autoDetectProjectType: true,
+      enableGitHubIntegration: true,
+      initialContext: projectContext
+    });
+
+    this.implementationState.phase = 'consultation_complete';
+    this.implementationState.progress = 25;
+
+    console.log(chalk.green('✅ Enhanced consultation completed'));
+    return discoveryResult;
+  }
+
+  /**
+   * Configure GitHub Spec Kit based on consultation results
+   */
+  async configureFromConsultation() {
+    if (!this.consultationSession) {
+      console.log(chalk.yellow('⚠️ No consultation session available, using defaults'));
+      return;
+    }
+
+    const consultationData = this.consultationSession.getDiscoveryResults();
+
+    // Configure GitHub Spec Kit
+    this.config.initializeProject(
+      consultationData.projectName || path.basename(this.workingDir),
+      consultationData.projectType || 'web-app',
+      {
+        description: consultationData.projectDescription,
+        complianceLevel: consultationData.complianceLevel || 'standard',
+        teamSize: consultationData.teamSize || 'small'
+      }
+    );
+
+    this.githubSpecKit.setConfig(this.config);
+    console.log(chalk.green('✅ GitHub Spec Kit configured from consultation'));
+  }
+
+  /**
+   * Generate GitHub-compatible implementation structure
+   */
+  async generateGitHubImplementation() {
+    if (!this.consultationSession) {
+      console.log(chalk.yellow('⚠️ No consultation data for GitHub implementation'));
+      return null;
+    }
+
+    console.log(chalk.cyan('🐕 Spec: "Generating GitHub implementation structure..."'));
+
+    const consultationData = this.consultationSession.getDiscoveryResults();
+
+    // Initialize spec using GitHub Spec Kit
+    const spec = await this.githubSpecKit.initializeSpec(
+      consultationData.projectName,
+      consultationData.projectType
+    );
+
+    // Enhance spec with consultation insights
+    spec.description = consultationData.projectDescription || spec.description;
+    spec.features = consultationData.features || spec.features;
+    spec.technologies = consultationData.technologies || spec.technologies;
+
+    // Generate repository structure
+    const repositoryStructure = this.githubSpecKit.generateRepoStructure(spec);
+
+    // Generate implementation files
+    await this.githubSpecKit.createRepositoryFiles(spec, this.workingDir);
+
+    // Save specification
+    const specPath = path.join(this.workingDir, 'SPEC.md');
+    await this.githubSpecKit.saveSpec(spec, specPath);
+
+    this.implementationState.currentSpec = spec;
+    this.implementationState.phase = 'github_ready';
+    this.implementationState.progress = 75;
+
+    console.log(chalk.green('✅ GitHub implementation structure generated'));
+
+    return {
+      spec,
+      repositoryStructure,
+      specificationPath: specPath
+    };
   }
 
   async downloadSpecKitTemplates() {

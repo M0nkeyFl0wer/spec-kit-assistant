@@ -1,0 +1,35 @@
+# Install Script Contract
+
+## Interface
+```bash
+./scripts/install.sh [--help] [--check-only] [--verbose]
+```
+
+## Input Requirements
+- Must run on Linux or macOS systems
+- No parameters required for standard installation
+- Optional flags for help, check-only mode, verbose output
+
+## Output Behavior
+- Exit code 0: Installation successful
+- Exit code 1: System incompatible or dependencies missing
+- Exit code 2: Installation failed
+- STDOUT: Progress messages and success confirmation
+- STDERR: Error messages and debugging information
+
+## Functional Contract
+1. **System Verification**: Check OS compatibility (Linux/macOS)
+2. **Dependency Check**: Verify Node.js 18+, npm available
+3. **Installation Process**: Install required packages and setup
+4. **Validation**: Confirm system ready for spec assistant usage
+5. **Error Handling**: Clear error messages for common failure modes
+
+## Performance Contract
+- Complete within 120 seconds on typical systems
+- Progress feedback every 10 seconds
+- Network operations timeout after 30 seconds
+
+## Success Criteria
+- All dependencies installed and verified
+- Spec assistant commands available and functional
+- User receives confirmation message with next steps

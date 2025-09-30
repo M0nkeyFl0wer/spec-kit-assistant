@@ -1,0 +1,26 @@
+{
+  "name": "Spec Implementation",
+  "description": "Track implementation progress based on generated specification",
+  "columns": [
+    {
+      "name": "Specification Review",
+      "purpose": "Review and validate specs"
+    },
+    {
+      "name": "Ready for Development",
+      "purpose": "Approved and ready to implement"
+    },
+    {
+      "name": "In Progress",
+      "purpose": "Currently being worked on"
+    },
+    {
+      "name": "Testing",
+      "purpose": "Implementation complete, testing in progress"
+    },
+    {
+      "name": "Done",
+      "purpose": "Complete and deployed"
+    }
+  ]
+}

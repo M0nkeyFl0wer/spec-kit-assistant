@@ -226,6 +226,47 @@ Professional recording guide for showcasing the system capabilities
 ### **📋 [Ghostty Integration Specification](GHOSTTY_ASCII_ANIMATION_INTEGRATION_SPEC.md)**
 Technical specification for ASCII animation architecture and implementation
 
+## 🧪 Testing & Quality Assurance
+
+### **Unit Testing with Constitutional Compliance**
+```bash
+# Run all unit tests (constitutional timing enforced)
+npm test
+
+# Run specific test suites
+npm test tests/unit/test_terminal_detector.js      # Terminal detection tests
+npm test tests/unit/test_animation_timing.js       # Animation timing compliance
+npm test tests/unit/test_character_validator.js    # Spec personality validation
+npm test tests/unit/test_side_quest_handler.js     # Consultation focus management
+npm test tests/unit/test_github_template_generator.js # Spec Kit templates
+
+# Performance validation
+npm run test:performance      # Verify constitutional 500ms limits
+npm run test:accessibility    # WCAG 2.1 AA compliance
+npm run test:character        # Spec personality consistency
+```
+
+### **Constitutional Compliance Standards**
+All features must adhere to:
+- **Animation Duration**: ≤ 500ms maximum
+- **CPU Usage**: ≤ 10% during normal operations
+- **Memory Efficiency**: Bounded growth, automatic cleanup
+- **Response Time**: Sub-second for user interactions
+- **Accessibility**: WCAG 2.1 AA standards
+- **Character Consistency**: Friendly, honest, fun, not cringe
+
+### **Quality Metrics Dashboard**
+```bash
+# Generate comprehensive quality report
+npm run quality:report
+
+# Real-time constitutional compliance monitoring
+npm run monitor:constitutional
+
+# Performance profiling with timing validation
+npm run profile:performance
+```
+
 ## 🚀 Installation & Setup
 
 ### **Prerequisites**
@@ -278,6 +319,33 @@ node src/index.js init --template github-spec-kit
 node src/index.js swarm --implement --spec generated-spec.md
 ```
 
+### **Cute Dog Commands (Spec the Golden Retriever)**
+```bash
+# Start focused development session
+node src/index.js come-here
+🐕 *perks up ears* Woof! I'm here to help! What should we build together?
+
+# Initialize new project workflow
+node src/index.js woof-woof
+🐕 *tail wagging intensifies* Let's fetch some amazing specifications!
+
+# Positive reinforcement during development
+node src/index.js good-boy
+🐕 *happy spinning* That's a great implementation! You're the best developer!
+
+# Focus/pause current task
+node src/index.js sit
+🐕 *sits attentively* Okay, I'm focused and ready for your next instruction!
+
+# Voice interaction mode
+node src/index.js speak
+🐕 *head tilted listening* Tell me what you'd like to build! I'm all ears!
+
+# Maintain focus on current task
+node src/index.js stay
+🐕 *focused and determined* Staying on task! Let's keep working on this spec!
+```
+
 ### **Voice-to-Code Development**
 ```bash
 # Start voice ramble session
@@ -286,6 +354,21 @@ node src/index.js swarm --implement --spec generated-spec.md
 # Speak: "Create a REST API with authentication and rate limiting"
 # Watch: Agents automatically implement the requirements
 # Result: Production-ready API with tests and documentation
+```
+
+### **Constitutional Compliance Examples**
+```bash
+# Animation with timing enforcement
+node src/index.js animate --sequence welcome --timeout 500
+🐕 Animation completed in 347ms (within 500ms constitutional limit)
+
+# Character validation with personality check
+node src/index.js validate-response "🐕 *wag wag* This is great!"
+✅ Personality Score: 0.92 (friendly: 0.95, honest: 0.88, fun: 0.94, notCringe: 0.92)
+
+# Performance monitoring
+node src/index.js monitor --constitutional
+📊 CPU: 7.2% (limit: 10%) | Memory: 45MB | Response: 89ms
 ```
 
 ### **Real-Time Agent Deployment**

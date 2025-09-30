@@ -1,0 +1,21 @@
+{
+  "assignmentRules": {
+    "spec-*": "product-owner",
+    "found-*": "devops-engineer",
+    "dev-*": "developer",
+    "integ-*": "qa-engineer",
+    "deploy-*": "devops-engineer"
+  },
+  "teamRoles": {
+    "product-owner": "Specification and requirements",
+    "developer": "Feature implementation",
+    "qa-engineer": "Testing and quality assurance",
+    "devops-engineer": "Infrastructure and deployment"
+  },
+  "notificationSettings": {
+    "taskAssigned": true,
+    "taskCompleted": true,
+    "phaseCompleted": true,
+    "blockerReported": true
+  }
+}

@@ -1,0 +1,44 @@
+# Animation Engine Contract
+
+## Interface
+```javascript
+class AnimationEngine {
+  playSequence(sequenceName, options = {})
+  showProgress(message, duration)
+  displayCharacter(state, message)
+  detectTerminalCapabilities()
+  enableFallbackMode()
+}
+```
+
+## Input Requirements
+- `sequenceName`: String identifier for animation
+- `options`: Object with timing, fallback preferences
+- `message`: String for progress or character dialogue
+- `duration`: Number in milliseconds (max 500ms)
+- `state`: Character emotional/visual state
+
+## Output Behavior
+- Animated sequences render in terminal
+- Progress indicators show during operations
+- Character displays with personality-consistent messages
+- Graceful fallback to text + symbols on limited terminals
+
+## Functional Contract
+1. **Animation Playback**: Display frame sequences within timing limits
+2. **Progress Indication**: Show visual progress for long operations
+3. **Character Display**: Render Spec with consistent personality
+4. **Terminal Adaptation**: Auto-detect capabilities and adapt rendering
+5. **Fallback Support**: Plain text with symbols when animations unsupported
+
+## Performance Contract
+- All animations complete within 500ms
+- Frame transitions smooth (60fps target when possible)
+- CPU usage <10% during animation playback
+- Memory usage <50MB for animation assets
+
+## Success Criteria
+- Animations enhance user experience without blocking interaction
+- Character personality remains consistent across all interactions
+- Fallback mode provides equivalent information in plain text
+- Terminal compatibility covers 95% of common environments

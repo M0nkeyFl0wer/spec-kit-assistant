@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Specification Complete",
+    "description": "All specification documents reviewed and approved",
+    "due_date": "2025-10-05",
+    "state": "open"
+  },
+  {
+    "title": "Foundation Phase Complete",
+    "description": "Development environment and basic infrastructure ready",
+    "due_date": "2025-10-12",
+    "state": "open"
+  },
+  {
+    "title": "Core Development Complete",
+    "description": "Main features implemented and tested",
+    "due_date": "2025-11-09",
+    "state": "open"
+  },
+  {
+    "title": "Production Ready",
+    "description": "Application deployed and ready for users",
+    "due_date": "2025-11-23",
+    "state": "open"
+  }
+]

@@ -1,0 +1,340 @@
+openapi: 3.0.0
+info:
+  title: Requirement Refinement Engine
+  description: API contract for refining ambiguous requirements into measurable, testable criteria
+  version: 1.0.0
+
+paths:
+  /refine/requirements:
+    post:
+      summary: Refine ambiguous requirements with measurable criteria
+      description: Analyzes requirements and provides specific, testable refinements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requirements:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Requirement identifier (e.g., FR-001)
+                      text:
+                        type: string
+                        description: Original requirement text
+                      context:
+                        type: object
+                        description: Additional context for refinement
+                    required: [id, text]
+                refinement_options:
+                  type: object
+                  properties:
+                    focus_areas:
+                      type: array
+                      items:
+                        type: string
+                        enum: [ambiguity, measurability, testability, specificity]
+                    preserve_intent:
+                      type: boolean
+                      default: true
+                    include_validation_criteria:
+                      type: boolean
+                      default: true
+              required: [requirements]
+      responses:
+        '200':
+          description: Requirements refinement completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refinement_session_id:
+                    type: string
+                  processed_requirements:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        requirement_id:
+                          type: string
+                        original_text:
+                          type: string
+                        refinement_needed:
+                          type: boolean
+                        issues_identified:
+                          type: array
+                          items:
+                            type: string
+                            enum: [ambiguous_language, missing_criteria, untestable, vague_adjectives]
+                        refined_text:
+                          type: string
+                        clarification_rationale:
+                          type: string
+                        testability_criteria:
+                          type: array
+                          items:
+                            type: string
+                        measurability_validation:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              criterion:
+                                type: string
+                              measurement_method:
+                                type: string
+                              success_threshold:
+                                type: string
+                        refinement_type:
+                          type: string
+                          enum: [ambiguity, measurability, testability, specificity]
+                        approval_status:
+                          type: string
+                          enum: [draft, approved, rejected]
+                          default: draft
+                  summary:
+                    type: object
+                    properties:
+                      total_requirements:
+                        type: integer
+                      refined_count:
+                        type: integer
+                      no_refinement_needed:
+                        type: integer
+                      critical_refinements:
+                        type: integer
+                required: [refinement_session_id, processed_requirements, summary]
+
+  /refine/validate-criteria:
+    post:
+      summary: Validate measurability of refined requirements
+      description: Checks if refined requirements meet measurability and testability standards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refined_requirements:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      requirement_id:
+                        type: string
+                      refined_text:
+                        type: string
+                      testability_criteria:
+                        type: array
+                        items:
+                          type: string
+                    required: [requirement_id, refined_text]
+                validation_standards:
+                  type: object
+                  properties:
+                    require_quantifiable_metrics:
+                      type: boolean
+                      default: true
+                    require_testable_conditions:
+                      type: boolean
+                      default: true
+                    require_success_criteria:
+                      type: boolean
+                      default: true
+              required: [refined_requirements]
+      responses:
+        '200':
+          description: Validation completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validation_results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        requirement_id:
+                          type: string
+                        validation_status:
+                          type: string
+                          enum: [valid, invalid, needs_improvement]
+                        validation_score:
+                          type: number
+                          minimum: 0
+                          maximum: 1
+                        issues_found:
+                          type: array
+                          items:
+                            type: string
+                        suggestions:
+                          type: array
+                          items:
+                            type: string
+                        measurability_assessment:
+                          type: object
+                          properties:
+                            has_quantifiable_metrics:
+                              type: boolean
+                            has_testable_conditions:
+                              type: boolean
+                            has_success_criteria:
+                              type: boolean
+                            clarity_score:
+                              type: number
+                  overall_validation:
+                    type: object
+                    properties:
+                      passed_requirements:
+                        type: integer
+                      failed_requirements:
+                        type: integer
+                      improvement_needed:
+                        type: integer
+                      average_score:
+                        type: number
+
+  /refine/generate-validation:
+    post:
+      summary: Generate validation criteria for refined requirements
+      description: Creates specific validation methods and success criteria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requirements:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      requirement_id:
+                        type: string
+                      refined_text:
+                        type: string
+                      functional_area:
+                        type: string
+                    required: [requirement_id, refined_text]
+                validation_preferences:
+                  type: object
+                  properties:
+                    automation_preference:
+                      type: string
+                      enum: [full, partial, manual]
+                      default: partial
+                    include_performance_criteria:
+                      type: boolean
+                      default: true
+                    include_user_experience_criteria:
+                      type: boolean
+                      default: true
+              required: [requirements]
+      responses:
+        '200':
+          description: Validation criteria generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validation_criteria:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        criteria_id:
+                          type: string
+                        requirement_reference:
+                          type: string
+                        validation_method:
+                          type: string
+                          enum: [automated, manual, hybrid]
+                        success_criteria:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              criterion:
+                                type: string
+                              measurement:
+                                type: string
+                              threshold:
+                                type: string
+                        failure_handling:
+                          type: string
+                        automation_level:
+                          type: string
+                          enum: [full, partial, none]
+                        tool_requirements:
+                          type: array
+                          items:
+                            type: string
+                        estimated_effort:
+                          type: number
+                          description: Validation time estimate in hours
+
+components:
+  schemas:
+    RequirementRefinement:
+      type: object
+      properties:
+        requirement_id:
+          type: string
+        original_text:
+          type: string
+        refined_text:
+          type: string
+        clarification_rationale:
+          type: string
+        testability_criteria:
+          type: array
+          items:
+            type: string
+        measurability_validation:
+          type: array
+          items:
+            type: object
+        refinement_type:
+          type: string
+          enum: [ambiguity, measurability, testability, specificity]
+        approval_status:
+          type: string
+          enum: [draft, approved, rejected]
+      required: [requirement_id, original_text, refined_text]
+
+    ValidationCriteria:
+      type: object
+      properties:
+        criteria_id:
+          type: string
+        requirement_reference:
+          type: string
+        validation_method:
+          type: string
+          enum: [automated, manual, hybrid]
+        success_criteria:
+          type: array
+          items:
+            type: object
+        failure_handling:
+          type: string
+        automation_level:
+          type: string
+          enum: [full, partial, none]
+        tool_requirements:
+          type: array
+          items:
+            type: string
+        estimated_effort:
+          type: number
+      required: [criteria_id, requirement_reference, validation_method]

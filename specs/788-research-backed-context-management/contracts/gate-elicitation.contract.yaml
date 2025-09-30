@@ -1,0 +1,79 @@
+component: GATEElicitor
+description: Progressive context elicitation using problem-first GATE Framework
+version: 1.0.0
+
+operations:
+  - name: startProblemDiscovery
+    description: Begin discovery with problem-space questions
+    input:
+      userVision:
+        type: string
+        required: true
+        description: "User's initial feature vision or idea"
+    output:
+      problemQuestions:
+        type: array
+        description: "Ordered list of problem-space questions to ask"
+        minLength: 3
+      phase:
+        type: string
+        value: "Problem"
+    performance:
+      target: "< 500ms"
+    requirements:
+      - FR-007
+      - FR-008
+
+  - name: extractContextFromResponse
+    description: Parse user response and extract contextual elements
+    input:
+      question:
+        type: string
+        required: true
+        description: "Question that was asked"
+      userResponse:
+        type: string
+        required: true
+        description: "User's answer"
+    output:
+      contextExtracted:
+        type: object
+        fields:
+          problem: { type: string, description: "Identified problem statement" }
+          users: { type: array, description: "User personas extracted" }
+          impact: { type: string, description: "Problem impact" }
+          constraints: { type: array, description: "Constraints mentioned" }
+      nextQuestion:
+        type: string
+        nullable: true
+        description: "Follow-up question if more depth needed (null if complete)"
+    performance:
+      target: "< 200ms"
+    requirements:
+      - FR-009
+
+  - name: measureContextDensity
+    description: Compare context information extracted via GATE vs baseline
+    input:
+      beforeContext:
+        type: object
+        description: "Context from feature-first baseline approach"
+      afterContext:
+        type: object
+        description: "Context from GATE problem-first approach"
+    output:
+      improvementPercent:
+        type: number
+        description: "Percentage improvement in context elements"
+        minimum: 0
+    successCriteria:
+      target: ">= 40% improvement (FR-010)"
+    requirements:
+      - FR-010
+
+testability:
+  - Contract test must verify problem questions prioritize WHY over WHAT
+  - Contract test must verify extractContextFromResponse returns structured context
+  - Contract test must verify progressive disclosure (nextQuestion logic)
+  - Contract test must verify measureContextDensity calculates improvement correctly
+  - Integration test must verify 40% improvement vs feature-first (Acceptance 2)

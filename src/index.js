@@ -11,14 +11,77 @@ import { SpecKitIntegration } from './spec-kit/integration.js';
 // Removed Warp - using swarm stack instead
 import { SpecFirstInterceptor } from './core/spec-first-interceptor.js';
 
+// T036: Enhanced CLI integration imports
+import { SpecKitCLI } from './cli/commands.js';
+import { SpecCharacterSystem } from './character/persona.js';
+import { AnimationEngine } from './animation/engine.js';
+import { TerminalDetector } from './core/terminal-detector.js';
+import { FallbackMode } from './animation/fallback.js';
+import { SpecKitRouter } from './integration/spec-kit-router.js';
+import { ConsultationSwarmIntegration } from './integration/consultation-swarm-integration.js';
+
+// T036: Enhanced CLI initialization
+let enhancedCLI = null;
+let characterSystem = null;
+let animationEngine = null;
+let terminalDetector = null;
+let fallbackMode = null;
+let specKitRouter = null;
+let consultationSwarmIntegration = null;
+
+// Legacy CLI components (maintained for backward compatibility)
 const program = new Command();
 const spec = new SpecCharacter();
 const consultation = new ConsultationEngine();
 const swarm = new SwarmOrchestrator();
 const cloud = new CloudIntegration();
 const specKit = new SpecKitIntegration();
-// Using swarm stack for all orchestration
 const interceptor = new SpecFirstInterceptor();
+
+// Enhanced CLI initialization function
+async function initializeEnhancedCLI() {
+  try {
+    console.log(chalk.blue('🐕 Initializing enhanced Spec Kit Assistant...'));
+
+    // Detect terminal capabilities first
+    terminalDetector = await TerminalDetector.create();
+    const capabilities = await terminalDetector.detectCapabilities();
+
+    // Initialize fallback mode if needed
+    if (capabilities.fallbackRequired) {
+      fallbackMode = FallbackMode.createForCapabilities(capabilities);
+    }
+
+    // Initialize animation engine
+    animationEngine = await AnimationEngine.create();
+
+    // Initialize character system
+    characterSystem = await SpecCharacterSystem.createWithAnimation(animationEngine);
+
+    // Initialize spec kit router
+    specKitRouter = new SpecKitRouter();
+
+    // Initialize consultation swarm integration
+    consultationSwarmIntegration = await ConsultationSwarmIntegration.create();
+
+    // Initialize enhanced CLI
+    enhancedCLI = await SpecKitCLI.create();
+
+    console.log(chalk.green('✅ Enhanced CLI initialized successfully'));
+
+    return {
+      capabilities,
+      fallbackMode: !!fallbackMode,
+      animationEnabled: !animationEngine.fallbackMode,
+      swarmIntegration: consultationSwarmIntegration.getStatus().swarmAvailable
+    };
+
+  } catch (error) {
+    console.log(chalk.yellow('⚠️ Enhanced CLI initialization failed, using legacy mode'));
+    console.log(chalk.gray(`Error: ${error.message}`));
+    return { fallbackMode: true };
+  }
+}
 
 // Welcome message with Spec character
 console.log(chalk.yellow(figlet.textSync('Spec Kit Assistant', { horizontalLayout: 'full' })));
@@ -904,5 +967,52 @@ program.commands.forEach(command => {
 // Start continuous spec alignment monitoring
 interceptor.monitorSpecAlignment();
 
-// Start the CLI
-program.parse();
+// T036: Enhanced CLI startup
+async function startCLI() {
+  // Initialize enhanced CLI components
+  const initResult = await initializeEnhancedCLI();
+
+  // Check if we should use enhanced CLI or legacy mode
+  if (enhancedCLI && !initResult.fallbackMode) {
+    console.log(chalk.cyan('🐕 Starting enhanced Spec Kit Assistant...'));
+
+    // Check if this is a direct enhanced command
+    const args = process.argv.slice(2);
+    const enhancedCommands = ['start', 'come-here', 'woof-woof', 'good-boy', 'sit', 'speak', 'stay'];
+
+    if (args.length > 0 && enhancedCommands.includes(args[0])) {
+      // Route to enhanced CLI
+      try {
+        await enhancedCLI.run();
+        return;
+      } catch (error) {
+        console.log(chalk.yellow('⚠️ Enhanced CLI failed, falling back to legacy'));
+        console.log(chalk.gray(`Error: ${error.message}`));
+      }
+    }
+  }
+
+  // Show initialization results
+  if (initResult.fallbackMode) {
+    console.log(chalk.yellow('📟 Running in fallback mode for terminal compatibility'));
+  } else {
+    console.log(chalk.green('🎨 Enhanced features available:'));
+    if (initResult.animationEnabled) {
+      console.log(chalk.blue('  ✅ Character animations'));
+    }
+    if (initResult.swarmIntegration) {
+      console.log(chalk.blue('  ✅ Swarm integration'));
+    }
+    console.log(chalk.blue('  ✅ Enhanced consultation'));
+  }
+
+  // Start legacy CLI
+  program.parse();
+}
+
+// Start the application
+startCLI().catch(error => {
+  console.error(chalk.red('❌ CLI startup failed:'), error.message);
+  // Emergency fallback - just run basic CLI
+  program.parse();
+});

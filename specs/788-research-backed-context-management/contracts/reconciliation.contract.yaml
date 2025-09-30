@@ -1,0 +1,103 @@
+component: ReconciliationProtocol
+description: Pause-sync-resume coordination when context divergence detected
+version: 1.0.0
+
+operations:
+  - name: pauseImplementation
+    description: Pause current implementation task and prepare for context sync
+    input:
+      currentTask:
+        type: string
+        required: true
+        description: "Task ID currently being implemented (e.g., T025)"
+      reason:
+        type: string
+        required: true
+        description: "Why pause is needed (e.g., mid-build requirement addition)"
+    output:
+      pauseToken:
+        type: string
+        format: uuid
+        description: "Unique token for this pause-sync-resume cycle"
+      pausedAt:
+        type: Date
+        description: "Exact timestamp when pause occurred"
+    performance:
+      target: "< 100ms (FR-003 divergence detection budget)"
+    sideEffects:
+      - emits: "implementationPaused event"
+      - stores: "Pause state in memory for resume"
+    requirements:
+      - FR-004 (step 1)
+
+  - name: syncContexts
+    description: Synchronize Spec Kit and Claude contexts to new version
+    input:
+      pauseToken:
+        type: string
+        required: true
+        format: uuid
+        description: "Token from pauseImplementation call"
+      newVersion:
+        type: string
+        required: true
+        format: semver
+        description: "Target context version to sync to"
+    output:
+      syncComplete:
+        type: boolean
+        description: "True if sync successful"
+      affectedTasks:
+        type: array
+        description: "List of task IDs that need reconciliation"
+    errors:
+      - InvalidPauseToken: "Token not found or already used"
+      - SyncTimeout: "Sync exceeded 2s budget"
+      - SyncFailed: "Sync operations failed"
+    performance:
+      target: "< 2000ms total for pause-sync-resume cycle (NFR-002)"
+      includes: "pauseImplementation + syncContexts + resumeImplementation"
+    sideEffects:
+      - updates: "Both Spec Kit and Claude context versions"
+      - creates: "ReconciliationEvent log entry"
+      - emits: "contextsSynced event"
+    requirements:
+      - FR-004 (steps 2-4)
+      - NFR-002
+
+  - name: resumeImplementation
+    description: Resume implementation with reconciled tasks
+    input:
+      pauseToken:
+        type: string
+        required: true
+        format: uuid
+      reconciledTasks:
+        type: array
+        required: true
+        description: "Ordered list of tasks after reconciliation"
+    output:
+      resumed:
+        type: boolean
+        description: "True if resume successful"
+      nextTask:
+        type: string
+        description: "Next task ID to implement"
+    errors:
+      - InvalidPauseToken: "Token not found or already used"
+      - NoTasksToResume: "Reconciled tasks list empty"
+    performance:
+      target: "Included in 2000ms total budget"
+    sideEffects:
+      - emits: "implementationResumed event"
+      - clears: "Pause state from memory"
+      - finalizes: "ReconciliationEvent status to 'completed'"
+    requirements:
+      - FR-004 (step 5)
+
+testability:
+  - Contract test must verify pause-sync-resume completes within 2s budget
+  - Contract test must verify pauseToken is unique UUID
+  - Contract test must verify invalid token throws error
+  - Contract test must verify affectedTasks list is accurate
+  - Integration test must verify mid-build reconciliation scenario (Acceptance 1)
