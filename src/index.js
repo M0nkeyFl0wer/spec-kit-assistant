@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import figlet from 'figlet';
+import { SpecLogo } from './character/spec-logo.js';
 import { SpecCharacter } from './character/spec.js';
 import { ConsultationEngine } from './consultation/engine.js';
 import { SwarmOrchestrator } from './swarm/orchestrator.js';
@@ -21,9 +21,8 @@ const specKit = new SpecKitIntegration();
 const interceptor = new SpecFirstInterceptor();
 
 // Welcome message with Spec character
-console.log(chalk.yellow(figlet.textSync('Spec Kit Assistant', { horizontalLayout: 'full' })));
-console.log(chalk.cyan('🐕 Meet Spec - Your Golden Retriever Guide to Spec-Driven Development!'));
-console.log(chalk.gray('Addressing user feedback: Smart oversight, agent swarms, and delightful UX'));
+console.log(chalk.cyan(SpecLogo.main));
+console.log(chalk.gray('✨ AI-assisted development • Built with Claude Code'));
 
 program
   .name('spec')
