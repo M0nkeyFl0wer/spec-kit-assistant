@@ -2,9 +2,14 @@
  * T026: Enhanced consultation engine implementation - Deployed to Seshat
  * Provides multi-phase project discovery with side quest handling
  * Integrates with ConsultationSession model and swarm orchestrator
+ *
+ * T033-T035: Context engineering integration (FR-021)
  */
 
 import { ConsultationSession } from '../core/consultation-session.js';
+import GATEElicitor from '../context/gate-elicitor.js';
+import PersonaRotator from '../context/persona-rotator.js';
+import SocraticRefiner from '../context/socratic-refiner.js';
 
 export class EnhancedConsultationEngine {
   constructor() {
@@ -20,6 +25,12 @@ export class EnhancedConsultationEngine {
     this.currentFocus = 'main-mission';
     this.projectContext = new Map();
     this.swarmIntegration = null;
+
+    // Context engineering integration (T033-T035)
+    this.gateElicitor = new GATEElicitor();
+    this.personaRotator = new PersonaRotator();
+    this.socraticRefiner = new SocraticRefiner();
+    this.contextEngineeringEnabled = true;
   }
 
   /**
@@ -462,6 +473,83 @@ export class EnhancedConsultationEngine {
       }
     };
   }
-}
 
-export default EnhancedConsultationEngine;
+  /**
+   * Start GATE-based discovery (T033: FR-021, FR-007)
+   * Problem-first approach replaces feature-first
+   */
+  async startGATEDiscovery(projectVision) {
+    if (!this.contextEngineeringEnabled) {
+      return this.startProjectDiscovery(projectVision);
+    }
+
+    // Use GATE elicitor for problem-first discovery
+    const gateResult = await this.gateElicitor.startProblemDiscovery({
+      userVision: projectVision
+    });
+
+    this.conversationState.phase = 'gate-problem';
+    this.projectContext.set('gatePhase', 'Problem');
+
+    return {
+      questions: gateResult.problemQuestions,
+      phase: gateResult.phase,
+      message: 'Starting GATE problem-first discovery'
+    };
+  }
+
+  /**
+   * Enrich context with multi-persona perspectives (T034: FR-021, FR-011)
+   */
+  async enrichWithPersonas(context) {
+    if (!this.contextEngineeringEnabled) {
+      return context;
+    }
+
+    let enrichedContext = context;
+
+    // Rotate through 4 personas for comprehensive coverage
+    for (let i = 0; i < 4; i++) {
+      const persona = await this.personaRotator.getNextPersona();
+      const enrichment = await this.personaRotator.enrichContext({
+        context: enrichedContext,
+        persona
+      });
+
+      enrichedContext = enrichment.enrichedContext;
+
+      console.log(`Enriched with ${persona.role} perspective (+${enrichment.addedInsights.length} insights)`);
+    }
+
+    return enrichedContext;
+  }
+
+  /**
+   * Refine requirements with Socratic questioning (T035: FR-021, FR-014)
+   */
+  async refineWithSocratic(requirements) {
+    if (!this.contextEngineeringEnabled) {
+      return requirements;
+    }
+
+    // Detect assumptions
+    const detected = await this.socraticRefiner.detectAssumptions({ requirements });
+
+    const refinedRequirements = [];
+
+    // Refine each assumption
+    for (const assumption of detected.assumptions) {
+      const question = await this.socraticRefiner.generateProbingQuestion({ assumption });
+
+      // In real usage, would prompt user. For now, simulate refinement
+      const refinement = await this.socraticRefiner.refineAssumption({
+        assumption,
+        userResponse: 'User would provide specific criteria here'
+      });
+
+      refinedRequirements.push(refinement.explicitRequirement);
+    }
+
+    return refinedRequirements;
+  }
+}

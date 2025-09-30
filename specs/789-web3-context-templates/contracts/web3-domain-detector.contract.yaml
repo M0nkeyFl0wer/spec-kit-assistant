@@ -1,0 +1,215 @@
+# Contract: Web3 Domain Detector
+
+**Module**: `src/context/web3-domain-detector.js`
+**Purpose**: Detect Web3 keywords in user input and trigger specialized personas
+**Requirements**: FR-001, FR-002
+
+---
+
+## Interface
+
+### detectDomain(userInput: string): Web3DomainContext
+
+**Description**: Analyzes user input for Web3-related keywords and determines if Web3 domain should be activated.
+
+**Input**:
+```typescript
+userInput: string  // User's feature description or vision
+```
+
+**Output**:
+```typescript
+{
+  detected: boolean,          // true if 2+ keywords matched
+  keywords: string[],         // Matched keywords
+  dappType: DAppType | null,  // Detected dApp category
+  complexityLevel: ComplexityLevel,
+  privacyRequirements: PrivacyLevel,
+  timestamp: Date,
+  confidence: number          // 0-1 confidence score
+}
+```
+
+**Business Rules**:
+1. Minimum 2 keywords required for `detected: true`
+2. Confidence >= 0.7 required to activate personas
+3. Keywords: blockchain, dApp, smart contract, NFT, DeFi, token, wallet, Ethereum, Solidity, web3, DAO, DEX, staking, lending
+4. DApp type detection:
+   - "swap", "exchange", "liquidity" → DEX
+   - "NFT", "marketplace", "mint" → NFT_MARKETPLACE
+   - "governance", "DAO", "voting" → DAO
+   - "token", "ERC-20", "ERC-721" → TOKEN
+   - "lending", "borrow" → LENDING
+   - "staking", "rewards" → STAKING
+
+**Performance**:
+- Must complete in <100ms (NFR-001)
+- Use regex for keyword matching (O(n) complexity)
+
+**Error Handling**:
+- Empty input → return `detected: false, confidence: 0`
+- Invalid input type → throw TypeError
+
+---
+
+### inferComplexity(userInput: string): ComplexityLevel
+
+**Description**: Infers user experience level from language patterns.
+
+**Input**:
+```typescript
+userInput: string
+```
+
+**Output**:
+```typescript
+ComplexityLevel  // 'beginner' | 'intermediate' | 'advanced'
+```
+
+**Business Rules**:
+1. BEGINNER: Phrases like "first dApp", "learning", "tutorial"
+2. INTERMEDIATE: Mentions frameworks, specific technologies
+3. ADVANCED: Production, optimization, security audit mentions
+
+**Performance**: <50ms
+
+---
+
+### inferPrivacyLevel(userInput: string, keywords: string[]): PrivacyLevel
+
+**Description**: Determines privacy requirements from user input.
+
+**Input**:
+```typescript
+userInput: string
+keywords: string[]  // Already detected keywords
+```
+
+**Output**:
+```typescript
+PrivacyLevel  // 'public' | 'pseudonymous' | 'private'
+```
+
+**Business Rules**:
+1. PUBLIC: No privacy keywords
+2. PSEUDONYMOUS: "MEV", "front-running" → basic privacy
+3. PRIVATE: "private", "anonymous", "ZK", "stealth" → strong privacy
+
+**Performance**: <50ms
+
+---
+
+## Examples
+
+### Example 1: Basic dApp Detection
+```javascript
+const input = "I want to build an NFT marketplace on Ethereum";
+const result = detectDomain(input);
+// result.detected === true
+// result.keywords === ['NFT', 'marketplace', 'Ethereum']
+// result.dappType === 'nft-marketplace'
+// result.confidence >= 0.8
+```
+
+### Example 2: Insufficient Keywords
+```javascript
+const input = "I want to build a web application";
+const result = detectDomain(input);
+// result.detected === false
+// result.keywords === []
+// result.confidence === 0
+```
+
+### Example 3: Privacy Requirements
+```javascript
+const input = "Build a private DEX with MEV protection and ZK proofs";
+const result = detectDomain(input);
+// result.detected === true
+// result.dappType === 'dex'
+// result.privacyRequirements === 'private'
+```
+
+---
+
+## Test Cases (Contract Tests)
+
+### Test: Should detect Web3 domain with multiple keywords
+```javascript
+test('detectDomain with 3+ keywords', () => {
+  const input = "blockchain dApp with smart contracts";
+  const result = detectDomain(input);
+
+  assert.strictEqual(result.detected, true);
+  assert.ok(result.keywords.length >= 3);
+  assert.ok(result.confidence >= 0.7);
+});
+```
+
+### Test: Should NOT detect with single keyword
+```javascript
+test('detectDomain with 1 keyword', () => {
+  const input = "blockchain application";
+  const result = detectDomain(input);
+
+  assert.strictEqual(result.detected, false);
+});
+```
+
+### Test: Should detect DEX type
+```javascript
+test('detectDomain DEX identification', () => {
+  const input = "decentralized exchange for token swaps";
+  const result = detectDomain(input);
+
+  assert.strictEqual(result.dappType, 'dex');
+});
+```
+
+### Test: Should infer beginner complexity
+```javascript
+test('inferComplexity for beginner', () => {
+  const input = "This is my first dApp, I'm learning Solidity";
+  const result = inferComplexity(input);
+
+  assert.strictEqual(result, 'beginner');
+});
+```
+
+### Test: Should infer private privacy level
+```javascript
+test('inferPrivacyLevel for strong privacy', () => {
+  const input = "need anonymous transactions with ZK proofs";
+  const result = inferPrivacyLevel(input, ['transactions', 'ZK']);
+
+  assert.strictEqual(result, 'private');
+});
+```
+
+### Test: Performance requirement <100ms
+```javascript
+test('detectDomain performance', () => {
+  const input = "large input ".repeat(1000) + "blockchain dApp NFT";
+  const start = Date.now();
+
+  detectDomain(input);
+
+  const duration = Date.now() - start;
+  assert.ok(duration < 100, `Took ${duration}ms, should be <100ms`);
+});
+```
+
+---
+
+## Dependencies
+- Feature 788: `PersonaRotator` (to trigger persona activation)
+- Node.js built-in `String` methods for regex matching
+
+---
+
+## Error States
+- `TypeError`: Input not a string
+- `ValidationError`: Confidence calculation failed (internal error)
+
+---
+
+**Status**: Contract Defined ✅

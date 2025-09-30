@@ -1,0 +1,404 @@
+# Contract: Safety-First Guidance System
+
+**Module**: `src/guidance/safety-guide.js`
+**Purpose**: Provide personalized, non-pushy tool recommendations based on user needs
+**Requirements**: FR-019, FR-020, FR-021
+
+---
+
+## Interface
+
+### assessUserNeeds(userInput: string, domainContext: Web3DomainContext): SafetyGuidanceProfile
+
+**Description**: Creates initial safety guidance profile from user input and domain context.
+
+**Input**:
+```typescript
+userInput: string
+domainContext: Web3DomainContext
+```
+
+**Output**:
+```typescript
+{
+  userId: string | null,
+  riskTolerance: RiskTolerance,      // 'conservative' | 'balanced' | 'aggressive'
+  privacyPreference: PrivacyLevel,   // from domainContext
+  experienceLevel: ComplexityLevel,  // from domainContext
+  concerns: string[],                // Extracted from user input
+  recommendedTools: [],              // Populated by recommendTools()
+  educationalContent: [],            // Populated by generateEducation()
+  consentGiven: []
+}
+```
+
+**Business Rules**:
+1. Default `riskTolerance` to 'balanced' unless user indicates otherwise
+2. Extract concerns from phrases like "worried about", "concerned", "how to prevent"
+3. Map privacyPreference from domainContext.privacyRequirements
+
+---
+
+### recommendToolsForNeed(need: string, profile: SafetyGuidanceProfile): ToolRecommendation[]
+
+**Description**: Returns appropriate tools based on specific user need (FR-019).
+
+**Input**:
+```typescript
+need: string  // e.g., "I want basic transaction privacy"
+profile: SafetyGuidanceProfile
+```
+
+**Output**:
+```typescript
+[
+  {
+    toolId: string,
+    reason: string,
+    priority: 'critical' | 'recommended' | 'optional',
+    actionRequired: string,
+    estimatedImpact: string
+  }
+]
+```
+
+**Need Mapping** (FR-019):
+- "basic transaction privacy" → Flashbots Protect (easiest, 80% adoption)
+- "simple private transfers" → zkBob (user-friendly), ERC-5564 stealth addresses
+- "DeFi with privacy" → Railgun privacy protocol
+- "fully private smart contracts" → Aztec Network L2, Noir framework
+- "front-running protection" → Flashbots Protect, commit-reveal patterns
+- "maximum privacy" → Combination (stealth + ZK + private RPC)
+- "protect against wallet drainers" → Revoke.cash + limited approvals + simulation
+- "audit wallet security" → Revoke.cash checker + Etherscan token approvals
+- "protect dApp users" → Integrate Tenderly/Blocknative + enforce limited approvals
+- "first steps" → Revoke.cash extension + audit approvals + hardware wallet
+
+**Business Rules**:
+1. Always present 2-3 options, never single recommendation
+2. Order by: easiest first, then by adoption rate
+3. Include cost/complexity tradeoffs (FR-019)
+4. Respect user's `experienceLevel` (don't recommend advanced tools to beginners without warning)
+
+---
+
+### generateEducation(profile: SafetyGuidanceProfile, insights: ContextInsight[]): EducationalItem[]
+
+**Description**: Creates educational content based on identified risks (FR-020).
+
+**Input**:
+```typescript
+profile: SafetyGuidanceProfile
+insights: ContextInsight[]  // From persona context extraction
+```
+
+**Output**:
+```typescript
+[
+  {
+    topic: string,
+    content: string,
+    severity: 'high' | 'medium' | 'low',
+    stats: string,
+    presented: boolean,
+    understood: boolean | null
+  }
+]
+```
+
+**Mandatory Educational Topics** (FR-020):
+1. **Wallet Drainers**:
+   - Content: "Wallet drainers use malicious contracts to steal assets via unlimited approvals"
+   - Stats: "$494M stolen via wallet drainers in 2024"
+   - Severity: high
+
+2. **Approval Persistence**:
+   - Content: "Disconnecting your wallet doesn't revoke approvals - you must explicitly revoke them"
+   - Stats: "Most users don't realize approvals stay active indefinitely"
+   - Severity: high
+
+3. **Transaction Simulation Spoofing**:
+   - Content: "New 2025 threat where attackers fake simulation results to trick users"
+   - Stats: "143.45 ETH ($460k) stolen in one attack"
+   - Severity: medium
+
+4. **Tornado Cash Legal Uncertainty**:
+   - Content: "Sanctions lifted March 2025, but legal risk remains for users"
+   - Stats: "First protocol sanctioned by OFAC"
+   - Severity: medium (if privacy tools mentioned)
+
+5. **Aztec zk.money Sunset**:
+   - Content: "Aztec's popular zk.money UI sunset, use alternatives"
+   - Stats: "Network still active, UI discontinued"
+   - Severity: low (if Aztec mentioned)
+
+**Business Rules**:
+1. Present education BEFORE recommending related tools
+2. High severity topics presented first
+3. Track `understood` flag from user acknowledgment
+4. Maximum 5 educational items per session (avoid overwhelming)
+
+---
+
+### obtainInformedConsent(topic: string, decision: 'accept' | 'decline', profile: SafetyGuidanceProfile): ConsentRecord
+
+**Description**: Records user's informed consent after education (FR-021).
+
+**Input**:
+```typescript
+topic: string             // e.g., 'declining-privacy-tools'
+decision: 'accept' | 'decline'
+profile: SafetyGuidanceProfile
+```
+
+**Output**:
+```typescript
+{
+  topic: string,
+  decision: 'accept' | 'decline',
+  reasoning: string,      // Why user chose this
+  timestamp: Date,
+  acknowledged: boolean   // User confirmed understanding risks
+}
+```
+
+**Business Rules** (FR-021):
+1. **Never Pushy**: Present options, don't mandate
+2. **Respect Choice**: Declining privacy/security tools is valid if user acknowledges risks
+3. **Frame Neutrally**: "Here are your options" not "You must use this"
+4. **Provide 'Why'**: Explain rationale for each recommendation
+5. **Allow Decline**: User can decline any non-critical tool
+6. **Critical Tools**: Revoke.cash, limited approvals are "critical" but still optional (with strong warning)
+
+**Consent Flow**:
+```
+1. Present educational content
+2. Show tool options with tradeoffs
+3. Ask for user preference
+4. If 'decline' → Show risks, ask for acknowledgment
+5. Record consent (immutable audit trail)
+```
+
+---
+
+### generateSummary(profile: SafetyGuidanceProfile): SafetySummary
+
+**Description**: Produces final summary of safety recommendations and user choices.
+
+**Input**:
+```typescript
+profile: SafetyGuidanceProfile
+```
+
+**Output**:
+```typescript
+{
+  toolsAccepted: ToolRecommendation[],
+  toolsDeclined: ToolRecommendation[],
+  risksSummary: string[],
+  nextSteps: string[],
+  estimatedImplementationTime: string
+}
+```
+
+**Business Rules**:
+1. Highlight any declined critical tools
+2. Provide concrete next steps (links to Revoke.cash, Tenderly docs, etc.)
+3. Estimate implementation time based on accepted tools
+4. Include checklist for Phase 2 task generation
+
+---
+
+## Examples
+
+### Example 1: Assess Beginner User Needs
+```javascript
+const input = "I'm building my first NFT marketplace, worried about security";
+const context = { dappType: 'nft-marketplace', complexityLevel: 'beginner', privacyRequirements: 'public' };
+
+const profile = assessUserNeeds(input, context);
+// profile.concerns === ['security']
+// profile.riskTolerance === 'conservative' (inferred from 'worried')
+// profile.experienceLevel === 'beginner'
+```
+
+### Example 2: Recommend Tools for Privacy Need
+```javascript
+const need = "I need DeFi with privacy";
+const profile = { experienceLevel: 'intermediate', privacyPreference: 'private' };
+
+const tools = recommendToolsForNeed(need, profile);
+// tools[0] === { toolId: 'railgun', reason: 'Privacy protocol for DeFi interactions', ... }
+// tools[1] === { toolId: 'flashbots-protect', reason: 'Prevents MEV attacks', ... }
+// tools[2] === { toolId: 'aztec', priority: 'optional', ... }
+```
+
+### Example 3: Generate Education for Wallet Drainers
+```javascript
+const profile = { experienceLevel: 'beginner' };
+const insights = [{ category: 'wallet-safety', risks: ['unlimited approvals'] }];
+
+const education = generateEducation(profile, insights);
+// education[0].topic === 'wallet-drainers'
+// education[0].stats === '$494M stolen via wallet drainers in 2024'
+// education[0].severity === 'high'
+```
+
+### Example 4: Obtain Consent for Declining Privacy Tools
+```javascript
+const topic = 'declining-flashbots-protect';
+const decision = 'decline';
+const profile = { ... };
+
+const consent = obtainInformedConsent(topic, decision, profile);
+// consent.decision === 'decline'
+// consent.reasoning === 'User prefers public transactions'
+// consent.acknowledged === true (user confirmed understanding MEV risk)
+```
+
+---
+
+## Test Cases (Contract Tests)
+
+### Test: Should assess conservative risk tolerance from user concerns
+```javascript
+test('assessUserNeeds risk tolerance inference', () => {
+  const input = "I'm very worried about wallet drainers and hacks";
+  const context = { complexityLevel: 'beginner', privacyRequirements: 'public' };
+
+  const profile = assessUserNeeds(input, context);
+
+  assert.strictEqual(profile.riskTolerance, 'conservative');
+  assert.ok(profile.concerns.includes('wallet drainers'));
+});
+```
+
+### Test: Should recommend beginner-friendly tools for beginners
+```javascript
+test('recommendToolsForNeed respects experience level', () => {
+  const need = "fully private smart contracts";
+  const profile = { experienceLevel: 'beginner', privacyPreference: 'private' };
+
+  const tools = recommendToolsForNeed(need, profile);
+
+  // Should recommend simpler options first
+  const firstTool = tools[0];
+  assert.ok(['flashbots-protect', 'zkbob'].includes(firstTool.toolId));
+  // Aztec should be 'optional' with warning for beginners
+  const aztec = tools.find(t => t.toolId === 'aztec');
+  assert.strictEqual(aztec?.priority, 'optional');
+});
+```
+
+### Test: Should always present 2+ tool options
+```javascript
+test('recommendToolsForNeed minimum options', () => {
+  const need = "basic transaction privacy";
+  const profile = { experienceLevel: 'intermediate' };
+
+  const tools = recommendToolsForNeed(need, profile);
+
+  assert.ok(tools.length >= 2, 'Should present at least 2 options');
+});
+```
+
+### Test: Should generate high severity education first
+```javascript
+test('generateEducation severity ordering', () => {
+  const profile = { experienceLevel: 'beginner' };
+  const insights = [{ category: 'wallet-safety', risks: ['unlimited approvals', 'no simulation'] }];
+
+  const education = generateEducation(profile, insights);
+
+  const severities = education.map(e => e.severity);
+  // High severity should come first
+  assert.strictEqual(severities[0], 'high');
+});
+```
+
+### Test: Should include $494M stat for wallet drainer education
+```javascript
+test('generateEducation wallet drainer stats', () => {
+  const profile = {};
+  const insights = [{ category: 'wallet-safety', risks: ['unlimited approvals'] }];
+
+  const education = generateEducation(profile, insights);
+
+  const drainerEd = education.find(e => e.topic === 'wallet-drainers');
+  assert.ok(drainerEd);
+  assert.ok(drainerEd.stats.includes('$494M'));
+});
+```
+
+### Test: Should record immutable consent
+```javascript
+test('obtainInformedConsent immutability', () => {
+  const topic = 'declining-privacy-tools';
+  const decision = 'decline';
+  const profile = { consentGiven: [] };
+
+  const consent = obtainInformedConsent(topic, decision, profile);
+
+  assert.ok(consent.timestamp);
+  assert.strictEqual(consent.decision, 'decline');
+  // Consent record should be immutable (add to array, don't modify)
+  assert.strictEqual(profile.consentGiven.length, 0);
+});
+```
+
+### Test: Should allow declining critical tools with warning
+```javascript
+test('obtainInformedConsent critical tool decline', () => {
+  const topic = 'declining-revoke-cash';
+  const decision = 'decline';
+  const profile = {};
+
+  const consent = obtainInformedConsent(topic, decision, profile);
+
+  // Should still allow decline, but flag acknowledged
+  assert.strictEqual(consent.decision, 'decline');
+  assert.strictEqual(consent.acknowledged, true);
+});
+```
+
+### Test: Should never be pushy (language check)
+```javascript
+test('recommendToolsForNeed non-pushy language', () => {
+  const need = "basic privacy";
+  const profile = { experienceLevel: 'beginner' };
+
+  const tools = recommendToolsForNeed(need, profile);
+
+  // Check that language is suggestive, not mandatory
+  tools.forEach(tool => {
+    assert.ok(!tool.reason.includes('must'));
+    assert.ok(!tool.reason.includes('required'));
+    assert.ok(!tool.actionRequired.includes('You must'));
+  });
+});
+```
+
+---
+
+## Dependencies
+- `src/templates/web3/privacy-tools/*.json` (all tool catalogs)
+- Feature 788: `SocraticRefiner` (for ambiguity resolution)
+
+---
+
+## Error States
+- `ValidationError`: Invalid profile structure
+- `NotFoundError`: Referenced tool doesn't exist in catalog
+- `ConsentError`: Attempting to modify immutable consent record
+
+---
+
+## Non-Functional Requirements
+- Tool recommendation generation: <300ms
+- Educational content generation: <200ms
+- Consent record must be append-only (immutable)
+- Profile serialization to JSON for persistence
+
+---
+
+**Status**: Contract Defined ✅

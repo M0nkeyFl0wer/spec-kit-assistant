@@ -1,8 +1,8 @@
 
-# Implementation Plan: Spec Assistant Constitutional Compliance and Performance Refinement
+# Implementation Plan: [FEATURE]
 
-**Branch**: `787-refinement-of-existing` | **Date**: 2025-09-28 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/home/monkeyflower/spec-kit-assistant/specs/787-refinement-of-existing/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,28 +31,23 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Systematic refinement of existing Spec Assistant implementation to achieve constitutional compliance, resolve ambiguous requirements, and implement missing performance validation capabilities. Focus on automated analysis with concrete remediation suggestions while maintaining backward compatibility and adding measurable criteria for all user interactions and system behaviors.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: Node.js 18+ (existing codebase infrastructure)
-**Primary Dependencies**: Enhanced existing dependencies - analysis tooling, constitutional validation, performance measurement utilities
-**Storage**: File-based configuration and analysis reports, no database required
-**Testing**: Node.js native test runner (constitutional compliance verification)
-**Target Platform**: Linux and macOS (existing support maintained)
-**Project Type**: Single CLI application enhancement (analysis and refinement utilities)
-**Performance Goals**: <100ms analysis completion, <500ms constitutional compliance validation, maintain existing 500ms animation limits
-**Constraints**: Backward compatibility mandatory, constitutional compliance non-negotiable, measurable criteria for all ambiguous requirements
-**Scale/Scope**: Single-user developer tool, automated analysis of existing specifications, hybrid automated/manual refinement workflow
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Swarm-First Architecture**: Must enhance existing `enhanced-swarm-orchestrator.js` for analysis coordination - no custom analysis coordinators
-**Spec-Driven Development**: Feature enhances the spec-to-implementation pipeline itself - validates existing spec.md completeness
-**Test-First Development**: All analysis utilities must have contract tests before implementation
-**Character-Driven UX**: Analysis reports must support Spec the Golden Retriever interface patterns with friendly feedback
-**Production Readiness Standards**: Analysis tools must meet enterprise standards for reliability and performance
-**Incremental Complexity Justification**: Enhancement builds on existing infrastructure rather than recreating analysis functionality
+[Gates determined based on constitution file]
 
 ## Project Structure
 
@@ -68,25 +63,50 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 ```
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── analysis/           # Constitutional compliance analysis
-├── refinement/         # Requirement refinement utilities
-├── validation/         # Performance and criteria validation
-├── reporting/          # Analysis report generation
-└── core/              # Shared utilities (existing)
+├── models/
+├── services/
+├── cli/
+└── lib/
 
 tests/
-├── contract/          # Analysis utility contracts
-├── integration/       # Full refinement workflow tests
-└── unit/             # Component validation tests
+├── contract/
+├── integration/
+└── unit/
 
-.specify/
-├── scripts/          # Enhanced analysis automation
-└── templates/        # Refinement templates
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single CLI application enhancement selected. Extends existing src/ structure with analysis-focused modules. Builds on proven file organization with new analysis, refinement, validation, and reporting capabilities. Leverages existing core utilities and test infrastructure while adding specialized analysis functionality.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -147,26 +167,18 @@ tests/
 
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
-- Generate from contracts: constitutional-compliance-analyzer.yaml → analysis tests + implementation
-- Generate from contracts: requirement-refinement-engine.yaml → refinement tests + engine implementation
-- Generate from contracts: coverage-gap-analyzer.yaml → coverage tests + gap detection implementation
-- Generate from data model: ConstitutionalViolation, PerformanceMetric, RequirementRefinement, CoverageGap, AnalysisReport, ValidationCriteria → model classes
-- Generate from quickstart: Constitutional analysis workflow → integration tests
+- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
+- Each contract → contract test task [P]
+- Each entity → model creation task [P] 
+- Each user story → integration test task
+- Implementation tasks to make tests pass
 
 **Ordering Strategy**:
-- Setup: Create analysis directory structure, configure constitutional standards
-- Tests First (TDD): Contract tests for analysis engines, refinement utilities, coverage detection [P]
-- Core Models: Data model implementations for violations, metrics, refinements [P]
-- Implementation: Analysis engines, refinement utilities, gap detection, reporting
-- Integration: Swarm orchestrator integration, character-driven feedback, performance validation
-- Polish: Error handling, logging, documentation, backward compatibility validation
+- TDD order: Tests before implementation 
+- Dependency order: Models before services before UI
+- Mark [P] for parallel execution (independent files)
 
-**Estimated Output**: 18-22 numbered, ordered tasks in tasks.md
-- Setup tasks: 2 tasks
-- Contract tests: 6 tasks [P]
-- Model implementations: 6 tasks [P]
-- Core implementations: 4 tasks
-- Integration & polish: 4 tasks
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -190,18 +202,18 @@ tests/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command)
-- [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [ ] Phase 0: Research complete (/plan command)
+- [ ] Phase 1: Design complete (/plan command)
+- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS
-- [x] Post-Design Constitution Check: PASS
-- [x] All NEEDS CLARIFICATION resolved
-- [x] Complexity deviations documented
+- [ ] Initial Constitution Check: PASS
+- [ ] Post-Design Constitution Check: PASS
+- [ ] All NEEDS CLARIFICATION resolved
+- [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`*
+*Based on Constitution v2.1.1 - See `/memory/constitution.md`*

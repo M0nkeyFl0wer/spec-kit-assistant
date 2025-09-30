@@ -1,0 +1,336 @@
+# Contract: Smart Contract Security & Privacy Persona
+
+**Module**: `src/personas/web3/smart-contract-security.js`
+**Purpose**: Elicit security and privacy context through targeted questioning
+**Requirements**: FR-004, FR-012, FR-014
+
+---
+
+## Interface
+
+### generateQuestions(domainContext: Web3DomainContext): Question[]
+
+**Description**: Generates prioritized security/privacy questions based on dApp type and privacy requirements.
+
+**Input**:
+```typescript
+{
+  dappType: DAppType,
+  privacyRequirements: PrivacyLevel,
+  complexityLevel: ComplexityLevel
+}
+```
+
+**Output**:
+```typescript
+[
+  {
+    id: string,
+    text: string,
+    category: 'security' | 'privacy' | 'wallet-safety',
+    priority: number,  // 1-10, higher = more critical
+    followUps: string[],
+    toolRecommendations: string[]
+  }
+]
+```
+
+**Business Rules**:
+1. Always include wallet drainer protection questions (priority 10)
+2. Privacy questions only if `privacyRequirements !== 'public'`
+3. Advanced questions only if `complexityLevel === 'advanced'`
+4. Minimum 8 questions, maximum 15
+5. Questions sorted by priority descending
+
+**Question Bank** (FR-004, FR-012):
+- "What assets does this contract hold?" (priority: 10)
+- "Who can call sensitive functions?" (priority: 10)
+- "Are there external calls to untrusted contracts?" (priority: 9)
+- "How are you preventing reentrancy?" (priority: 9)
+- "What happens if ETH/tokens get stuck?" (priority: 8)
+- "Do you need upgradeability?" (priority: 7)
+- "What transaction data needs to be private?" (priority: varies by privacyRequirements)
+- "Are you protecting against MEV/front-running?" (priority: 8)
+- "What user data is exposed on-chain?" (priority: 7)
+- "Do you need commit-reveal or zero-knowledge proofs?" (priority: varies)
+- "How are you preventing wallet drainers?" (priority: 10)
+- "Are you using limited token approvals?" (priority: 10)
+- "Do you have transaction simulation?" (priority: 9)
+
+**Performance**: <200ms (NFR-001)
+
+---
+
+### extractContext(answers: Answer[]): ContextInsight[]
+
+**Description**: Analyzes user answers and extracts security/privacy insights with tool recommendations.
+
+**Input**:
+```typescript
+[
+  {
+    questionId: string,
+    answerText: string
+  }
+]
+```
+
+**Output**:
+```typescript
+[
+  {
+    question: string,
+    answer: string,
+    category: string,
+    toolsRecommended: ToolRecommendation[],
+    risks: string[],
+    mitigations: string[]
+  }
+]
+```
+
+**Business Rules**:
+1. Identify risks from answers (e.g., "external calls" → reentrancy risk)
+2. Recommend tools based on identified needs:
+   - Unlimited approvals mentioned → Recommend Revoke.cash
+   - Privacy needs → Recommend Flashbots/ZK frameworks
+   - No simulation → Recommend Tenderly/Blocknative
+3. Mitigations must reference OpenZeppelin patterns (FR-013)
+4. Wallet safety tools always included if contract holds assets
+
+**Risk Detection Patterns**:
+- "external call" → Reentrancy risk, recommend ReentrancyGuard
+- "admin function" → Access control risk, recommend AccessControl/Ownable
+- "no limits" / "unlimited" → Approval exploit risk, recommend limited approvals
+- "public data" → Privacy leak, recommend off-chain storage
+- "no simulation" → User vulnerability, recommend Tenderly/Blocknative
+
+---
+
+### recommendTools(insights: ContextInsight[], privacyLevel: PrivacyLevel): ToolRecommendation[]
+
+**Description**: Generates personalized tool recommendations based on extracted context.
+
+**Input**:
+```typescript
+insights: ContextInsight[]
+privacyLevel: PrivacyLevel
+```
+
+**Output**:
+```typescript
+[
+  {
+    toolId: string,
+    reason: string,
+    priority: 'critical' | 'recommended' | 'optional',
+    actionRequired: string,
+    estimatedImpact: string
+  }
+]
+```
+
+**Business Rules** (FR-012, FR-014, FR-019):
+1. **Always Critical**:
+   - Revoke.cash (wallet drainer protection)
+   - Limited approvals (prevent unlimited access)
+   - Transaction simulation (pre-signing safety)
+
+2. **Privacy-based Recommendations**:
+   - `privacyLevel === 'pseudonymous'` → Flashbots Protect
+   - `privacyLevel === 'private'` → Flashbots + ZK framework (Circom/Noir) + stealth addresses
+
+3. **Complexity-based Recommendations**:
+   - Beginner → Focus on Revoke.cash, MetaMask security, Flashbots
+   - Intermediate → Add Tenderly simulation, Circom
+   - Advanced → Add Noir, Aztec L2, TEE infrastructure
+
+4. **Educational Content** (FR-020):
+   - Include "$494M stolen via wallet drainers in 2024" warning
+   - Explain "disconnecting wallet doesn't revoke approvals"
+   - Note "transaction simulation spoofing" threat
+
+---
+
+### generateSecurityChecklist(domainContext: Web3DomainContext, insights: ContextInsight[]): SecurityChecklist
+
+**Description**: Produces actionable security checklist for implementation phase.
+
+**Input**:
+```typescript
+domainContext: Web3DomainContext
+insights: ContextInsight[]
+```
+
+**Output**:
+```typescript
+{
+  contractSecurity: CheckItem[],
+  walletSafety: CheckItem[],
+  privacyMeasures: CheckItem[],
+  systemHardening: CheckItem[]
+}
+
+type CheckItem = {
+  item: string,
+  required: boolean,
+  pattern: string,  // OpenZeppelin contract or pattern name
+  testRequired: boolean
+}
+```
+
+**Business Rules** (FR-011, FR-015):
+1. Contract security minimum: ReentrancyGuard, AccessControl, input validation
+2. Wallet safety minimum: Limited approvals, Revoke.cash integration, simulation links
+3. Privacy measures: Based on `privacyLevel`
+4. System hardening: Rate limiting, CSP, HTTPS-only, emergency pause
+
+---
+
+## Examples
+
+### Example 1: Generate Questions for DEX
+```javascript
+const context = {
+  dappType: 'dex',
+  privacyRequirements: 'pseudonymous',
+  complexityLevel: 'intermediate'
+};
+
+const questions = generateQuestions(context);
+// Returns 10-12 questions including:
+// - Asset custody (DEX holds tokens)
+// - MEV protection (DEX vulnerable to sandwich attacks)
+// - Wallet drainer prevention
+// - Slippage handling
+```
+
+### Example 2: Extract Context with Risk Detection
+```javascript
+const answers = [
+  { questionId: 'external-calls', answerText: 'Yes, we call Uniswap router' },
+  { questionId: 'approvals', answerText: 'Users approve our contract' }
+];
+
+const insights = extractContext(answers);
+// insights[0].risks === ['Reentrancy from external call']
+// insights[0].mitigations === ['Use ReentrancyGuard', 'Check-Effects-Interactions pattern']
+// insights[1].toolsRecommended includes Revoke.cash
+```
+
+### Example 3: Recommend Tools for High Privacy
+```javascript
+const insights = [...]; // From extractContext
+const tools = recommendTools(insights, 'private');
+
+// Returns:
+// - Revoke.cash (critical)
+// - Flashbots Protect (critical)
+// - Noir framework (recommended)
+// - ERC-5564 stealth addresses (recommended)
+// - Aztec L2 (optional)
+```
+
+---
+
+## Test Cases (Contract Tests)
+
+### Test: Should generate minimum 8 questions
+```javascript
+test('generateQuestions minimum count', () => {
+  const context = { dappType: 'token', privacyRequirements: 'public', complexityLevel: 'beginner' };
+  const questions = generateQuestions(context);
+
+  assert.ok(questions.length >= 8);
+});
+```
+
+### Test: Should prioritize wallet safety for asset-holding contracts
+```javascript
+test('generateQuestions wallet safety priority', () => {
+  const context = { dappType: 'dex', privacyRequirements: 'public', complexityLevel: 'beginner' };
+  const questions = generateQuestions(context);
+
+  const walletQuestions = questions.filter(q => q.category === 'wallet-safety');
+  assert.ok(walletQuestions.length >= 3);
+  assert.ok(walletQuestions.every(q => q.priority >= 9));
+});
+```
+
+### Test: Should detect reentrancy risk from external calls
+```javascript
+test('extractContext reentrancy risk detection', () => {
+  const answers = [{ questionId: 'external-calls', answerText: 'calls external DEX' }];
+  const insights = extractContext(answers);
+
+  assert.ok(insights[0].risks.some(r => r.includes('reentrancy')));
+  assert.ok(insights[0].mitigations.some(m => m.includes('ReentrancyGuard')));
+});
+```
+
+### Test: Should always recommend Revoke.cash
+```javascript
+test('recommendTools always includes Revoke.cash', () => {
+  const insights = [{ category: 'wallet-safety', answer: 'users approve tokens' }];
+  const tools = recommendTools(insights, 'public');
+
+  const revokeCash = tools.find(t => t.toolId === 'revoke-cash');
+  assert.ok(revokeCash);
+  assert.strictEqual(revokeCash.priority, 'critical');
+});
+```
+
+### Test: Should recommend privacy tools for private level
+```javascript
+test('recommendTools privacy stack', () => {
+  const insights = [];
+  const tools = recommendTools(insights, 'private');
+
+  const privacyTools = tools.filter(t =>
+    ['flashbots-protect', 'noir', 'erc-5564'].includes(t.toolId)
+  );
+  assert.ok(privacyTools.length >= 2);
+});
+```
+
+### Test: Should include $494M warning in educational content
+```javascript
+test('recommendTools includes wallet drainer warning', () => {
+  const insights = [];
+  const tools = recommendTools(insights, 'public');
+
+  const revokeTool = tools.find(t => t.toolId === 'revoke-cash');
+  assert.ok(revokeTool.reason.includes('$494M') || revokeTool.reason.includes('wallet drainer'));
+});
+```
+
+### Test: Performance requirement <200ms
+```javascript
+test('generateQuestions performance', () => {
+  const context = { dappType: 'dex', privacyRequirements: 'private', complexityLevel: 'advanced' };
+  const start = Date.now();
+
+  generateQuestions(context);
+
+  const duration = Date.now() - start;
+  assert.ok(duration < 200, `Took ${duration}ms, should be <200ms`);
+});
+```
+
+---
+
+## Dependencies
+- `src/templates/web3/privacy-tools/wallet-security.json` (tool catalog)
+- `src/templates/web3/privacy-tools/privacy-layers.json` (privacy tools)
+- `src/templates/web3/contract-patterns/security-patterns.json` (OpenZeppelin patterns)
+
+---
+
+## Error States
+- `ValidationError`: Invalid domainContext structure
+- `NotFoundError`: Tool recommendation references non-existent tool
+- `ConfigError`: Question bank file missing/corrupted
+
+---
+
+**Status**: Contract Defined ✅

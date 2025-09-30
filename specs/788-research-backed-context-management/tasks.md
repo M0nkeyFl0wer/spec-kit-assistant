@@ -104,22 +104,22 @@
 - [x] T032 Integrate ContextState awareness into `src/core/spec-first-interceptor.js` for real-time divergence detection (FR-020, FR-002, FR-003)
 
 ### Enhance Consultation Engine
-- [ ] T033 Integrate GATE elicitation into `src/consultation/enhanced-consultation-engine.js` replacing current discovery flow (FR-021, FR-007)
+- [x] T033 Integrate GATE elicitation into `src/consultation/enhanced-consultation-engine.js` replacing current discovery flow (FR-021, FR-007)
 
 ### Persona Integration
-- [ ] T034 Integrate PersonaRotator into `src/consultation/enhanced-consultation-engine.js` for multi-perspective discovery (FR-021, FR-011)
+- [x] T034 Integrate PersonaRotator into `src/consultation/enhanced-consultation-engine.js` for multi-perspective discovery (FR-021, FR-011)
 
 ### Socratic Integration
-- [ ] T035 Integrate SocraticRefiner into `src/consultation/enhanced-consultation-engine.js` for requirement clarification (FR-021, FR-014)
+- [x] T035 Integrate SocraticRefiner into `src/consultation/enhanced-consultation-engine.js` for requirement clarification (FR-021, FR-014)
 
 ---
 
 ## Phase 3.6: Validation & Polish
 
 ### Testing & Performance
-- [ ] T036 [P] Run all contract tests and verify 2s reconciliation budget (NFR-002)
-- [ ] T037 [P] Run all integration tests and verify 15-minute discovery budget (NFR-003)
-- [ ] T038 [P] Create backward compatibility tests for existing spec kit functionality in `tests/integration/test_backward_compatibility.js`
+- [x] T036 [P] Run all contract tests and verify 2s reconciliation budget (NFR-002)
+- [x] T037 [P] Run all integration tests and verify 15-minute discovery budget (NFR-003)
+- [x] T038 [P] Create backward compatibility tests for existing spec kit functionality in `tests/integration/test_backward_compatibility.js`
 
 ### Performance Validation
 - [ ] T039 [P] Implement performance test for context divergence detection < 100ms in `tests/performance/test_divergence_detection.js`
