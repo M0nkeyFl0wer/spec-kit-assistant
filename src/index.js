@@ -26,8 +26,8 @@ console.log(chalk.cyan('🐕 Meet Spec - Your Golden Retriever Guide to Spec-Dri
 console.log(chalk.gray('Addressing user feedback: Smart oversight, agent swarms, and delightful UX'));
 
 program
-  .name('spec-assistant')
-  .description('🐕 Intelligent Spec Kit Assistant with Agent Swarm Orchestration')
+  .name('spec')
+  .description('🐕 Spec - Your Golden Retriever Guide! Fetch specs, build great software!')
   .version('1.0.0');
 
 program
@@ -249,6 +249,37 @@ process.on('unhandledRejection', (error) => {
 // === GITHUB SPEC KIT INTEGRATION COMMANDS ===
 
 // Generate specification using GitHub Spec Kit format
+// === PRIMARY COMMAND: FETCH ===
+program
+  .command('fetch')
+  .alias('spec-fetch')
+  .description('🐕 Start Spec Kit Assistant - Fetch specs and begin your journey!')
+  .option('-s, --spec <feature>', 'Fetch/generate a spec for a feature')
+  .option('-i, --interactive', 'Interactive consultation mode')
+  .option('--guide', 'Show workflow guidance')
+  .action(async (options) => {
+    try {
+      await spec.greet();
+
+      if (options.spec) {
+        console.log(chalk.cyan(`🐕 Fetching spec for: ${options.spec}`));
+        const spec_content = await specKit.generateSpec(options.spec, '', {});
+        const saved = await specKit.saveSpec(options.spec, spec_content, 'spec');
+        console.log(chalk.green('✅ Spec fetched and ready!'));
+        console.log(chalk.gray(`File: ${saved.relativePath}`));
+      } else if (options.guide) {
+        await spec.show('thinking', 'Let me show you the workflow...');
+        console.log(chalk.cyan('🎯 Use: fetch --spec <feature> to generate specifications'));
+      } else {
+        // Default interactive mode
+        console.log(chalk.cyan('🐕 Welcome! Let\'s fetch some specs together!'));
+        await consultation.startGuidedSetup(options);
+      }
+    } catch (error) {
+      console.error(chalk.red('Error fetching spec:'), error.message);
+    }
+  });
+
 program
   .command('spec <feature-name>')
   .description('📋 Generate GitHub Spec Kit specification for a feature')
