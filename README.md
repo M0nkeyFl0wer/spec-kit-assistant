@@ -1,4 +1,4 @@
-# Spec - Your Golden Retriever Guide to Spec-Driven Development
+# Spec - Your Guide to Spec-Driven Development
 
 ```
     ╔═════════════════════════════════════════════╗
