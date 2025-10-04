@@ -1,18 +1,18 @@
 # Spec - Your Golden Retriever Guide to Spec-Driven Development
 
 ```
-    ╔═══════════════════════════════════════════════╗
-    ║                                               ║
-    ║      ⚙️  ███████╗██████╗ ███████╗ ██████╗    ║
+    ╔═════════════════════════════════════════════╗
+    ║                                             ║
+    ║      ⚙️  ███████╗██████╗ ███████╗ ██████╗   ║
     ║         ██╔════╝██╔══██╗██╔════╝██╔════╝    ║
     ║         ███████╗██████╔╝█████╗  ██║         ║
     ║         ╚════██║██╔═══╝ ██╔══╝  ██║         ║
     ║         ███████║██║     ███████╗╚██████╗    ║
     ║         ╚══════╝╚═╝     ╚══════╝ ╚═════╝    ║
-    ║                                               ║
-    ║       🐕 Your Golden Retriever Guide          ║
-    ║          Fetch Specs, Build Great Software!   ║
-    ╚═══════════════════════════════════════════════╝
+    ║                                             ║
+    ║       🐕 Your loyal assitant and Guide      ║
+    ║          Fetch Specs, Build Great Software! ║
+    ╚═════════════════════════════════════════════╝
 ```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
