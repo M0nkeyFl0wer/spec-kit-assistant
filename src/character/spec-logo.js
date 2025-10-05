@@ -15,21 +15,21 @@ export const SpecLogo = {
   // Pixel dog art with SPEC text inline - Hand-coded by user!
   pixelDog: chalk.white(`
     ╔════════════════════════════════════════════════════════════════╗
-    ║                         `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`                 ║
-    ║                       `) + chalk.hex('#00D9FF')('████████████████████████') + chalk.white(`               ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██████          ██████') + chalk.white(`  ║
-    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(` `) + chalk.hex('#0099FF')('████████    ████████████') + chalk.white(`  ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`      `) + chalk.hex('#0099FF')('██  ██  ████████  ██') + chalk.white(`    ║
-    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ████████') + chalk.white(`        ║
-    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`    `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`      ║
-    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`    `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`      ║
-    ║                                       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`      ║
-    ║                                       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`      ║
-    ║                                        `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`        ║
-    ║                                           `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`          ║
-    ║                                             `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`            ║
-    ║                                             `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`            ║
-    ║                                               `) + chalk.hex('#0066FF')('████') + chalk.white(`              ║
+    ║                             `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`             ║
+    ║                           `) + chalk.hex('#00D9FF')('████████████████████████') + chalk.white(`           ║
+    ║                           `) + chalk.hex('#0099FF')('██████          ██████') + chalk.white(`           ║
+    ║                           `) + chalk.hex('#0099FF')('████████    ████████████') + chalk.white(`           ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██  ██  ████████  ██') + chalk.white(`        ║
+    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(`     `) + chalk.hex('#0066FF')('██    ████████') + chalk.white(`            ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
+    ║                                            `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`            ║
+    ║                                               `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`              ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
+    ║                                                   `) + chalk.hex('#0066FF')('████') + chalk.white(`                  ║
     ╚════════════════════════════════════════════════════════════════╝
 `),
 
