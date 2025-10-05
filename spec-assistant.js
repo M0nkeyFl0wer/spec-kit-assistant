@@ -124,7 +124,32 @@ function showDogNextSteps() {
 }
 
 /**
+ * Validate and sanitize user input to prevent command injection
+ */
+function validateInput(input) {
+  // Reject inputs with shell metacharacters
+  const dangerousChars = /[;&|`$(){}[\]<>\\'"]/;
+  if (dangerousChars.test(input)) {
+    throw new Error(`Invalid input: contains shell metacharacters`);
+  }
+  return input;
+}
+
+/**
+ * Validate project name (for init command)
+ */
+function validateProjectName(name) {
+  // Only allow alphanumeric, hyphens, underscores, and dots
+  const validPattern = /^[a-zA-Z0-9._-]+$/;
+  if (!validPattern.test(name)) {
+    throw new Error(`Invalid project name: must contain only letters, numbers, hyphens, underscores, and dots`);
+  }
+  return name;
+}
+
+/**
  * Call official Spec Kit CLI with optional argument injection
+ * SECURITY: Uses spawn() instead of execSync to prevent command injection
  */
 function callSpecKit(args, injectArgs = []) {
   const allArgs = [...injectArgs, ...args];
@@ -135,21 +160,51 @@ function callSpecKit(args, injectArgs = []) {
     allArgs.splice(1, 0, '--ai', 'claude');
   }
 
+  // Validate inputs to prevent command injection
+  try {
+    if (args[0] === 'init' && args[1]) {
+      validateProjectName(args[1]);
+    }
+
+    // Validate all arguments
+    allArgs.forEach((arg, index) => {
+      // Skip validation for known safe flags
+      if (arg.startsWith('--') || arg === 'init' || arg === 'check' || arg === 'constitution' || arg === 'claude') {
+        return;
+      }
+      validateInput(arg);
+    });
+  } catch (error) {
+    console.error(chalk.red(`\n❌ Security error: ${error.message}`));
+    process.exit(1);
+  }
+
   console.log(chalk.hex('#10B981')(`\n🐕 Running: specify ${allArgs.join(' ')}\n`));
 
-  try {
-    execSync(`~/.local/bin/uv tool run --from specify-cli specify ${allArgs.join(' ')}`, {
-      stdio: 'inherit'
-    });
+  // SECURITY FIX: Use spawn() instead of execSync to avoid shell interpretation
+  // Arguments are passed as array, not concatenated string
+  const uvPath = join(process.env.HOME || '~', '.local', 'bin', 'uv');
+  const specProcess = spawn(uvPath, ['tool', 'run', '--from', 'specify-cli', 'specify', ...allArgs], {
+    stdio: 'inherit',
+    shell: false  // Explicitly disable shell to prevent injection
+  });
 
-    // After successful init, show friendly next steps
-    if (args[0] === 'init') {
-      showDogNextSteps();
+  specProcess.on('close', (code) => {
+    if (code === 0) {
+      // After successful init, show friendly next steps
+      if (args[0] === 'init') {
+        showDogNextSteps();
+      }
+    } else {
+      console.error(chalk.red('\n❌ Command failed'));
+      process.exit(code || 1);
     }
-  } catch (error) {
-    console.error(chalk.red('\n❌ Command failed'));
-    process.exit(error.status || 1);
-  }
+  });
+
+  specProcess.on('error', (error) => {
+    console.error(chalk.red('\n❌ Failed to execute command:'), error.message);
+    process.exit(1);
+  });
 }
 
 /**
