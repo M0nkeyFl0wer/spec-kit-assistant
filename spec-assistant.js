@@ -138,9 +138,8 @@ function callSpecKit(args, injectArgs = []) {
   console.log(chalk.hex('#10B981')(`\n🐕 Running: specify ${allArgs.join(' ')}\n`));
 
   try {
-    execSync(`~/.local/bin/uv tool run --from . specify ${allArgs.join(' ')}`, {
-      stdio: 'inherit',
-      cwd: __dirname
+    execSync(`~/.local/bin/uv tool run --from specify-cli specify ${allArgs.join(' ')}`, {
+      stdio: 'inherit'
     });
 
     // After successful init, show friendly next steps
