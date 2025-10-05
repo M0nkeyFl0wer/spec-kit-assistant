@@ -1,0 +1,28 @@
+{
+  "name": "spec-kit-assistant",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Friendly assistant wrapper for GitHub Spec Kit - adds helpful dog guidance to spec-driven development",
+  "main": "spec-assistant.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node spec-assistant.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/github/spec-kit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/github/spec-kit/issues"
+  },
+  "homepage": "https://github.com/github/spec-kit#readme",
+  "dependencies": {
+    "chalk": "^5.6.2"
+  }
+}
