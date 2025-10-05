@@ -1,35 +1,33 @@
 /**
  * Spec Logo - Beautiful ASCII art for CLI startup
- * Based on official GitHub Spec Kit branding
+ * Based on official Specify branding
  *
- * Colors from official Spec Kit logo:
- * - Purple #8B5CF6
- * - Pink #EC4899
- * - Green #10B981 (seedling/plant)
- * - Brown #8B4513 (soil)
+ * Colors from official Specify logo:
+ * - Blue #0066FF (primary brand color)
+ * - White #FFFFFF (text and accents)
  */
 
 import chalk from 'chalk';
 
 export const SpecLogo = {
   // Pixel dog art with SPEC text inline - Hand-coded by user!
-  pixelDog: chalk.hex('#8B5CF6')(`
+  pixelDog: chalk.white(`
     ╔════════════════════════════════════════════════════════════════╗
-    ║                         `) + chalk.hex('#8B4513')('██████          ██████') + chalk.hex('#8B5CF6')(`                 ║
-    ║                       `) + chalk.hex('#8B4513')('██▓▓▓▓▓▓██████████▓▓▓▓▓▓██') + chalk.hex('#8B5CF6')(`               ║
-    ║                       `) + chalk.hex('#8B4513')('██▓▓▓▓██          ██▓▓▓▓██') + chalk.hex('#8B5CF6')(`               ║
-    ║                       `) + chalk.hex('#8B4513')('██▓▓████    ▓▓▓▓▓▓████▓▓██') + chalk.hex('#8B5CF6')(`               ║
-    ║   `) + chalk.hex('#EC4899')('███████╗██████╗ ███████╗ ██████╗') + chalk.hex('#8B5CF6')(` `) + chalk.hex('#8B4513')('██  ██  ██▓▓██▓▓██  ██') + chalk.hex('#8B5CF6')(`        ║
-    ║   `) + chalk.hex('#EC4899')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.hex('#8B5CF6')(`     `) + chalk.hex('#10B981')('██    ▓▓▓▓▓▓██') + chalk.hex('#8B5CF6')(`            ║
-    ║   `) + chalk.hex('#EC4899')('███████╗██████╔╝█████╗  ██║') + chalk.hex('#8B5CF6')(`          `) + chalk.hex('#10B981')('██              ██') + chalk.hex('#8B5CF6')(`          ║
-    ║   `) + chalk.hex('#EC4899')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.hex('#8B5CF6')(`          `) + chalk.hex('#10B981')('██    ██████    ██') + chalk.hex('#8B5CF6')(`          ║
-    ║   `) + chalk.hex('#8B5CF6')('███████║██║     ███████╗╚██████╗') + chalk.hex('#8B5CF6')(`       `) + chalk.hex('#10B981')('██    ██████    ██') + chalk.hex('#8B5CF6')(`          ║
-    ║   `) + chalk.hex('#8B5CF6')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.hex('#8B5CF6')(`       `) + chalk.hex('#10B981')('██              ██') + chalk.hex('#8B5CF6')(`          ║
-    ║                                            `) + chalk.hex('#10B981')('██    ██    ██') + chalk.hex('#8B5CF6')(`            ║
-    ║                                               `) + chalk.hex('#8B4513')('████░░████') + chalk.hex('#8B5CF6')(`              ║
-    ║                                                 `) + chalk.hex('#8B4513')('██░░██') + chalk.hex('#8B5CF6')(`                ║
-    ║                                                 `) + chalk.hex('#8B4513')('██░░██') + chalk.hex('#8B5CF6')(`                ║
-    ║                                                   `) + chalk.hex('#8B4513')('████') + chalk.hex('#8B5CF6')(`                  ║
+    ║                         `) + chalk.hex('#0066FF')('██████          ██████') + chalk.white(`                 ║
+    ║                       `) + chalk.hex('#0066FF')('██▓▓▓▓▓▓██████████▓▓▓▓▓▓██') + chalk.white(`               ║
+    ║                       `) + chalk.hex('#0066FF')('██▓▓▓▓██          ██▓▓▓▓██') + chalk.white(`               ║
+    ║                       `) + chalk.hex('#0066FF')('██▓▓████    ▓▓▓▓▓▓████▓▓██') + chalk.white(`               ║
+    ║   `) + chalk.hex('#0066FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0066FF')('██  ██  ██▓▓██▓▓██  ██') + chalk.white(`        ║
+    ║   `) + chalk.hex('#0066FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(`     `) + chalk.hex('#0066FF')('██    ▓▓▓▓▓▓██') + chalk.white(`            ║
+    ║   `) + chalk.hex('#0066FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0066FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
+    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
+    ║                                            `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`            ║
+    ║                                               `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`              ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
+    ║                                                   `) + chalk.hex('#0066FF')('████') + chalk.white(`                  ║
     ╚════════════════════════════════════════════════════════════════╝
 `),
 
