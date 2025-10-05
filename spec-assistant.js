@@ -71,15 +71,29 @@ function checkSpecKitInstalled() {
 function ensureSpecKitInstalled() {
   if (!checkSpecKitInstalled()) {
     console.log(chalk.yellow('📦 Installing uv package manager...'));
-    execSync('curl -LsSf https://astral.sh/uv/install.sh | sh', { stdio: 'inherit' });
+    try {
+      execSync('curl -LsSf https://astral.sh/uv/install.sh | sh', { stdio: 'inherit' });
+    } catch (error) {
+      console.log(chalk.red('❌ Failed to install uv. Please install manually:'));
+      console.log(chalk.white('   curl -LsSf https://astral.sh/uv/install.sh | sh'));
+      process.exit(1);
+    }
   }
 
   // Check if specify is installed
   try {
     execSync('~/.local/bin/uv tool list | grep specify-cli', { stdio: 'pipe' });
   } catch {
-    console.log(chalk.yellow('📦 Installing GitHub Spec Kit...'));
-    execSync(`~/.local/bin/uv tool install .`, { stdio: 'inherit', cwd: __dirname });
+    console.log(chalk.yellow('📦 Installing GitHub Spec Kit (one-time setup)...'));
+    console.log(chalk.dim('   This installs the official Spec Kit CLI tool'));
+    try {
+      execSync('~/.local/bin/uv tool install specify-cli', { stdio: 'inherit' });
+      console.log(chalk.green('✅ Spec Kit installed successfully!'));
+    } catch (error) {
+      console.log(chalk.red('❌ Failed to install Spec Kit. Please install manually:'));
+      console.log(chalk.white('   ~/.local/bin/uv tool install specify-cli'));
+      process.exit(1);
+    }
   }
 }
 
