@@ -24,7 +24,7 @@ echo "✅ Node.js found: $(node --version)"
 # Clone repo
 if [ ! -d "spec-kit-assistant" ]; then
     echo "📦 Cloning Spec Kit Assistant..."
-    git clone https://github.com/yourusername/spec-kit-assistant.git
+    git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
     cd spec-kit-assistant
 else
     echo "📂 Using existing spec-kit-assistant directory..."
