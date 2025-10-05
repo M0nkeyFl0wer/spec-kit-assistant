@@ -1,65 +1,31 @@
 #!/bin/bash
-# 🐕 Spec Kit Assistant - One Command Install
-# Makes setup butter smooth and lovely!
+# One-liner installer for Spec Kit Assistant
+# Usage: curl -fsSL https://raw.githubusercontent.com/M0nkeyFl0wer/spec-kit-assistant/main/install.sh | bash
 
 set -e
 
-echo "
-    🐕 Woof! Installing Spec Kit Assistant...
-
-         |\__/,|   (\`\\
-       _.|o o  |_   ) )
-     -(((---(((--------
-"
-
-# Check Node.js
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js not found. Please install Node.js 16+ first:"
-    echo "   https://nodejs.org"
-    exit 1
-fi
-
-echo "✅ Node.js found: $(node --version)"
+echo "🐕 Installing Spec Kit Assistant..."
 
 # Clone repo
-if [ ! -d "spec-kit-assistant" ]; then
-    echo "📦 Cloning Spec Kit Assistant..."
-    git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-    cd spec-kit-assistant
-else
-    echo "📂 Using existing spec-kit-assistant directory..."
+if [ -d "spec-kit-assistant" ]; then
+    echo "📁 Directory exists, pulling latest..."
     cd spec-kit-assistant
     git pull
+else
+    git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
+    cd spec-kit-assistant
 fi
 
-# Install Node dependencies
-echo "📦 Installing Node.js dependencies..."
-npm install --silent
+# Make run script executable
+chmod +x run.sh
 
-# Install uv package manager (for official Spec Kit)
-if ! command -v uv &> /dev/null; then
-    echo "📦 Installing uv package manager..."
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-fi
+# Install dependencies silently
+echo "📦 Installing dependencies..."
+npm install --silent --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
-# Install official Spec Kit
-echo "📦 Installing official GitHub Spec Kit..."
-~/.local/bin/uv tool install .
+echo ""
+echo "✅ Installation complete!"
+echo ""
 
-# Make executable
-chmod +x spec-assistant.js
-
-# Add to PATH (optional)
-echo ""
-echo "✨ Installation complete!"
-echo ""
-echo "🐕 Spec is ready to help! Try these commands:"
-echo ""
-echo "   cd spec-kit-assistant"
-echo "   node spec-assistant.js init \"My Awesome Project\""
-echo ""
-echo "🦴 For even easier access, add to your PATH:"
-echo "   echo 'alias spec-assistant=\"$PWD/spec-assistant.js\"' >> ~/.bashrc"
-echo ""
-echo "🐕 Woof woof! Happy spec-driven development!"
-echo ""
+# Auto-launch
+./run.sh
