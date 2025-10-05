@@ -6,7 +6,7 @@
 
 import { SpecLogo } from './src/character/spec-logo.js';
 import chalk from 'chalk';
-import { execSync, spawn } from 'child_process';
+import { execSync, spawn, spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -259,10 +259,51 @@ async function runSwarmTests() {
  * Main command router
  */
 async function main() {
-  // No args - show help
+  // No args - run welcome flow instead of showing help
   if (args.length === 0) {
-    displayHelp();
-    process.exit(0);
+    const { runWelcomeFlow, showNextSteps } = await import('./src/onboarding/welcome-flow.js');
+
+    try {
+      const config = await runWelcomeFlow();
+
+      if (config.mode === 'existing') {
+        console.log(chalk.green('\n✅ Ready to continue! Use /specify or /implement in your AI tool\n'));
+        process.exit(0);
+      }
+
+      // Create new project
+      ensureSpecKitInstalled();
+
+      const initArgs = ['init', config.projectName];
+      if (config.agent && config.agent !== 'manual') {
+        initArgs.push('--ai', config.agent);
+      }
+
+      console.log(chalk.cyan(`\n🚀 Creating project: ${config.projectName}\n`));
+
+      // Call Spec Kit init
+      const uvPath = join(process.env.HOME || '~', '.local', 'bin', 'uv');
+      const result = spawnSync(uvPath, ['tool', 'run', '--from', 'specify-cli', 'specify', ...initArgs], {
+        stdio: 'inherit',
+        shell: false
+      });
+
+      if (result.status === 0) {
+        showNextSteps(config.agent, config.projectName);
+      } else {
+        console.error(chalk.red('\n❌ Failed to create project'));
+        process.exit(1);
+      }
+
+    } catch (error) {
+      if (error.message === 'User force closed the prompt') {
+        console.log(chalk.dim('\n👋 Goodbye!'));
+        process.exit(0);
+      }
+      throw error;
+    }
+
+    return;
   }
 
   // Ensure Spec Kit is installed for official commands
