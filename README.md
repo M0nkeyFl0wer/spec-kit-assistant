@@ -30,26 +30,57 @@
 
 ## 🚀 Quick Install
 
+### ⚠️ **IMPORTANT: This is a TERMINAL TOOL, not for Claude Code!**
+
+**If Claude Code helped you download this:**
+1. ✋ **STOP using Claude Code for now**
+2. 🪟 **Open a NEW terminal window** (outside Claude Code)
+3. 💻 **Run the commands below in your terminal**
+
+Why? Spec Kit Assistant guides YOU through spec-driven development. If Claude runs it, Claude takes over and you miss the whole process! 🐕
+
+---
+
+### Installation (in your terminal)
+
 ```bash
-# Clone the repo
+# 1. Clone the repo
 git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
 cd spec-kit-assistant
 
-# Install (setup runs automatically!)
+# 2. Run setup (it auto-launches after install)
 npm install
-# Or use pnpm/bun/yarn - setup wizard lets you choose!
 ```
 
-**That's it!** The friendly setup wizard launches automatically and:
+**That's it!** The friendly setup wizard:
+- ✅ Detects if you're using Claude Code (asks you to open real terminal if so)
 - ✅ Lets you choose package manager (pnpm, bun, yarn, or npm)
-- ✅ Guides you through installation step-by-step
+- ✅ Defaults to Claude as AI model (you can change it)
 - ✅ Perfect for beginners! 🐕
 
-**Concerned about npm security?** The setup wizard offers safer alternatives like **pnpm** or **bun**!
+---
 
-If you need to run setup again:
+### 🤔 "Wait, I'm confused..."
+
+**Q: Isn't this for Claude Code?**
+A: This tool WORKS WITH Claude Code, but you RUN IT from your terminal. Think of it like:
+- **Spec Kit Assistant** = The director (you run commands)
+- **Claude Code** = The worker (it implements based on your spec)
+
+**Q: Why can't Claude just run it for me?**
+A: Because the whole point is YOU drive the process! Spec Kit Assistant walks YOU through:
+1. Writing a clear spec
+2. Creating TODOs
+3. Getting clarifications
+4. THEN having Claude implement
+
+If Claude runs everything, it skips steps 1-3 and just codes! 😅
+
+---
+
+### Re-run setup anytime:
 ```bash
-npm run setup  # or: pnpm run setup / bun run setup / yarn setup
+npm run setup  # or: pnpm/bun/yarn run setup
 ```
 
 ---
