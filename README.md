@@ -1,5 +1,8 @@
 # 🌱 Spec Kit Assistant
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
+
 ```
                               ___
                           .-'   `'.
@@ -23,8 +26,23 @@
                   🐕 Woof! I'm Spec, your loyal assistant!
 ```
 
-> **"I loved GitHub Spec Kit so much, I wanted to make it even MORE fun!**
-> So I used Spec Kit itself to build this enhanced version. Meta? Maybe. Awesome? Definitely! 🎉"
+> **An experimental wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit)**
+> Built to explore UX improvements and share my experience with the tool
+
+---
+
+## 💭 **Why This Exists**
+
+I **love** GitHub Spec Kit! It's an amazing tool for spec-driven development. While using it, I had some ideas about making the onboarding smoother and adding a friendlier personality. This project is my way of:
+
+1. **Sharing my UX ideas** - things I personally wanted while learning Spec Kit
+2. **Starting a conversation** - maybe these ideas are useful, maybe they're not!
+3. **Learning in public** - building this taught me a lot about Spec Kit's design
+4. **Inviting collaboration** - feedback and contributors welcome!
+
+This is **experimental** and **unofficial**. All the real magic comes from the [@github/spec-kit team](https://github.com/github/spec-kit)'s excellent work. I'm just adding some dog ASCII art and training wheels. 🐕
+
+**Want the official tool?** Go to https://github.com/github/spec-kit
 
 ---
 

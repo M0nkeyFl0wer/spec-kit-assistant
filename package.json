@@ -2,7 +2,7 @@
   "name": "spec-kit-assistant",
   "version": "1.0.0",
   "type": "module",
-  "description": "Friendly assistant wrapper for GitHub Spec Kit - adds helpful dog guidance to spec-driven development",
+  "description": "🐕 Friendly dog assistant wrapper for GitHub Spec Kit - Makes spec-driven development delightful with beginner-friendly UX and AI swarm orchestration",
   "main": "spec-assistant.js",
   "directories": {
     "doc": "docs"
@@ -17,9 +17,19 @@
     "type": "git",
     "url": "git+https://github.com/M0nkeyFl0wer/spec-kit-assistant.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "spec-kit",
+    "spec-driven-development",
+    "github",
+    "ai-assistant",
+    "claude-code",
+    "wrapper",
+    "developer-tools",
+    "onboarding",
+    "friendly-ux"
+  ],
+  "author": "M0nkeyFl0wer",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/M0nkeyFl0wer/spec-kit-assistant/issues"
   },
