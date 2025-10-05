@@ -31,12 +31,20 @@
 ## 🚀 Quick Install
 
 ```bash
-# Clone and run
+# Clone the repo
 git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-cd spec-kit-assistant && npm install && node spec-assistant.js init "My Project"
+cd spec-kit-assistant
+
+# Install (setup runs automatically!)
+npm install
 ```
 
-That's it! 🐕
+**That's it!** The friendly setup wizard launches automatically and guides you through everything! 🐕
+
+If you need to run setup again:
+```bash
+npm run setup
+```
 
 ---
 
