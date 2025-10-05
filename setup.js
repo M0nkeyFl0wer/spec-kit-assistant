@@ -7,6 +7,12 @@ import { execSync } from 'child_process';
 import { existsSync, writeFileSync } from 'fs';
 import inquirer from 'inquirer';
 
+// Skip setup if running non-interactively (npm install in CI/CD or automated context)
+if (!process.stdin.isTTY) {
+  console.log(chalk.dim('Setup skipped (non-interactive mode). Run "npm run setup" to configure.'));
+  process.exit(0);
+}
+
 console.clear();
 
 // Detect if running inside Claude Code or agent context
