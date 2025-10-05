@@ -9,6 +9,57 @@ import inquirer from 'inquirer';
 
 console.clear();
 
+// Detect if running inside Claude Code or agent context
+const isInAgent = process.env.ANTHROPIC_API_KEY ||
+                  process.env.CLAUDE_API_KEY ||
+                  process.env.OPENAI_API_KEY ||
+                  (process.env.TERM_PROGRAM === 'vscode' && process.env.VSCODE_IPC_HOOK);
+
+if (isInAgent) {
+  console.log(chalk.red.bold(`
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║                    ⚠️  HOLD ON A SECOND! ⚠️                    ║
+║                                                                ║
+║   It looks like you're running this inside an AI agent        ║
+║   (Claude Code, Cursor, etc.)                                 ║
+║                                                                ║
+║   That's not quite right! Here's what to do:                  ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+`));
+
+  console.log(chalk.yellow.bold(`\n  🪟 OPEN A NEW TERMINAL WINDOW\n`));
+  console.log(chalk.white(`  1. Open your regular terminal app (not inside the AI agent)`));
+  console.log(chalk.white(`  2. Navigate to this folder:`));
+  console.log(chalk.cyan(`     cd ${process.cwd()}\n`));
+  console.log(chalk.white(`  3. Run setup again:`));
+  console.log(chalk.cyan(`     npm install\n`));
+
+  console.log(chalk.yellow(`  Why? Because Spec Kit Assistant guides YOU through the process!`));
+  console.log(chalk.white(`  If the AI runs it, the AI takes over and you miss the whole point! 😅\n`));
+
+  console.log(chalk.hex('#8B5CF6')(`
+       ∧＿∧
+      (｡･ω･｡)  "See you in a real terminal! Woof!"
+      ⊂　　 ノ
+       しーＪ
+`));
+
+  const { continueAnyway } = await inquirer.prompt([{
+    type: 'confirm',
+    name: 'continueAnyway',
+    message: chalk.yellow('Continue setup anyway? (Not recommended)'),
+    default: false
+  }]);
+
+  if (!continueAnyway) {
+    process.exit(0);
+  }
+
+  console.log(chalk.yellow(`\n⚠️  Okay, but remember: run commands yourself, not through the AI!\n`));
+}
+
 // Welcome screen with big dog!
 console.log(chalk.hex('#8B5CF6')(`
 ╔════════════════════════════════════════════════════════════════╗
