@@ -49,33 +49,26 @@ All core functionality comes from the official Spec Kit. I just added:
 
 ## Quick Start
 
-### One-Click Launch
+### One-Liner Install & Launch
 
 ```bash
-# Clone and run
+curl -fsSL https://raw.githubusercontent.com/M0nkeyFl0wer/spec-kit-assistant/main/install.sh | bash
+```
+
+**That's it!** Installs, sets up, and launches automatically with your pixel dog logo.
+
+### Alternative: Manual Install
+
+```bash
 git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
 cd spec-kit-assistant
 ./run.sh
 ```
 
-**That's it!** The run script automatically:
+The run script automatically:
 - Installs dependencies if needed (no prompts)
-- Launches the app with your pixel dog logo
+- Launches the app
 - Shows you available commands
-
-### Manual Installation
-
-```bash
-# Clone the repo
-git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-cd spec-kit-assistant
-
-# Install dependencies
-npm install
-
-# Run it
-node spec-assistant.js --help
-```
 
 ### Optional: Setup Wizard
 
