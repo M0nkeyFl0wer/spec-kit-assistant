@@ -77,28 +77,119 @@ try {
 }
 
 console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.cyan.bold(`  STEP 2: Install Dependencies\n`));
+console.log(chalk.cyan.bold(`  STEP 2: Choose Package Manager\n`));
+
+console.log(chalk.yellow(`💡 Concerned about npm security? We support safer alternatives!\n`));
+
+// Check what's available
+let availableManagers = [];
+const managers = [
+  { name: 'pnpm (Recommended - faster, more secure)', value: 'pnpm', cmd: 'pnpm', install: 'npm install -g pnpm' },
+  { name: 'bun (Fastest, most secure)', value: 'bun', cmd: 'bun', install: 'curl -fsSL https://bun.sh/install | bash' },
+  { name: 'yarn (Popular, audited)', value: 'yarn', cmd: 'yarn', install: 'npm install -g yarn' },
+  { name: 'npm (Default)', value: 'npm', cmd: 'npm', install: null }
+];
+
+for (const mgr of managers) {
+  try {
+    execSync(`${mgr.cmd} --version`, { stdio: 'ignore' });
+    availableManagers.push(mgr);
+  } catch (e) {
+    // Not installed - still add to list for installation option
+  }
+}
+
+let packageManager = 'npm';
+let installCmd = 'npm install';
+
+if (availableManagers.length === 0) {
+  // None installed, offer to install pnpm
+  console.log(chalk.white(`No alternative package managers found.\n`));
+  const { wantPnpm } = await inquirer.prompt([{
+    type: 'confirm',
+    name: 'wantPnpm',
+    message: chalk.cyan('🐕 Install pnpm (more secure alternative to npm)?'),
+    default: true
+  }]);
+
+  if (wantPnpm) {
+    console.log(chalk.white(`\nInstalling pnpm...`));
+    try {
+      execSync('npm install -g pnpm', { stdio: 'inherit' });
+      packageManager = 'pnpm';
+      installCmd = 'pnpm install';
+      console.log(chalk.green(`✅ pnpm installed!\n`));
+    } catch (e) {
+      console.log(chalk.yellow(`\n⚠️  Couldn't install pnpm, using npm\n`));
+      packageManager = 'npm';
+      installCmd = 'npm install';
+    }
+  }
+} else {
+  // Show available options
+  const { selectedManager } = await inquirer.prompt([{
+    type: 'list',
+    name: 'selectedManager',
+    message: chalk.cyan('🐕 Which package manager?'),
+    choices: [
+      ...availableManagers.map(m => m.name),
+      new inquirer.Separator(),
+      'Install a different one'
+    ],
+    default: availableManagers.find(m => m.value === 'pnpm')?.name || availableManagers[0].name
+  }]);
+
+  if (selectedManager === 'Install a different one') {
+    const notInstalled = managers.filter(m => !availableManagers.find(a => a.value === m.value));
+    const { toInstall } = await inquirer.prompt([{
+      type: 'list',
+      name: 'toInstall',
+      message: chalk.cyan('Which one do you want to install?'),
+      choices: notInstalled.map(m => m.name)
+    }]);
+
+    const mgr = notInstalled.find(m => m.name === toInstall);
+    console.log(chalk.white(`\nInstalling ${mgr.value}...`));
+    try {
+      execSync(mgr.install, { stdio: 'inherit' });
+      packageManager = mgr.value;
+      console.log(chalk.green(`✅ ${mgr.value} installed!\n`));
+    } catch (e) {
+      console.log(chalk.yellow(`\n⚠️  Install failed, using npm\n`));
+      packageManager = 'npm';
+    }
+  } else {
+    packageManager = availableManagers.find(m => m.name === selectedManager).value;
+  }
+
+  installCmd = packageManager === 'npm' ? 'npm install' :
+               packageManager === 'yarn' ? 'yarn install' :
+               packageManager === 'bun' ? 'bun install' :
+               'pnpm install';
+}
+
+console.log(chalk.green(`✅ Using ${packageManager}\n`));
 
 const { installNow } = await inquirer.prompt([{
   type: 'confirm',
   name: 'installNow',
-  message: chalk.cyan('🐕 Ready to install Node.js packages?'),
+  message: chalk.cyan('🐕 Ready to install packages?'),
   default: true
 }]);
 
 if (installNow) {
-  console.log(chalk.white(`\nInstalling packages... (this may take 30-60 seconds)`));
+  console.log(chalk.white(`\nInstalling with ${packageManager}... (30-60 seconds)`));
   try {
-    execSync('npm install', { stdio: 'inherit' });
-    console.log(chalk.green(`\n✅ Packages installed!`));
+    execSync(installCmd, { stdio: 'inherit' });
+    console.log(chalk.green(`\n✅ Packages installed securely!`));
   } catch (e) {
-    console.log(chalk.red(`\n❌ Installation failed. Try running manually:`));
-    console.log(chalk.white(`  npm install\n`));
+    console.log(chalk.red(`\n❌ Installation failed. Try manually:`));
+    console.log(chalk.white(`  ${installCmd}\n`));
     process.exit(1);
   }
 } else {
   console.log(chalk.yellow(`\nSkipped! Run this later:`));
-  console.log(chalk.white(`  npm install\n`));
+  console.log(chalk.white(`  ${installCmd}\n`));
 }
 
 console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
