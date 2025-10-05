@@ -37,13 +37,19 @@ cd spec-kit-assistant
 
 # Install (setup runs automatically!)
 npm install
+# Or use pnpm/bun/yarn - setup wizard lets you choose!
 ```
 
-**That's it!** The friendly setup wizard launches automatically and guides you through everything! 🐕
+**That's it!** The friendly setup wizard launches automatically and:
+- ✅ Lets you choose package manager (pnpm, bun, yarn, or npm)
+- ✅ Guides you through installation step-by-step
+- ✅ Perfect for beginners! 🐕
+
+**Concerned about npm security?** The setup wizard offers safer alternatives like **pnpm** or **bun**!
 
 If you need to run setup again:
 ```bash
-npm run setup
+npm run setup  # or: pnpm run setup / bun run setup / yarn setup
 ```
 
 ---
