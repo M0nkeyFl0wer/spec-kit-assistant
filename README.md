@@ -47,59 +47,42 @@ All core functionality comes from the official Spec Kit. I just added:
 
 ---
 
-## 🚀 Quick Install
+## Quick Start
 
-### ⚠️ **IMPORTANT: This is a TERMINAL TOOL, not for Claude Code!**
-
-**If Claude Code helped you download this:**
-1. ✋ **STOP using Claude Code for now**
-2. 🪟 **Open a NEW terminal window** (outside Claude Code)
-3. 💻 **Run the commands below in your terminal**
-
-Why? Spec Kit Assistant guides YOU through spec-driven development. If Claude runs it, Claude takes over and you miss the whole process! 🐕
-
----
-
-### Installation (in your terminal)
+### One-Click Launch
 
 ```bash
-# 1. Clone the repo
+# Clone and run
+git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
+cd spec-kit-assistant
+./run.sh
+```
+
+**That's it!** The run script automatically:
+- Installs dependencies if needed (no prompts)
+- Launches the app with your pixel dog logo
+- Shows you available commands
+
+### Manual Installation
+
+```bash
+# Clone the repo
 git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
 cd spec-kit-assistant
 
-# 2. Run setup (it auto-launches after install)
+# Install dependencies
 npm install
+
+# Run it
+node spec-assistant.js --help
 ```
 
-**That's it!** The friendly setup wizard:
-- ✅ Detects if you're using Claude Code (asks you to open real terminal if so)
-- ✅ Lets you choose package manager (pnpm, bun, yarn, or npm)
-- ✅ Defaults to Claude as AI model (you can change it)
-- ✅ Perfect for beginners! 🐕
+### Optional: Setup Wizard
 
----
+Want to configure package manager preferences and AI models?
 
-### 🤔 "Wait, I'm confused..."
-
-**Q: Isn't this for Claude Code?**
-A: This tool WORKS WITH Claude Code, but you RUN IT from your terminal. Think of it like:
-- **Spec Kit Assistant** = The director (you run commands)
-- **Claude Code** = The worker (it implements based on your spec)
-
-**Q: Why can't Claude just run it for me?**
-A: Because the whole point is YOU drive the process! Spec Kit Assistant walks YOU through:
-1. Writing a clear spec
-2. Creating TODOs
-3. Getting clarifications
-4. THEN having Claude implement
-
-If Claude runs everything, it skips steps 1-3 and just codes! 😅
-
----
-
-### Re-run setup anytime:
 ```bash
-npm run setup  # or: pnpm/bun/yarn run setup
+npm run setup
 ```
 
 ---
