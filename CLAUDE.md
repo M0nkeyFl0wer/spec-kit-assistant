@@ -22,9 +22,8 @@ This is a **TRUE FORK** that wraps the official GitHub Spec Kit:
 
 ## Remote Deployment
 
-**Seshat Server**: `ssh -p 8888 m0nkey-fl0wer@seshat.noosworx.com`
-- Run swarms remotely for heavy operations
-- Deploy to: `~/spec-kit-assistant/`
+- Supports SSH deployment to remote servers for heavy swarm operations
+- Configure your server details in local config (not in repo)
 
 ## Key Files
 

@@ -173,11 +173,11 @@ npm install
 node spec-assistant.js init "Test Project"
 ```
 
-### Remote Deployment (Seshat)
+### Remote Deployment
 
 ```bash
-# Deploy to remote server
-ssh -p 8888 m0nkey-fl0wer@seshat.noosworx.com
+# Deploy to remote server (configure SSH in your local setup)
+ssh your-server
 cd spec-kit-assistant
 node spec-assistant.js deploy
 ```
@@ -187,7 +187,7 @@ node spec-assistant.js deploy
 
         ___
        /   \
-      | • • |    "Deploying to Seshat..."
+      | • • |    "Deploying remotely..."
        \___/
         | |
        _| |_
