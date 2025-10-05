@@ -1,5 +1,12 @@
 import chalk from 'chalk';
-import ora from 'ora';
+let ora;
+try {
+  const oraModule = await import('ora');
+  ora = oraModule.default;
+} catch {
+  // ora not available, will skip spinners
+  ora = null;
+}
 import inquirer from 'inquirer';
 import { DogArt, MoodArt, DogAnimations } from './dog-art.js';
 
@@ -323,34 +330,45 @@ export class SpecCharacter {
   async think(duration = 2000) {
     await this.show('thinking');
 
-    const spinner = ora({
-      text: 'Spec is thinking...',
-      spinner: {
-        interval: 200,
-        frames: ['🤔', '💭', '🧠', '💡', '✨'],
-      },
-    }).start();
+    if (ora) {
+      const spinner = ora({
+        text: 'Spec is thinking...',
+        spinner: {
+          interval: 200,
+          frames: ['🤔', '💭', '🧠', '💡', '✨'],
+        },
+      }).start();
 
-    await this.pause(duration);
+      await this.pause(duration);
 
-    spinner.stop();
+      spinner.stop();
+    } else {
+      console.log('Spec is thinking...');
+      await this.pause(duration);
+    }
     console.log(chalk.green('💡 Got it!'));
   }
 
   async work(task, duration = 3000) {
     await this.show('working', `Starting work on: ${task}`);
 
-    const spinner = ora({
-      text: `Spec is working on ${task}...`,
-      spinner: {
-        interval: 300,
-        frames: ['🐕', '🦴', '🎾', '🐾', '🏃‍♂️'],
-      },
-    }).start();
+    if (ora) {
+      const spinner = ora({
+        text: `Spec is working on ${task}...`,
+        spinner: {
+          interval: 300,
+          frames: ['🐕', '🦴', '🎾', '🐾', '🏃‍♂️'],
+        },
+      }).start();
 
-    await this.pause(duration);
+      await this.pause(duration);
 
-    spinner.succeed(chalk.green(`✅ Completed: ${task}`));
+      spinner.succeed(chalk.green(`✅ Completed: ${task}`));
+    } else {
+      console.log(`Spec is working on ${task}...`);
+      await this.pause(duration);
+      console.log(chalk.green(`✅ Completed: ${task}`));
+    }
   }
 
   async askQuestion(question, options = {}) {
