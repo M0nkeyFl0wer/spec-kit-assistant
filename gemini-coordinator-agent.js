@@ -4,7 +4,7 @@
  * Queen agent that uses free Gemini tokens to coordinate swarm tasks
  */
 
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import chalk from 'chalk';
 
 class GeminiCoordinatorAgent {
@@ -42,9 +42,19 @@ class GeminiCoordinatorAgent {
     try {
       console.log(chalk.cyan('👑 Queen Coordinator analyzing task...'));
 
-      // Use Gemini CLI for coordination
-      const command = `echo "${prompt}" | gemini`;
-      const response = execSync(command, { encoding: 'utf8', timeout: 10000 });
+      // SECURITY FIX: Use spawn instead of execSync to prevent command injection
+      const result = spawnSync('gemini', [], {
+        input: prompt,
+        encoding: 'utf8',
+        timeout: 10000,
+        shell: false  // Explicitly disable shell
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      const response = result.stdout;
 
       this.tokensUsed += this.estimateTokens(prompt + response);
 
@@ -172,9 +182,21 @@ Respond in JSON format:
     try {
       const branchName = this.generateBranchName(task);
 
+      // SECURITY FIX: Validate branch name to prevent command injection
+      if (!/^[a-zA-Z0-9._/-]+$/.test(branchName)) {
+        throw new Error('Invalid branch name - contains unsafe characters');
+      }
+
       switch (strategy) {
         case 'feature-branch-workflow':
-          execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' });
+          // SECURITY FIX: Use spawnSync instead of execSync
+          const result = spawnSync('git', ['checkout', '-b', branchName], {
+            stdio: 'inherit',
+            shell: false
+          });
+          if (result.error || result.status !== 0) {
+            throw new Error('Failed to create git branch');
+          }
           console.log(chalk.green(`✅ Created feature branch: ${branchName}`));
           break;
 

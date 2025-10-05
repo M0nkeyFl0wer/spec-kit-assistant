@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import os from 'os';
 import fs from 'fs-extra';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execSync, spawnSync } from 'child_process';
 import { DogArt } from '../character/dog-art.js';
 
 /**
@@ -472,8 +472,23 @@ export class IntelligentSwarmOrchestrator {
 
   async pullOllamaModel(model) {
     console.log(chalk.yellow(`📦 Pulling Ollama model: ${model}`));
+
+    // SECURITY FIX: Validate model name to prevent command injection
+    if (!/^[a-zA-Z0-9:._-]+$/.test(model)) {
+      throw new Error('Invalid model name - contains unsafe characters');
+    }
+
     try {
-      execSync(`ollama pull ${model}`, { stdio: 'inherit' });
+      // SECURITY FIX: Use spawnSync instead of execSync
+      const result = spawnSync('ollama', ['pull', model], {
+        stdio: 'inherit',
+        shell: false
+      });
+
+      if (result.error || result.status !== 0) {
+        throw new Error(`Failed to pull model ${model}`);
+      }
+
       console.log(chalk.green(`✅ Model ${model} ready!`));
     } catch (error) {
       console.log(chalk.red(`❌ Failed to pull model: ${error.message}`));
