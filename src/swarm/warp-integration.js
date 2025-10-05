@@ -667,9 +667,13 @@ node agent.js
 
   /**
    * Sign task with HMAC for integrity
+   * SECURITY FIX: Removed weak fallback secret
    */
   signTask(task) {
-    const secret = process.env.SPEC_KIT_SECRET || 'spec-kit-secret';
+    const secret = process.env.SPEC_KIT_SECRET;
+    if (!secret) {
+      throw new Error('SPEC_KIT_SECRET environment variable must be set for secure operations');
+    }
     return crypto.createHmac('sha256', secret)
       .update(JSON.stringify(task))
       .digest('hex');
