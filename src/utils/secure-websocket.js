@@ -323,8 +323,17 @@ export class SecureWebSocketServer extends EventEmitter {
       return;
     }
 
-    // Validate token (simplified - in production use proper crypto)
-    const expectedToken = crypto.createHmac('sha256', 'spec-kit-secret')
+    // SECURITY FIX: Use environment variable for secret
+    const secret = process.env.WEBSOCKET_AUTH_SECRET;
+    if (!secret) {
+      console.error('WEBSOCKET_AUTH_SECRET environment variable not set!');
+      this.sendError(connectionId, 'Server configuration error');
+      connectionInfo.ws.close(4500, 'Server misconfigured');
+      return;
+    }
+
+    // Validate token using environment-based secret
+    const expectedToken = crypto.createHmac('sha256', secret)
       .update(agentId + agentType)
       .digest('hex');
 
