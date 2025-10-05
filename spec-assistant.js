@@ -84,16 +84,55 @@ function ensureSpecKitInstalled() {
 }
 
 /**
- * Call official Spec Kit CLI
+ * Show friendly dog guidance after init
  */
-function callSpecKit(args) {
-  console.log(chalk.hex('#10B981')(`\n🌱 Running: specify ${args.join(' ')}\n`));
+function showDogNextSteps() {
+  console.log(chalk.hex('#8B5CF6')(`
+       ∧＿∧
+      (｡･ω･｡)  "Great! Your project is ready!"
+      ⊂　　 ノ
+       しーＪ
+`));
+
+  console.log(chalk.cyan.bold(`\n🐕 Now let's build your spec! Here's how it works:\n`));
+  console.log(chalk.white(`  1. Open this project in ${chalk.cyan('Claude Code')} (or your chosen AI)`));
+  console.log(chalk.white(`  2. Use ${chalk.cyan('slash commands')} to guide the AI:\n`));
+
+  console.log(chalk.hex('#EC4899')(`     The Spec-Driven Process:`));
+  console.log(chalk.white(`     ${chalk.cyan('/constitution')}  - Define project principles`));
+  console.log(chalk.white(`     ${chalk.cyan('/specify')}       - Write what to build`));
+  console.log(chalk.white(`     ${chalk.cyan('/plan')}          - Create implementation plan`));
+  console.log(chalk.white(`     ${chalk.cyan('/tasks')}         - Break into tasks`));
+  console.log(chalk.white(`     ${chalk.cyan('/implement')}     - AI builds it!\n`));
+
+  console.log(chalk.yellow(`  💡 Remember: ${chalk.dim('You drive the process, AI executes')}`));
+  console.log(chalk.gray(`     Run these slash commands IN Claude Code, not here!\n`));
+}
+
+/**
+ * Call official Spec Kit CLI with optional argument injection
+ */
+function callSpecKit(args, injectArgs = []) {
+  const allArgs = [...injectArgs, ...args];
+
+  // Default to Claude if this is an init command without --ai specified
+  if (args[0] === 'init' && !args.includes('--ai') && !args.includes('claude')) {
+    console.log(chalk.cyan(`🐕 Defaulting to Claude Code (use --ai to change)\n`));
+    allArgs.splice(1, 0, '--ai', 'claude');
+  }
+
+  console.log(chalk.hex('#10B981')(`\n🐕 Running: specify ${allArgs.join(' ')}\n`));
 
   try {
-    execSync(`~/.local/bin/uv tool run --from . specify ${args.join(' ')}`, {
+    execSync(`~/.local/bin/uv tool run --from . specify ${allArgs.join(' ')}`, {
       stdio: 'inherit',
       cwd: __dirname
     });
+
+    // After successful init, show friendly next steps
+    if (args[0] === 'init') {
+      showDogNextSteps();
+    }
   } catch (error) {
     console.error(chalk.red('\n❌ Command failed'));
     process.exit(error.status || 1);
