@@ -10,6 +10,13 @@ export class SpecCharacter {
     this.currentMood = 'excited';
     this.voiceEnabled = false;
 
+    // Stub out multimedia features (not needed for simple wrapper)
+    this.multimedia = {
+      showCelebration: async () => {},
+      generateDemo: async () => {},
+      showStepDemo: async () => {},
+    };
+
     // Use the amazing new dog art collection!
     this.art = {
       // Enhanced with colors and messages
