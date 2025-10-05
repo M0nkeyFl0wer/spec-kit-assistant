@@ -31,11 +31,12 @@
 ## 🚀 Quick Install
 
 ```bash
-# One command to rule them all
-curl -fsSL https://raw.githubusercontent.com/yourusername/spec-kit-assistant/main/install.sh | bash
+# Clone and run
+git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
+cd spec-kit-assistant && npm install && node spec-assistant.js init "My Project"
 ```
 
-That's it! Spec is ready to help! 🐕
+That's it! 🐕
 
 ---
 
@@ -162,7 +163,7 @@ spec-assistant swarm                       # Swarm management
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/spec-kit-assistant
+git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant
 cd spec-kit-assistant
 
 # Install Node dependencies
