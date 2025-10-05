@@ -31,18 +31,21 @@
 
 ---
 
-## 💭 **Why This Exists**
+## Why This Exists
 
-I **love** GitHub Spec Kit! It's an amazing tool for spec-driven development. While using it, I had some ideas about making the onboarding smoother and adding a friendlier personality. This project is my way of:
+I've been using [GitHub Spec Kit](https://github.com/github/spec-kit) and really like it. While using it, I had some UX ideas I wanted to explore - mainly around making the onboarding less intimidating for beginners.
 
-1. **Sharing my UX ideas** - things I personally wanted while learning Spec Kit
-2. **Starting a conversation** - maybe these ideas are useful, maybe they're not!
-3. **Learning in public** - building this taught me a lot about Spec Kit's design
-4. **Inviting collaboration** - feedback and contributors welcome!
+This wrapper is:
+- **Experimental** - testing some UX improvements
+- **Unofficial** - not affiliated with the Spec Kit team
+- **For discussion** - sharing my experience and inviting feedback
 
-This is **experimental** and **unofficial**. All the real magic comes from the [@github/spec-kit team](https://github.com/github/spec-kit)'s excellent work. I'm just adding some dog ASCII art and training wheels. 🐕
+All core functionality comes from the official Spec Kit. I just added:
+- Friendly onboarding wizard
+- Claude Code defaults
+- Some dog ASCII art (because why not)
 
-**Want the official tool?** Go to https://github.com/github/spec-kit
+**Want the real thing?** Use https://github.com/github/spec-kit
 
 ---
 
