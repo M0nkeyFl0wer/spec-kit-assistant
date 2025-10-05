@@ -16,20 +16,20 @@ export const SpecLogo = {
   pixelDog: chalk.white(`
     ╔════════════════════════════════════════════════════════════════╗
     ║                         `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`                 ║
-    ║                       `) + chalk.hex('#00D9FF')('██▓▓▓▓▓▓██████████▓▓▓▓▓▓██') + chalk.white(`               ║
-    ║                       `) + chalk.hex('#0099FF')('██▓▓▓▓██          ██▓▓▓▓██') + chalk.white(`               ║
-    ║                       `) + chalk.hex('#0099FF')('██▓▓████    ▓▓▓▓▓▓████▓▓██') + chalk.white(`               ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██  ██  ██▓▓██▓▓██  ██') + chalk.white(`        ║
-    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(`     `) + chalk.hex('#0066FF')('██    ▓▓▓▓▓▓██') + chalk.white(`            ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
-    ║                                            `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`            ║
-    ║                                               `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`              ║
-    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
-    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
-    ║                                                   `) + chalk.hex('#0066FF')('████') + chalk.white(`                  ║
+    ║                       `) + chalk.hex('#00D9FF')('████████████████████████') + chalk.white(`               ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██████          ██████') + chalk.white(`  ║
+    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(` `) + chalk.hex('#0099FF')('████████    ████████████') + chalk.white(`  ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`      `) + chalk.hex('#0099FF')('██  ██  ████████  ██') + chalk.white(`    ║
+    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ████████') + chalk.white(`        ║
+    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`    `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`      ║
+    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`    `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`      ║
+    ║                                       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`      ║
+    ║                                       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`      ║
+    ║                                        `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`        ║
+    ║                                           `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`          ║
+    ║                                             `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`            ║
+    ║                                             `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`            ║
+    ║                                               `) + chalk.hex('#0066FF')('████') + chalk.white(`              ║
     ╚════════════════════════════════════════════════════════════════╝
 `),
 
