@@ -50,36 +50,15 @@ if (existsSync(setupMarker)) {
   }
 }
 
-console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.cyan.bold(`  STEP 1: Check Your System\n`));
-
-// Check Node.js
-console.log(chalk.white(`Checking Node.js version...`));
+// Quick system check
 try {
-  const nodeVersion = execSync('node --version', { encoding: 'utf8' }).trim();
-  console.log(chalk.green(`✅ Node.js found: ${nodeVersion}`));
+  execSync('node --version', { stdio: 'ignore' });
 } catch (e) {
-  console.log(chalk.red(`❌ Node.js not found!`));
-  console.log(chalk.yellow(`\nPlease install Node.js first:`));
-  console.log(chalk.white(`  https://nodejs.org\n`));
+  console.log(chalk.red(`❌ Node.js not found! Install from https://nodejs.org\n`));
   process.exit(1);
 }
 
-// Check Python
-console.log(chalk.white(`\nChecking Python version...`));
-try {
-  const pythonVersion = execSync('python3 --version', { encoding: 'utf8' }).trim();
-  console.log(chalk.green(`✅ Python found: ${pythonVersion}`));
-} catch (e) {
-  console.log(chalk.yellow(`⚠️  Python not found (optional, but recommended)`));
-  console.log(chalk.white(`  The official Spec Kit needs Python 3.8+`));
-  console.log(chalk.white(`  Download: https://www.python.org\n`));
-}
-
-console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.cyan.bold(`  STEP 2: Choose Package Manager\n`));
-
-console.log(chalk.yellow(`💡 Concerned about npm security? We support safer alternatives!\n`));
+console.log(chalk.yellow(`\n💡 Concerned about npm security? I support safer alternatives too!\n`));
 
 // Check what's available
 let availableManagers = [];
@@ -192,17 +171,13 @@ if (installNow) {
   console.log(chalk.white(`  ${installCmd}\n`));
 }
 
-console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.cyan.bold(`  STEP 3: Install Official Spec Kit (Optional)\n`));
-
-console.log(chalk.white(`The official GitHub Spec Kit provides core spec-driven features.`));
-console.log(chalk.white(`This wrapper adds AI swarms and friendly dog personality! 🐕\n`));
+console.log(chalk.cyan(`\n🐕 Want the full power of official Spec Kit too?\n`));
 
 const { installSpecKit } = await inquirer.prompt([{
   type: 'confirm',
   name: 'installSpecKit',
-  message: chalk.cyan('Install official Spec Kit now?'),
-  default: true
+  message: chalk.cyan('Install official GitHub Spec Kit?'),
+  default: false
 }]);
 
 if (installSpecKit) {
@@ -225,112 +200,16 @@ if (installSpecKit) {
   console.log(chalk.white(`  ~/.local/bin/uv tool install .\n`));
 }
 
-console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.cyan.bold(`  STEP 4: Quick Tutorial\n`));
-
-const { wantTutorial } = await inquirer.prompt([{
-  type: 'confirm',
-  name: 'wantTutorial',
-  message: chalk.cyan('🐕 Want a quick tutorial? (30 seconds)'),
-  default: true
-}]);
-
-if (wantTutorial) {
-  console.log(chalk.white(`\n` + `─`.repeat(60)));
-  console.log(chalk.hex('#EC4899').bold(`\n  📚 BASIC COMMANDS\n`));
-
-  console.log(chalk.cyan(`  Official Spec Kit commands:`));
-  console.log(chalk.white(`    node spec-assistant.js init "Project Name"`));
-  console.log(chalk.gray(`      → Create a new spec for your project\n`));
-
-  console.log(chalk.white(`    node spec-assistant.js check`));
-  console.log(chalk.gray(`      → Validate your spec\n`));
-
-  console.log(chalk.white(`    node spec-assistant.js constitution`));
-  console.log(chalk.gray(`      → Show Spec Kit principles\n`));
-
-  console.log(chalk.cyan(`  Enhanced AI Swarm commands:`));
-  console.log(chalk.white(`    node spec-assistant.js run "implement feature X"`));
-  console.log(chalk.gray(`      → Deploy AI swarms to build features\n`));
-
-  console.log(chalk.white(`    node spec-assistant.js test`));
-  console.log(chalk.gray(`      → Run automated testing swarms\n`));
-
-  console.log(chalk.white(`    node spec-assistant.js deploy`));
-  console.log(chalk.gray(`      → Production deployment with swarms\n`));
-
-  console.log(chalk.white(`─`.repeat(60)));
-
-  console.log(chalk.hex('#10B981').bold(`\n  💡 TIPS FOR TERMINAL BEGINNERS\n`));
-  console.log(chalk.white(`  • ${chalk.cyan('cd directory-name')} - Move into a folder`));
-  console.log(chalk.white(`  • ${chalk.cyan('ls')} - List files in current folder`));
-  console.log(chalk.white(`  • ${chalk.cyan('pwd')} - Show where you are`));
-  console.log(chalk.white(`  • ${chalk.cyan('clear')} - Clear the screen`));
-  console.log(chalk.white(`  • Use ${chalk.cyan('Tab')} key to autocomplete file names!`));
-  console.log(chalk.white(`  • Use ${chalk.cyan('↑')} and ${chalk.cyan('↓')} arrows to cycle through previous commands\n`));
-
-  console.log(chalk.white(`─`.repeat(60) + `\n`));
-}
-
-// Create quick reference file
-console.log(chalk.white(`\n📝 Creating quick reference file...`));
-const quickRef = `# 🐕 Spec Kit Assistant - Quick Reference
-
-## Common Commands
-
-### Create a New Spec
-\`\`\`bash
-node spec-assistant.js init "My Project Name"
-\`\`\`
-
-### Validate Your Spec
-\`\`\`bash
-node spec-assistant.js check
-\`\`\`
-
-### Deploy AI Swarms
-\`\`\`bash
-node spec-assistant.js run "implement authentication"
-\`\`\`
-
-## Terminal Basics for Beginners
-
-- **cd folder-name** - Move into a folder
-- **ls** - List files
-- **pwd** - Show current location
-- **clear** - Clear screen
-- **Tab key** - Autocomplete
-- **↑/↓ arrows** - Previous commands
-
-## Documentation
-
-- [Full README](README.md)
-- [Constitution](CONSTITUTION.md)
-- [Spec](SPEC.md)
-
-## Need Help?
-
-- GitHub Issues: https://github.com/M0nkeyFl0wer/spec-kit-assistant/issues
-- Official Spec Kit: https://github.com/github/spec-kit
-
----
-🐕 Woof! Happy spec-driven development!
-`;
-
-writeFileSync('./QUICK-START.md', quickRef);
-console.log(chalk.green(`✅ Created QUICK-START.md for reference!`));
-
 // Mark setup as complete
 writeFileSync(setupMarker, new Date().toISOString());
 
 console.log(chalk.magenta(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`));
-console.log(chalk.hex('#10B981').bold(`  ✨ SETUP COMPLETE! ✨\n`));
+console.log(chalk.hex('#10B981').bold(`  ✨ ALL SET! LET'S GO! ✨\n`));
 
-console.log(chalk.cyan(`🐕 You're all set! Let's create your first spec:\n`));
+console.log(chalk.cyan(`🐕 Woof! I'm ready to help! Let's create your first spec:\n`));
 console.log(chalk.white.bold(`  node spec-assistant.js init "My Awesome Project"\n`));
 
-console.log(chalk.gray(`Need help? Check QUICK-START.md or run:`));
-console.log(chalk.white(`  node spec-assistant.js --help\n`));
+console.log(chalk.gray(`(Psst! I'll guide you through everything as we go!)\n`));
 
 console.log(chalk.hex('#8B5CF6')(`
        ∧＿∧
@@ -338,5 +217,5 @@ console.log(chalk.hex('#8B5CF6')(`
       ⊂　　 ノ 　　　・゜+.
        しーＪ　　　°。+ *´¨)
 
-    Woof woof! Happy coding! 🦴
+    Let's build something awesome! 🦴
 `));
