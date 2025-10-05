@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/github/spec-kit#readme",
   "dependencies": {
-    "chalk": "^5.6.2"
+    "chalk": "^5.6.2",
+    "fs-extra": "^11.3.2",
+    "ws": "^8.18.3"
   }
 }
