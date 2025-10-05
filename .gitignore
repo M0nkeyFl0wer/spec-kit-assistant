@@ -61,3 +61,5 @@ yarn-error.log*
 .genreleases/
 *.zip
 sdd-*/
+.spec-setup-complete
+QUICK-START.md
