@@ -4,20 +4,24 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
 
 ```
-    ╔════════════════════════════════════════════════════════════════╗
-    ║                             ██████          ██████             ║
-    ║                           ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██           ║
-    ║   ███████╗██████╗ ███████╗ ██████╗ ██▓▓▓▓██          ██▓▓▓▓██  ║
-    ║   ██╔════╝██╔══██╗██╔════╝██╔════╝ ██▓▓████    ▓▓▓▓▓▓████▓▓██  ║
-    ║   ███████╗██████╔╝█████╗  ██║      ██  ██  ██▓▓██▓▓██  ██    ║
-    ║   ╚════██║██╔═══╝ ██╔══╝  ██║          ██    ▓▓▓▓▓▓██        ║
-    ║   ███████║██║     ███████╗╚██████╗    ██              ██      ║
-    ║   ╚══════╝╚═╝     ╚══════╝ ╚═════╝    ██    ██████    ██      ║
-    ║                                     ██    ██████    ██      ║
-    ║                                     ██              ██      ║
-    ║    🌱 GitHub Spec Kit Assistant     ██    ██    ██        ║
-    ║  Spec-Driven Development Made Easy ████░░████          ║
-    ╚════════════════════════════════════════════════════════════════╝
+                                         ██████          ██████
+                                       ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██
+                                       ██▓▓▓▓██          ██▓▓▓▓██
+                                       ██▓▓████    ▓▓▓▓▓▓████▓▓██
+   ███████╗██████╗ ███████╗ ██████╗    ██  ██  ██▓▓██▓▓██  ██
+   ██╔════╝██╔══██╗██╔════╝██╔════╝        ██    ▓▓▓▓▓▓██
+   ███████╗██████╔╝█████╗  ██║            ██              ██
+   ╚════██║██╔═══╝ ██╔══╝  ██║            ██    ██████    ██
+   ███████║██║     ███████╗╚██████╗       ██    ██████    ██
+   ╚══════╝╚═╝     ╚══════╝ ╚═════╝       ██              ██
+                                            ██    ██    ██
+                                               ████░░████
+                                                 ██░░██
+                                                 ██░░██
+                                                   ████
+
+                  🌱 GitHub Spec Kit Assistant
+              Spec-Driven Development Made Easy
 ```
 
 > **An experimental wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit)**
@@ -100,10 +104,10 @@ npm run setup  # or: pnpm/bun/yarn run setup
 
 ---
 
-## 📖 The Journey
+## The Journey
 
 ```
-    🐕 "Woof! Let me tell you how I came to be..."
+    "Woof! Let me tell you how I came to be..."
 
          |\__/,|   (`\
        _.|o o  |_   ) )
@@ -145,12 +149,14 @@ spec-assistant constitution # Show constitution
 ```
 
 ```
-    🐕 "These commands go straight to the official Spec Kit!"
+    "These commands go straight to the official Spec Kit!"
+
          ___
         /o o\
        ( =^= )
         )   (
        /|   |\
+      (_) (_)
 ```
 
 ### Enhanced Swarm Commands
@@ -163,13 +169,21 @@ spec-assistant swarm                       # Swarm management
 ```
 
 ```
-    🐕 "These are MY special commands! I call in my swarm friends!"
+    "These are MY special commands! I call in my swarm friends!"
 
-         🤖 Builder Swarm
-         🛡️  Red-Team Swarm
-         📊 Data Science Swarm
-         🚀 Production Swarm
-         🔒 Security Swarm
+       ,--._______,-.
+      ( )   (  \_O/( )
+       |\    \  / '|
+       | \  .~  / |
+        \  \   /  /
+        |    ~   |
+        |  (\/) |
+
+         >> Builder Swarm
+         >> Red-Team Swarm
+         >> Data Science Swarm
+         >> Production Swarm
+         >> Security Swarm
 ```
 
 ---
@@ -202,12 +216,13 @@ spec-assistant swarm                       # Swarm management
 6. **Spec celebrates** when done!
 
 ```
-    🐕 "I'm just here to make everything friendlier!"
+    "I'm just here to make everything friendlier!"
 
-       ∧＿∧
-      (｡･ω･｡)つ━☆・*。
-      ⊂　　 ノ 　　　・゜+.
-       しーＪ　　　°。+ *´¨)
+       / \__
+      (    @\___
+      /         O
+     /   (_____/
+    /_____/   U
 ```
 
 ---
@@ -243,14 +258,14 @@ node spec-assistant.js deploy
 ```
 
 ```
-    🐕 "I can run on servers too! SSH is my friend!"
+    "I can run on servers too! SSH is my friend!"
 
-        ___
-       /   \
-      | • • |    "Deploying remotely..."
-       \___/
-        | |
-       _| |_
+         __
+    (___()'`;
+    /,    /`
+    \\"--\\
+
+    "Deploying remotely..."
 ```
 
 ---
@@ -270,7 +285,14 @@ node spec-assistant.js run "Red-team security audit"
 - Race condition handling: PASS
 
 ```
-    🛡️ "I take security seriously!"
+    "I take security seriously!"
+
+      /^ ^\
+     / 0 0 \
+     V\ Y /V
+      / - \
+     /    |
+    V__) ||
 
        |\      _,,,---,,_
  ZZZzz /,`.-'`'    -.  ;-;;,_
@@ -329,13 +351,17 @@ spec-assistant run "Security audit"
 ### Why a Dog Assistant?
 
 ```
-    🐕 "Because development should be FUN!"
+    "Because development should be FUN!"
+
+       /\_/\
+      ( o.o )
+       > ^ <
 
     Dogs are:
-    ✓ Loyal - Always here to help
-    ✓ Friendly - Make everything less scary
-    ✓ Playful - Coding should be joyful
-    ✓ Focused - But also keep YOU focused
+    > Loyal - Always here to help
+    > Friendly - Make everything less scary
+    > Playful - Coding should be joyful
+    > Focused - But also keep YOU focused
 ```
 
 ### Why Wrap, Not Replace?
@@ -357,11 +383,12 @@ This project **used Spec Kit to build itself**:
 5. Tested with AI swarms deployed via Spec Kit
 
 ```
-    🐕 "I'm a spec-driven dog! Woof!"
+    "I'm a spec-driven dog! Woof!"
 
-         ∧∧
-        (･ω･)
-        /  づ〜♡  SPEC.md
+         __
+    (___()'`;
+    /,    /`
+    \\"--\\    [SPEC.md]
 ```
 
 ---
@@ -378,12 +405,15 @@ This project **used Spec Kit to build itself**:
 ## 🤝 Contributing
 
 ```
-    🐕 "Want to help? I'd love that!"
+    "Want to help? I'd love that!"
 
-       ∧＿∧
-      (｡･ω･｡)つ  Pull requests welcome!
-      ⊂　　 ノ
-       しーＪ
+       ,--._______,-.
+      ( )   (  \_O/( )
+       |\    \  / '|
+       | \  .~  / |
+        \  \   /  /
+
+    Pull requests welcome!
 ```
 
 1. Fork the repo
@@ -423,8 +453,8 @@ MIT License - See [LICENSE](LICENSE)
            (:::)
             \(
 
-    🐕 "Thanks for using Spec Kit Assistant!"
-       "Woof woof! Happy spec-driven development!"
+    "Thanks for using Spec Kit Assistant!"
+    "Woof woof! Happy spec-driven development!"
 ```
 
 ---
