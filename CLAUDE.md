@@ -22,9 +22,8 @@ This is a **TRUE FORK** that wraps the official GitHub Spec Kit:
 
 ## Remote Deployment
 
-**Remote-Server Server**: `ssh -p 8888 REMOTE_USER@REMOTE_HOST`
-- Run swarms remotely for heavy operations
-- Deploy to: `~/spec-kit-assistant/`
+- Supports SSH deployment to remote servers for heavy swarm operations
+- Configure your server details in local config (not in repo)
 
 ## Key Files
 
