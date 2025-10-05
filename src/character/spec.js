@@ -1,8 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
-import { MultimediaGenerator } from '../multimedia/multimedia-generator.js';
-import { VoiceSynthesis } from '../multimedia/voice-synthesis.js';
 import { DogArt, MoodArt, DogAnimations } from './dog-art.js';
 
 export class SpecCharacter {
@@ -11,8 +9,6 @@ export class SpecCharacter {
     this.personality = 'friendly-helpful-encouraging';
     this.currentMood = 'excited';
     this.voiceEnabled = false;
-    this.multimedia = new MultimediaGenerator();
-    this.voice = new VoiceSynthesis();
 
     // Use the amazing new dog art collection!
     this.art = {
