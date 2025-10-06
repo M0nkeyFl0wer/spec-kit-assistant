@@ -15,23 +15,23 @@ export const SpecLogo = {
   // Pixel dog art with SPEC text inline - Hand-coded by user!
   // Matches Specify gradient: cyan #00D9FF → blue #0099FF → deep blue #0066FF
   pixelDog: chalk.white(`
-    ╔════════════════════════════════════════════════════════════════╗
-    ║                             `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`             ║
-    ║                           `) + chalk.hex('#00D9FF')('████████████████████████') + chalk.white(`           ║
-    ║                           `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`           ║
-    ║                           `) + chalk.hex('#0099FF')('████████    ████████████') + chalk.white(`           ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██  ██  ████████  ██') + chalk.white(`        ║
-    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(`     `) + chalk.hex('#0099FF')('██    ████████') + chalk.white(`            ║
-    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`          ║
-    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`          ║
-    ║                                            `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`            ║
-    ║                                               `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`              ║
-    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
-    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                ║
-    ║                                                   `) + chalk.hex('#0066FF')('████') + chalk.white(`                  ║
-    ╚════════════════════════════════════════════════════════════════╝
+    ╔════════════════════════════════════════════════════════════════════╗
+    ║                             `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`                 ║
+    ║                           `) + chalk.hex('#00D9FF')('████████████████████████') + chalk.white(`               ║
+    ║                           `) + chalk.hex('#00D9FF')('██████          ██████') + chalk.white(`               ║
+    ║                           `) + chalk.hex('#0099FF')('████████    ████████████') + chalk.white(`               ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╗ ███████╗ ██████╗') + chalk.white(` `) + chalk.hex('#0099FF')('██  ██  ████████  ██') + chalk.white(`            ║
+    ║   `) + chalk.hex('#0099FF')('██╔════╝██╔══██╗██╔════╝██╔════╝') + chalk.white(`     `) + chalk.hex('#0099FF')('██    ████████') + chalk.white(`                ║
+    ║   `) + chalk.hex('#0099FF')('███████╗██████╔╝█████╗  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`              ║
+    ║   `) + chalk.hex('#0099FF')('╚════██║██╔═══╝ ██╔══╝  ██║') + chalk.white(`          `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`              ║
+    ║   `) + chalk.hex('#0066FF')('███████║██║     ███████╗╚██████╗') + chalk.white(`       `) + chalk.hex('#0066FF')('██    ██████    ██') + chalk.white(`              ║
+    ║   `) + chalk.hex('#0066FF')('╚══════╝╚═╝     ╚══════╝ ╚═════╝') + chalk.white(`       `) + chalk.hex('#0066FF')('██              ██') + chalk.white(`              ║
+    ║                                            `) + chalk.hex('#0066FF')('██    ██    ██') + chalk.white(`                ║
+    ║                                               `) + chalk.hex('#0066FF')('████░░████') + chalk.white(`                  ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                    ║
+    ║                                                 `) + chalk.hex('#0066FF')('██░░██') + chalk.white(`                    ║
+    ║                                                   `) + chalk.hex('#0066FF')('████') + chalk.white(`                      ║
+    ╚════════════════════════════════════════════════════════════════════╝
 `),
 
   // Main logo with dog and SPEC text (colored) - keep original as fallback
