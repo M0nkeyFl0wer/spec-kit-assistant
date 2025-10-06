@@ -11,6 +11,28 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import os from 'os';
 
+// Dog ASCII art for the flow
+const dogWelcome = chalk.hex('#0099FF')(`
+     ∧＿∧
+    (｡･ω･｡)  Woof! Let's get you set up!
+    ⊂　　 ノ
+     しーＪ
+`);
+
+const dogThinking = chalk.cyan(`
+     ∧＿∧
+    (｡･ω･｡)  Hmm, let me check your setup...
+    ⊂　　 ノ
+     しーＪ
+`);
+
+const dogSuccess = chalk.green(`
+     ∧＿∧
+    (｡･∀･｡)  Perfect! You're all set!
+    ⊂　　 ノ
+     しーＪ
+`);
+
 /**
  * Check if Ollama is installed and running
  */
@@ -140,7 +162,8 @@ async function pullDeepSeek() {
  * Setup AI agent
  */
 export async function setupAIAgent() {
-  console.log(chalk.hex('#0099FF').bold('\n🤖 AI Agent Setup\n'));
+  console.log(dogThinking);
+  console.log(chalk.hex('#0099FF').bold('🤖 AI Agent Setup\n'));
 
   const { hasClaudeKey, hasOpenAIKey } = checkAPIKeys();
   const hasClaudeCode = checkClaudeCode();
@@ -167,18 +190,18 @@ export async function setupAIAgent() {
     });
   }
 
-  // DeepSeek local (if system capable)
+  // DeepSeek local (if system capable) - uses "opencode" in Specify
   if (resources.canRunDeepSeek) {
     if (hasOllama) {
       choices.push({
-        name: `${chalk.cyan('●')} DeepSeek Coder (Free, runs locally on this device)`,
-        value: 'deepseek',
+        name: `${chalk.cyan('●')} DeepSeek Coder (Free, runs locally via Open WebUI)`,
+        value: 'opencode',
         short: 'DeepSeek'
       });
     } else {
       choices.push({
-        name: `${chalk.cyan('○')} DeepSeek Coder (Free, needs Ollama installation)`,
-        value: 'deepseek-install',
+        name: `${chalk.cyan('○')} DeepSeek Coder (Free, needs Ollama + Open WebUI setup)`,
+        value: 'opencode-install',
         short: 'DeepSeek'
       });
     }
@@ -219,12 +242,14 @@ export async function setupAIAgent() {
     process.exit(0);
   }
 
-  // Handle installation if needed
-  if (agent === 'deepseek-install') {
+  // Handle opencode installation (Ollama + Open WebUI)
+  if (agent === 'opencode-install') {
+    console.log(chalk.hex('#0099FF')('\n🐕 Setting up local AI with Ollama + Open WebUI!\n'));
+
     const { installNow } = await inquirer.prompt([{
       type: 'confirm',
       name: 'installNow',
-      message: 'Install Ollama and DeepSeek now?',
+      message: 'Install Ollama and DeepSeek now? (Open WebUI comes next)',
       default: true
     }]);
 
@@ -232,7 +257,30 @@ export async function setupAIAgent() {
       const ollamaInstalled = await installOllama();
       if (ollamaInstalled) {
         await pullDeepSeek();
-        return 'deepseek';
+
+        // Install Open WebUI via Docker
+        console.log(chalk.cyan('\n📦 Installing Open WebUI (web interface for Ollama)...'));
+        console.log(chalk.dim('   This provides a ChatGPT-like interface for DeepSeek\n'));
+
+        try {
+          spawnSync('docker', ['run', '-d', '-p', '3000:8080', '--add-host=host.docker.internal:host-gateway',
+            '-v', 'open-webui:/app/backend/data', '--name', 'open-webui', '--restart', 'always',
+            'ghcr.io/open-webui/open-webui:main'], {
+            stdio: 'inherit',
+            shell: false
+          });
+
+          console.log(dogSuccess);
+          console.log(chalk.green('✅ Open WebUI installed!'));
+          console.log(chalk.cyan('\n  Access it at: ') + chalk.underline('http://localhost:3000'));
+          console.log(chalk.dim('  (Specify will use this with --ai opencode)\n'));
+
+          return 'opencode';
+        } catch (error) {
+          console.log(chalk.yellow('\n⚠️  Open WebUI not installed (Docker required)'));
+          console.log(chalk.dim('  You can still use: ollama run deepseek-coder\n'));
+          return 'opencode';
+        }
       }
     }
     return 'manual';
@@ -252,7 +300,8 @@ function isInProject() {
  * Main welcome flow
  */
 export async function runWelcomeFlow() {
-  console.log(chalk.hex('#0099FF').bold('\n🐕 Welcome to Spec Kit Assistant!\n'));
+  console.log(dogWelcome);
+  console.log(chalk.hex('#0099FF').bold('Welcome to Spec Kit Assistant!\n'));
 
   // Check if already in a project
   if (isInProject()) {
@@ -306,7 +355,8 @@ export async function runWelcomeFlow() {
  * Show next steps after project creation
  */
 export function showNextSteps(agent, projectPath) {
-  console.log(chalk.hex('#0099FF')('\n🎉 Project created successfully!\n'));
+  console.log(dogSuccess);
+  console.log(chalk.hex('#0099FF')('🎉 Project created successfully!\n'));
 
   console.log(chalk.white('📁 Your project is ready at:'), chalk.cyan(projectPath));
   console.log();
@@ -319,11 +369,12 @@ export function showNextSteps(agent, projectPath) {
     console.log(chalk.dim('     /constitution - Define project principles'));
     console.log(chalk.dim('     /specify      - Describe what to build'));
     console.log(chalk.dim('     /implement    - Let Claude build it!\n'));
-  } else if (agent === 'deepseek') {
-    console.log(chalk.cyan('🤖 Using DeepSeek (Local AI):\n'));
-    console.log(chalk.white('  1. Start coding in your favorite editor'));
-    console.log(chalk.white('  2. Run DeepSeek for AI assistance:'));
-    console.log(chalk.dim('     ollama run deepseek-coder:6.7b\n'));
+  } else if (agent === 'opencode') {
+    console.log(chalk.cyan('🤖 Using DeepSeek via Open WebUI:\n'));
+    console.log(chalk.white('  1. Open Open WebUI: ') + chalk.underline('http://localhost:3000'));
+    console.log(chalk.white('  2. Select DeepSeek Coder model'));
+    console.log(chalk.white('  3. Chat with AI about your spec!\n'));
+    console.log(chalk.dim('     Or use CLI: ollama run deepseek-coder:6.7b\n'));
   } else {
     console.log(chalk.gray('🤖 Manual Setup:\n'));
     console.log(chalk.white('  1. Open this folder in your AI tool of choice'));
