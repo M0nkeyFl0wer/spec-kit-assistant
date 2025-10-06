@@ -42,6 +42,43 @@ function checkSystemResources() {
 }
 
 /**
+ * Check for Claude Code installation
+ */
+function checkClaudeCode() {
+  // Check for CLAUDE.md in current directory or .claude folder
+  if (existsSync('CLAUDE.md') || existsSync('.claude/CLAUDE.md')) {
+    return true;
+  }
+
+  // Check for Claude Code binary (VSCode extension)
+  try {
+    const platform = os.platform();
+
+    if (platform === 'darwin') {
+      // macOS
+      const vscodeExtensions = join(os.homedir(), '.vscode/extensions');
+      const vscodiumExtensions = join(os.homedir(), '.vscode-oss/extensions');
+
+      if (existsSync(vscodeExtensions) || existsSync(vscodiumExtensions)) {
+        return true;
+      }
+    } else if (platform === 'linux') {
+      // Linux
+      const vscodeExtensions = join(os.homedir(), '.vscode/extensions');
+      const vscodiumExtensions = join(os.homedir(), '.vscode-oss/extensions');
+
+      if (existsSync(vscodeExtensions) || existsSync(vscodiumExtensions)) {
+        return true;
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return false;
+}
+
+/**
  * Check for API keys
  */
 function checkAPIKeys() {
@@ -106,15 +143,16 @@ export async function setupAIAgent() {
   console.log(chalk.hex('#0099FF').bold('\n🤖 AI Agent Setup\n'));
 
   const { hasClaudeKey, hasOpenAIKey } = checkAPIKeys();
+  const hasClaudeCode = checkClaudeCode();
   const resources = checkSystemResources();
   const hasOllama = checkOllama();
 
   const choices = [];
 
-  // Claude (if API key available)
-  if (hasClaudeKey) {
+  // Claude Code (if installed OR API key available)
+  if (hasClaudeCode || hasClaudeKey) {
     choices.push({
-      name: `${chalk.hex('#0099FF')('●')} Claude Code (API key detected)`,
+      name: `${chalk.hex('#0099FF')('●')} Claude Code ${hasClaudeCode ? '(installed)' : '(API key detected)'}`,
       value: 'claude',
       short: 'Claude'
     });
@@ -146,6 +184,15 @@ export async function setupAIAgent() {
     }
   }
 
+  // If no AI detected, offer to get Claude Code
+  if (!hasClaudeCode && !hasClaudeKey && !hasOpenAIKey) {
+    choices.push({
+      name: `${chalk.hex('#0099FF')('○')} Get Claude Code (recommended for best experience)`,
+      value: 'get-claude',
+      short: 'Get Claude'
+    });
+  }
+
   // Generic option
   choices.push({
     name: `${chalk.gray('○')} Use any AI (manual setup later)`,
@@ -157,8 +204,20 @@ export async function setupAIAgent() {
     type: 'list',
     name: 'agent',
     message: 'Which AI agent would you like to use?',
-    choices
+    choices,
+    default: hasClaudeCode || hasClaudeKey ? 'claude' : (hasOllama ? 'deepseek' : 'get-claude')
   }]);
+
+  // Handle get-claude option
+  if (agent === 'get-claude') {
+    console.log(chalk.hex('#0099FF')('\n📖 Getting Claude Code:\n'));
+    console.log(chalk.white('  Claude Code is the best AI coding assistant for Spec Kit!'));
+    console.log();
+    console.log(chalk.cyan('  Download here: ') + chalk.underline('https://claude.ai/claude-code'));
+    console.log();
+    console.log(chalk.dim('  After installing, run this command again!\n'));
+    process.exit(0);
+  }
 
   // Handle installation if needed
   if (agent === 'deepseek-install') {
