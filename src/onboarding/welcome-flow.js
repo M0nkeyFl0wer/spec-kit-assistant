@@ -300,8 +300,13 @@ function isInProject() {
  * Main welcome flow
  */
 export async function runWelcomeFlow() {
+  // Show the full banner logo first
+  const { SpecLogo } = await import('../character/spec-logo.js');
+  console.log(SpecLogo.pixelDog);
+
   console.log(dogWelcome);
-  console.log(chalk.hex('#0099FF').bold('Welcome to Spec Kit Assistant!\n'));
+  console.log(chalk.hex('#0099FF').bold('I\'m Spec, your loyal companion and support dog!\n'));
+  console.log(chalk.white('I\'ll guide you through setting up your project step by step.\n'));
 
   // Check if already in a project
   if (isInProject()) {
