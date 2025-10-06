@@ -289,7 +289,17 @@ async function main() {
       });
 
       if (result.status === 0) {
-        showNextSteps(config.agent, config.projectName);
+        // Instead of just showing next steps, automatically start the interactive guide!
+        const { guideConstitution, guideSpec, guideNextSteps } = await import('./src/onboarding/interactive-guide.js');
+
+        // Guide through constitution
+        const constitutionAnswers = await guideConstitution(config.projectName);
+
+        // Guide through first spec
+        const specAnswers = await guideSpec(config.projectName, constitutionAnswers);
+
+        // Show next steps and launch AI
+        await guideNextSteps(config.agent, config.projectName, specAnswers.specPath);
       } else {
         console.error(chalk.red('\n❌ Failed to create project'));
         process.exit(1);
