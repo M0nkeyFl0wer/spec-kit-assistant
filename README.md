@@ -1,6 +1,7 @@
-# 🌱 Spec Kit Assistant
+# 🌱 Spec Kit Assistant + Scaffold-ETH-2
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Scaffold-ETH](https://img.shields.io/badge/Scaffold--ETH--2-Integrated-purple)](https://github.com/scaffold-eth/scaffold-eth-2)
 [![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
 
 ```
@@ -20,12 +21,13 @@
                                                  ██░░██
                                                    ████
 
-                  🌱 GitHub Spec Kit Assistant
-              Spec-Driven Development Made Easy
+          🌱 Spec Kit Assistant + 🔗 Scaffold-ETH-2 Integration
+        AI-Powered dApp Development | Spec-Driven | Production-Ready
 ```
 
-> **An experimental wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit)**
-> Built to explore UX improvements and share my experience with the tool
+> **AI-powered wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit) with deep [Scaffold-ETH-2](https://github.com/scaffold-eth/scaffold-eth-2) integration**
+>
+> Generate production-ready Ethereum dApps in minutes with AI agent swarms
 
 ---
 

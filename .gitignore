@@ -63,3 +63,20 @@ yarn-error.log*
 sdd-*/
 .spec-setup-complete
 QUICK-START.md
+
+# Development and building files - NOT for public repo
+BASH-COMMANDS.md
+GRANT-APPLICATION-SUMMARY.md
+CURRENT-STATE.md
+ROADMAP-SUMMARY.md
+deploy-to-remote-server.sh
+deploy-*.sh
+*-swarm.js
+logs/
+remote-results/
+remote-server-results/
+.swarm/
+test*/
+template/
+
+# Keep only: spec-assistant.js, enhanced-swarm-orchestrator.js, src/, docs/

@@ -241,18 +241,21 @@ New commands added by wrapper (not passed to official Spec Kit):
 ```javascript
 import { Client } from 'ssh2';
 import keytar from 'keytar';
+import dotenv from 'dotenv';
 
-async function connectToRemote-Server() {
-  // Get credentials from system keyring
-  const password = await keytar.getPassword('remote-server', 'REMOTE_USER');
+dotenv.config();
+
+async function connectToRemoteServer() {
+  // Get credentials from system keyring and environment
+  const password = await keytar.getPassword('remote-server', process.env.REMOTE_USER);
 
   const conn = new Client();
   return new Promise((resolve, reject) => {
     conn.on('ready', () => resolve(conn))
         .connect({
-          host: 'REMOTE_HOST',
-          port: 8888,
-          username: 'REMOTE_USER',
+          host: process.env.REMOTE_HOST,
+          port: parseInt(process.env.REMOTE_PORT),
+          username: process.env.REMOTE_USER,
           password: password
         });
   });
@@ -356,21 +359,21 @@ node spec-assistant.js
 
 ### Configuration
 
-**Environment Variables:**
+**Environment Variables (configure in .env file):**
 ```bash
-# Optional: Override SSH host
-export REMOTE_SERVER_HOST=REMOTE_HOST
-export REMOTE_SERVER_PORT=8888
-export REMOTE_SERVER_USER=REMOTE_USER
+# Remote server configuration
+REMOTE_HOST=your-server.example.com
+REMOTE_PORT=22
+REMOTE_USER=your-username
 
 # Optional: Disable swarms
-export SPEC_ASSISTANT_NO_SWARMS=1
+SPEC_ASSISTANT_NO_SWARMS=1
 ```
 
 **Keyring Setup:**
 ```bash
-# Store Remote-Server password securely
-node -e "const keytar = require('keytar'); keytar.setPassword('remote-server', 'REMOTE_USER', 'YOUR_PASSWORD');"
+# Store remote server password securely
+node -e "const keytar = require('keytar'); keytar.setPassword('remote-server', process.env.REMOTE_USER, 'YOUR_PASSWORD');"
 ```
 
 ## 📈 Success Criteria
