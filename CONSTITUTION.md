@@ -80,10 +80,11 @@
 ## 🔐 Security Principles
 
 ### SSH & Credentials
-- **Keyring integration** for Remote-Server credentials
+- **Keyring integration** for remote server credentials
 - **Never hardcode** passwords or keys
-- **Secure connection** to ssh://REMOTE_USER@REMOTE_HOST:REMOTE_PORT
+- **Secure connection** using environment variables (REMOTE_HOST, REMOTE_PORT, REMOTE_USER)
 - **User consent** before remote operations
+- **Never commit** SSH credentials, API keys, or secrets to version control
 
 ### File Operations
 - **Path validation** for all file operations
