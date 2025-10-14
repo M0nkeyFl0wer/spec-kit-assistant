@@ -1,0 +1,159 @@
+        ░░                                                                                                               
+                                  
+● N8N is still starting. Let me check status and create a final summary:
+
+● Bash(docker ps --format "{{.Names}}: {{.Status}}")
+  ⎿  n8n: Up 7 seconds                       
+     immich_server: Up 21 minutes (healthy)
+     immich_postgres: Up 21 minutes (healthy)
+     … +2 lines (ctrl+o to expand)
+
+● Bash(sudo ufw status numbered | tail -20)
+  ⎿  [ 6] 22                         ALLOW IN    100.0.0.0/8
+     # SSH from Tailscale
+     [ 7] 80/tcp                     ALLOW IN    Anywhere
+     … +35 lines (ctrl+o to expand)
+
+● Perfect! Everything is configured. Let me create a final summary:
+
+  ✅ SSH, Tailscale & Samba Access - REPAIRED
+
+  🎯 What Was Fixed:
+
+  1. N8N Network Binding - Changed from localhost-only to all interfaces
+  2. Firewall Rules - Added comprehensive access for:
+    - SSH from Tailscale (100.0.0.0/8)
+    - Samba from Tailscale (ports 137, 138, 139, 445)
+    - Immich from Tailscale (port 2283)
+    - N8N from Tailscale (port 5678)
+    - All services from local network (10.0.0.0/24)
+
+  📡 All Services Now Accessible:
+
+  | Service        | Local Network                | Tailscale (Anywhere)
+           | Status |
+  |----------------|------------------------------|-------------------------
+  ---------|--------|
+  | SSH            | 10.0.0.51                    | 100.75.223.48
+           | ✅ Open |
+  | Samba/Obsidian | \\10.0.0.51\obsidian-sandisk |
+  \\100.75.223.48\obsidian-sandisk | ✅ Open |
+  | Immich         | http://10.0.0.51:2283        |
+  http://100.75.223.48:2283        | ✅ Open |
+  | N8N            | http://10.0.0.51:5678        |
+  http://100.75.223.48:5678        | ✅ Open |
+
+  📱 Your Tailscale Devices:
+
+  - raspberrypi (100.75.223.48) - This Pi
+  - flowerpowered (100.121.226.39) - Laptop
+  - m0nk (100.93.131.84) - Desktop
+  - oneplus-cph2551 (100.68.198.4) - Phone
+  - creative-disruption2 (100.90.5.23) - Offline
+
+  🔧 Testing Commands:
+
+  From any device in Tailscale:
+  # Test SSH
+  ssh mini-monkey@100.75.223.48
+
+  # Test Immich
+  curl http://100.75.223.48:2283/api/server/ping
+
+  # Test N8N
+  curl http://100.75.223.48:5678/healthz
+
+  # Test Samba (from laptop)
+  smbclient -L 100.75.223.48 -U mini-monkey
+
+  Quick connection test on Pi:
+  bash /media/sandisk/test-connections.sh
+
+  📖 Setup Guides:
+
+  - Full guide: /media/sandisk/DEVICE_SETUP_GUIDE.md
+  - Connection test: /media/sandisk/test-connections.sh
+
+  All your devices should now be able to access SSH, Samba/Obsidian, Immich,
+   and N8N from anywhere via Tailscale or when on your home network!
+
+───────────────────────────────────────────────────────────────────────                                                                                       
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                             ░░                          ⠀                               
+                                         ██████          ██████                                                          
+                                       ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██                                                        
+                                       ██▓▓▓▓██          ██▓▓▓▓██                                                        
+║                                     ⠀██▓▓████    ▓▓▓▓▓▓████▓▓██    ⠀  ⠀⠀  ⠀⠀                                           
+║   ███████╗██████╗ ███████╗ ██████╗─ ⠀⠀⠀██  ██  ██▓▓██▓▓██  ██    ║⠀                                                    
+║   ██╔════╝██╔══██╗██╔════╝██╔════╝         ██    ▓▓▓▓▓▓██        ║                                                     
+║   ███████╗██████╔╝█████╗  ██║            ██              ██      ║                                                     
+║   ╚════██║██╔═══╝ ██╔══╝  ██║            ██    ██████    ██      ║                                                     
+║   ███████║██║     ███████╗╚██████╗       ██    ██████    ██      ║                                                     
+║   ╚══════╝╚═╝     ╚══════╝ ╚═════╝       ██              ██      ║                                                     
+║                                            ██    ██    ██        ║                                                     
+                                               ████░░████                                                                
+                                                 ██░░██                                                                  
+                                                 ██░░██                                                                  
+                                                   ████                                                                  
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                         
+                                                                                                                        ─

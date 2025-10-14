@@ -1,0 +1,37 @@
+SPEC LOGO DOG ASCII ART TEMPLATE
+================================
+
+Instructions:
+1. Go to https://asciiflow.com
+2. Draw your dog pixel art (6 lines for the dog face)
+3. Each line must be EXACTLY 39 characters wide
+4. Copy your art into the lines marked DOG LINE 1-6 below
+5. Use spaces to pad shorter lines to 39 chars
+6. Test the result in terminal
+
+Current Dog Design (6 lines):
+=============================
+
+DOG LINE 1:        ▄▀▀▄       ▄▀▀▄
+DOG LINE 2:       ▄▀  ▀▄  ▄  ▄▀  ▀▄
+DOG LINE 3:       ▀▀▀▀▀▀▀▀▀▀▀▀
+DOG LINE 4:        ██████████████
+DOG LINE 5:        ██ ●● ████ ●● ██
+DOG LINE 6:          ██ ▀▀▀▀▀ ██
+
+Character Count Guide (must equal 39):
+|---------------------------------------|
+123456789012345678901234567890123456789
+
+Tips:
+- Stick to basic ASCII characters for best alignment
+- Avoid Unicode (▄▀█●) if possible, use standard chars like: # @ O * = - _ |
+- Use spaces at the end to reach exactly 39 characters
+- The dog will appear with gradient colors: gold → orange → blue
+
+Color mapping (applied automatically):
+- Lines 1-2: Golden yellow (#FFD700)
+- Lines 3-4: Warm orange (#F28500)
+- Lines 5-6: Professional blue (#2E86AB)
+
+When ready, paste your 6 lines back to me and I'll integrate them!
