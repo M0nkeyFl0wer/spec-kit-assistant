@@ -145,15 +145,8 @@ spec-assistant swarm                       # Swarm management
 ```
 
 ```
-    "These are MY special commands! I call in my swarm friends!"
+    "These are so tricks Spec can do... commands:
 
-       ,--._______,-.
-      ( )   (  \_O/( )
-       |\    \  / '|
-       | \  .~  / |
-        \  \   /  /
-        |    ~   |
-        |  (\/) |
 
          >> Builder Swarm
          >> Red-Team Swarm
@@ -327,7 +320,7 @@ spec-assistant run "Security audit"
 ### Why a Dog Assistant?
 
 ```
-    "Because development should be FUN!"
+    "Because building stuff should be more FUN and friendly!"
 
        /\_/\
       ( o.o )
@@ -364,7 +357,7 @@ This project **used Spec Kit to build itself**:
          __
     (___()'`;
     /,    /`
-    \\"--\\    [SPEC.md]
+    \\"--\\    
 ```
 
 ---
@@ -381,15 +374,10 @@ This project **used Spec Kit to build itself**:
 ## 🤝 Contributing
 
 ```
-    "Want to help? I'd love that!"
+    "Want to help? We'd love that!"
 
-       ,--._______,-.
-      ( )   (  \_O/( )
-       |\    \  / '|
-       | \  .~  / |
-        \  \   /  /
 
-    Pull requests welcome!
+    Pull requests welcome! Come play.
 ```
 
 1. Fork the repo
@@ -415,22 +403,24 @@ MIT License - See [LICENSE](LICENSE)
 - **You** - For reading this far! Have a treat! 🦴
 
 ```
-                    _
-                   / )
-                  / /
-    |\         _.'  '.
-    ) \___---'         )
-    |                 /
-     \     ...:::::::_/
-      \   :::::::::::'
-       '._:::::::::'
-          '::::::' hjw
-            ||||
-           (:::)
-            \(
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠤⠶⣶⣶⣶⡒⠶⣄⡀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⡞⠁⠀⠀⠘⡿⠛⠻⣆⠹⡏⢱⡄⠀⠀
+⠀⠀⠀⠀⠀⠀⢀⣠⣿⣷⣤⠀⠀⠀⠀⢠⡶⣮⠀⡇⢸⠃⠀⠀
+⠀⠀⠀⠀⠀⠀⡏⣄⢻⡏⠁⣀⣄⠀⠀⠘⠉⠙⢧⡇⣿⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⣧⢻⣄⠱⡈⣿⠟⠀⢠⣶⣶⠀⠀⢹⣾⡧⠀⠀
+⠀⠀⠀⠀⠀⠀⢻⡄⠉⠙⠻⡇⡆⠀⠀⠙⢿⠴⣲⡏⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠉⠉⢙⣶⣤⡗⠒⠀⠚⠓⠊⠹⣷⠀⠀⠀⠀
+⠀⢀⣀⠀⠀⠀⠀⣠⡞⠉⠟⠀⠀⠀⠀⠀⠀⠀⠀⢿⡇⠀⠀⠀
+⣴⡷⢋⣴⠆⢀⣾⢻⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⠀⠀⠀
+⠈⢀⣾⠁⢠⠟⠁⠈⢿⣆⠀⠀⠀⢀⣀⠀⠀⠀⠀⢈⢻⠀⠀⠀
+⠀⢸⣿⢀⡟⠀⠀⠀⢸⣿⣦⠀⠀⠈⡟⠀⠀⠀⣠⡿⠀⢇⠀⠀
+⠀⠘⣿⣼⡇⠀⠀⠀⣼⣿⣿⠀⠀⠀⣧⣀⣤⣾⣿⠀⠀⢸⡀⠀
+⠀⠀⠹⣿⣧⣠⣶⣶⣿⣿⣿⠆⠀⢀⣼⡿⠟⠉⡼⠀⠠⠾⢧⡀
+⠀⠀⠀⠈⠻⡉⢀⠀⣄⢈⡇⠀⠛⠋⢁⢣⠀⠀⠱⣤⡀⣳⢱⣹
+⠀⠀⠀⠀⠀⠉⠉⠁⠉⠁⠙⠲⠤⠼⠼⠟⠀⠀⠀⠀⠉⠉⠉⠀
+
 
     "Thanks for using Spec Kit Assistant!"
-    "Woof woof! Happy spec-driven development!"
 ```
 
 ---
