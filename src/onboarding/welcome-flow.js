@@ -5,11 +5,11 @@
  */
 
 import chalk from 'chalk';
-import inquirer from 'inquirer';
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import os from 'os';
+import { promptWithGuard } from './prompt-helpers.js';
 
 // Dog ASCII art for the flow
 const dogWelcome = chalk.hex('#0099FF')(`
@@ -159,9 +159,68 @@ async function pullDeepSeek() {
 }
 
 /**
+ * Install and configure OpenCode + DeepSeek stack (Big Pickle mode)
+ */
+async function configureOpencodeAgent(options = {}, context = {}) {
+  const {
+    skipConfirmation = false,
+    label = 'Big Pickle (OpenCode + DeepSeek)',
+    showIntro = true
+  } = options;
+
+  if (showIntro) {
+    console.log(chalk.hex('#0099FF')(`\n🐕 Setting up ${label}!\n`));
+  }
+
+  if (!skipConfirmation) {
+    const installNow = await promptWithGuard({
+      type: 'confirm',
+      name: 'installNow',
+      message: `Install the ${label} stack now (Ollama, DeepSeek, Open WebUI)?`,
+      default: true
+    }, 'agentDetection', context);
+
+    if (!installNow) {
+      return 'manual';
+    }
+  } else {
+    console.log(chalk.dim('   Sit tight, I\'ll fetch everything you need for Big Pickle...\n'));
+  }
+
+  const ollamaInstalled = await installOllama();
+  if (!ollamaInstalled) {
+    return 'manual';
+  }
+
+  await pullDeepSeek();
+
+  console.log(chalk.cyan('\n📦 Installing Open WebUI (web interface for Ollama)...'));
+  console.log(chalk.dim('   This provides a chat experience for DeepSeek\n'));
+
+  try {
+    spawnSync('docker', ['run', '-d', '-p', '3000:8080', '--add-host=host.docker.internal:host-gateway',
+      '-v', 'open-webui:/app/backend/data', '--name', 'open-webui', '--restart', 'always',
+      'ghcr.io/open-webui/open-webui:main'], {
+      stdio: 'inherit',
+      shell: false
+    });
+
+    console.log(dogSuccess);
+    console.log(chalk.green(`✅ ${label} installed and ready!`));
+    console.log(chalk.cyan('\n  Access Open WebUI at: ') + chalk.underline('http://localhost:3000'));
+    console.log(chalk.dim('  (Specify will use this with --ai opencode)\n'));
+    return 'opencode';
+  } catch (error) {
+    console.log(chalk.yellow('\n⚠️  Open WebUI not installed (Docker required)'));
+    console.log(chalk.dim('  You can still use: ollama run deepseek-coder\n'));
+    return 'opencode';
+  }
+}
+
+/**
  * Setup AI agent
  */
-export async function setupAIAgent() {
+export async function setupAIAgent(context = {}) {
   console.log(dogThinking);
   console.log(chalk.hex('#0099FF').bold('🤖 AI Agent Setup\n'));
 
@@ -169,6 +228,33 @@ export async function setupAIAgent() {
   const hasClaudeCode = checkClaudeCode();
   const resources = checkSystemResources();
   const hasOllama = checkOllama();
+  const noKnownAgents = !hasClaudeCode && !hasClaudeKey && !hasOpenAIKey;
+  const canOfferBigPickle = resources.canRunDeepSeek;
+
+  // Offer automatic Big Pickle setup when nothing else is configured
+  if (noKnownAgents && canOfferBigPickle) {
+    if (hasOllama) {
+      console.log(chalk.cyan('\n🐕 I found Ollama already installed!'));
+      console.log(chalk.white('Let\'s use Big Pickle mode (OpenCode + DeepSeek) since everything is ready.\n'));
+      return 'opencode';
+    }
+
+    const autoSetupBigPickle = await promptWithGuard({
+      type: 'confirm',
+      name: 'autoSetupBigPickle',
+      message: 'Looks like you don\'t have an AI agent yet. Set up Big Pickle (OpenCode + DeepSeek) for free?',
+      default: true
+    }, 'agentDetection', context);
+
+    if (autoSetupBigPickle) {
+      const result = await configureOpencodeAgent({ skipConfirmation: true }, context);
+      if (result === 'opencode') {
+        return result;
+      }
+
+      console.log(chalk.yellow('\n⚠️  Big Pickle setup skipped. Let\'s choose another option together.\n'));
+    }
+  }
 
   const choices = [];
 
@@ -194,21 +280,21 @@ export async function setupAIAgent() {
   if (resources.canRunDeepSeek) {
     if (hasOllama) {
       choices.push({
-        name: `${chalk.cyan('●')} DeepSeek Coder (Free, runs locally via Open WebUI)`,
+        name: `${chalk.cyan('●')} Big Pickle (OpenCode + DeepSeek detected)`,
         value: 'opencode',
-        short: 'DeepSeek'
+        short: 'Big Pickle'
       });
     } else {
       choices.push({
-        name: `${chalk.cyan('○')} DeepSeek Coder (Free, needs Ollama + Open WebUI setup)`,
+        name: `${chalk.cyan('○')} Big Pickle (install OpenCode + DeepSeek stack)`,
         value: 'opencode-install',
-        short: 'DeepSeek'
+        short: 'Big Pickle'
       });
     }
   }
 
   // If no AI detected, offer to get Claude Code
-  if (!hasClaudeCode && !hasClaudeKey && !hasOpenAIKey) {
+  if (noKnownAgents) {
     choices.push({
       name: `${chalk.hex('#0099FF')('○')} Get Claude Code (recommended for best experience)`,
       value: 'get-claude',
@@ -223,13 +309,26 @@ export async function setupAIAgent() {
     short: 'Manual'
   });
 
-  const { agent } = await inquirer.prompt([{
+  let defaultChoice = 'manual';
+  if (hasClaudeCode || hasClaudeKey) {
+    defaultChoice = 'claude';
+  } else if (hasOpenAIKey) {
+    defaultChoice = 'openai';
+  } else if (hasOllama && resources.canRunDeepSeek) {
+    defaultChoice = 'opencode';
+  } else if (resources.canRunDeepSeek) {
+    defaultChoice = 'opencode-install';
+  } else if (noKnownAgents) {
+    defaultChoice = 'get-claude';
+  }
+
+  const agent = await promptWithGuard({
     type: 'list',
     name: 'agent',
     message: 'Which AI agent would you like to use?',
     choices,
-    default: hasClaudeCode || hasClaudeKey ? 'claude' : (hasOllama ? 'deepseek' : 'get-claude')
-  }]);
+    default: defaultChoice
+  }, 'agentDetection', context);
 
   // Handle get-claude option
   if (agent === 'get-claude') {
@@ -244,46 +343,7 @@ export async function setupAIAgent() {
 
   // Handle opencode installation (Ollama + Open WebUI)
   if (agent === 'opencode-install') {
-    console.log(chalk.hex('#0099FF')('\n🐕 Setting up local AI with Ollama + Open WebUI!\n'));
-
-    const { installNow } = await inquirer.prompt([{
-      type: 'confirm',
-      name: 'installNow',
-      message: 'Install Ollama and DeepSeek now? (Open WebUI comes next)',
-      default: true
-    }]);
-
-    if (installNow) {
-      const ollamaInstalled = await installOllama();
-      if (ollamaInstalled) {
-        await pullDeepSeek();
-
-        // Install Open WebUI via Docker
-        console.log(chalk.cyan('\n📦 Installing Open WebUI (web interface for Ollama)...'));
-        console.log(chalk.dim('   This provides a ChatGPT-like interface for DeepSeek\n'));
-
-        try {
-          spawnSync('docker', ['run', '-d', '-p', '3000:8080', '--add-host=host.docker.internal:host-gateway',
-            '-v', 'open-webui:/app/backend/data', '--name', 'open-webui', '--restart', 'always',
-            'ghcr.io/open-webui/open-webui:main'], {
-            stdio: 'inherit',
-            shell: false
-          });
-
-          console.log(dogSuccess);
-          console.log(chalk.green('✅ Open WebUI installed!'));
-          console.log(chalk.cyan('\n  Access it at: ') + chalk.underline('http://localhost:3000'));
-          console.log(chalk.dim('  (Specify will use this with --ai opencode)\n'));
-
-          return 'opencode';
-        } catch (error) {
-          console.log(chalk.yellow('\n⚠️  Open WebUI not installed (Docker required)'));
-          console.log(chalk.dim('  You can still use: ollama run deepseek-coder\n'));
-          return 'opencode';
-        }
-      }
-    }
-    return 'manual';
+    return await configureOpencodeAgent({}, context);
   }
 
   return agent;
@@ -299,7 +359,10 @@ function isInProject() {
 /**
  * Main welcome flow
  */
-export async function runWelcomeFlow() {
+export async function runWelcomeFlow(context = {}) {
+  const { flowController } = context;
+  flowController?.transition('welcome', 'Welcome to Spec Kit Assistant!');
+
   // Show the full banner logo first
   const { SpecLogo } = await import('../character/spec-logo.js');
   console.log(SpecLogo.pixelDog);
@@ -312,7 +375,7 @@ export async function runWelcomeFlow() {
   if (isInProject()) {
     console.log(chalk.green('✅ Detected existing Spec Kit project\n'));
 
-    const { action } = await inquirer.prompt([{
+    const action = await promptWithGuard({
       type: 'list',
       name: 'action',
       message: 'What would you like to do?',
@@ -321,7 +384,7 @@ export async function runWelcomeFlow() {
         { name: 'Create a new project', value: 'new' },
         { name: 'Exit', value: 'exit' }
       ]
-    }]);
+    }, 'welcome', context);
 
     if (action === 'exit') {
       process.exit(0);
@@ -333,21 +396,42 @@ export async function runWelcomeFlow() {
   }
 
   // Setup AI agent
-  const agent = await setupAIAgent();
+  flowController?.transition('agentDetection', 'Let\'s pick the best AI copilot for you.');
+  const agent = await setupAIAgent(context);
 
   // Get project info
-  const { projectName } = await inquirer.prompt([{
+  flowController?.transition('projectInit', 'Great! Let’s reserve a project folder name.');
+  const projectQuestion = {
     type: 'input',
     name: 'projectName',
     message: 'What\'s your project name?',
     default: 'my-project',
-    validate: (input) => {
-      if (!/^[a-zA-Z0-9._-]+$/.test(input)) {
-        return 'Project name must contain only letters, numbers, hyphens, underscores, and dots';
-      }
-      return true;
+    validate: (input) => input.trim().length > 0 || 'Project name is required'
+  };
+
+  let projectName = null;
+  while (!projectName) {
+    const rawName = await promptWithGuard({ ...projectQuestion }, 'projectInit', context);
+    const trimmed = rawName.trim();
+
+    if (!trimmed) {
+      console.log(chalk.yellow('⚠️  Project name cannot be empty.'));
+      continue;
     }
-  }]);
+
+    const sanitized = trimmed.replace(/\s+/g, '-');
+
+    if (!/^[a-zA-Z0-9._-]+$/.test(sanitized)) {
+      console.log(chalk.yellow('⚠️  Please use letters, numbers, dots, underscores, or hyphens.'));
+      continue;
+    }
+
+    if (sanitized !== rawName) {
+      console.log(chalk.dim(`   Converted to ${sanitized} for a filesystem-friendly name.`));
+    }
+
+    projectName = sanitized;
+  }
 
   return {
     mode: 'new',
