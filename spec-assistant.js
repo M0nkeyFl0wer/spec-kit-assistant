@@ -10,6 +10,8 @@ import { execSync, spawn, spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { FlowController } from './src/onboarding/flow-controller.js';
+import { SideQuestManager } from './src/onboarding/side-quest-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -131,18 +133,27 @@ function validateProjectName(name) {
  * Call official Spec Kit CLI with optional argument injection
  * SECURITY: Uses spawn() instead of execSync to prevent command injection
  */
-function callSpecKit(args, injectArgs = []) {
-  const allArgs = [...injectArgs, ...args];
+function callSpecKit(args, injectArgs = [], options = {}) {
+  const { skipAutoNextSteps = false, allowDefaultAgent = true } = options;
+  const allArgs = [...args];
+
+  if (injectArgs.length > 0) {
+    if (args[0] === 'init') {
+      allArgs.splice(1, 0, ...injectArgs);
+    } else {
+      allArgs.push(...injectArgs);
+    }
+  }
 
   // Default to Claude if this is an init command without --ai specified
-  if (args[0] === 'init' && !args.includes('--ai') && !args.includes('claude')) {
+  if (allowDefaultAgent && args[0] === 'init' && !allArgs.includes('--ai') && !allArgs.includes('claude')) {
     allArgs.splice(1, 0, '--ai', 'claude');
   }
 
   // Validate inputs to prevent command injection
   try {
-    if (args[0] === 'init' && args[1]) {
-      validateProjectName(args[1]);
+    if (allArgs[0] === 'init' && allArgs[1]) {
+      validateProjectName(allArgs[1]);
     }
 
     // Validate all arguments
@@ -161,26 +172,33 @@ function callSpecKit(args, injectArgs = []) {
   // SECURITY FIX: Use spawn() instead of execSync to avoid shell interpretation
   // Arguments are passed as array, not concatenated string
   const uvPath = join(process.env.HOME || '~', '.local', 'bin', 'uv');
-  const specProcess = spawn(uvPath, ['tool', 'run', '--from', 'specify-cli', 'specify', ...allArgs], {
-    stdio: 'inherit',
-    shell: false  // Explicitly disable shell to prevent injection
-  });
+  const localSpecKitPath = join(__dirname, '..', 'spec-kit-official');
+  const specSource = existsSync(localSpecKitPath) ? localSpecKitPath : 'specify-cli';
+  const spawnArgs = ['tool', 'run', '--from', specSource, 'specify', ...allArgs];
 
-  specProcess.on('close', (code) => {
-    if (code === 0) {
-      // After successful init, show next steps
-      if (args[0] === 'init') {
-        showNextSteps();
+  return new Promise((resolve) => {
+    const specProcess = spawn(uvPath, spawnArgs, {
+      stdio: 'inherit',
+      shell: false  // Explicitly disable shell to prevent injection
+    });
+
+    specProcess.on('close', (code) => {
+      if (code === 0) {
+        // After successful init, show next steps unless caller suppresses them
+        if (args[0] === 'init' && !skipAutoNextSteps) {
+          showNextSteps();
+        }
+        resolve(0);
+      } else {
+        console.error(chalk.red('\n❌ Command failed'));
+        process.exit(code || 1);
       }
-    } else {
-      console.error(chalk.red('\n❌ Command failed'));
-      process.exit(code || 1);
-    }
-  });
+    });
 
-  specProcess.on('error', (error) => {
-    console.error(chalk.red('\n❌ Failed to execute command:'), error.message);
-    process.exit(1);
+    specProcess.on('error', (error) => {
+      console.error(chalk.red('\n❌ Failed to execute command:'), error.message);
+      process.exit(1);
+    });
   });
 }
 
@@ -233,20 +251,165 @@ async function runSwarmTests() {
 }
 
 /**
+ * Map onboarding agent choice to Specify CLI agent identifier
+ */
+function mapAgentToSpecify(agent) {
+  if (!agent || agent === 'manual') {
+    return null;
+  }
+
+  if (agent === 'openai') {
+    return 'codex';
+  }
+
+  return agent;
+}
+
+/**
+ * Determine default script flag for Specify CLI based on platform
+ */
+function getDefaultScriptArgs(existingArgs = []) {
+  if (existingArgs.includes('--script')) {
+    return [];
+  }
+
+  const isWindows = process.platform === 'win32';
+  const scriptType = isWindows ? 'ps' : 'sh';
+  return ['--script', scriptType];
+}
+
+/**
+ * Launch the selected agent experience automatically
+ */
+function launchAgentExperience(agent, projectPath) {
+  if (!agent) {
+    return;
+  }
+
+  if (agent === 'claude') {
+    console.log(chalk.hex('#0099FF')('\n🐕 Opening Claude Code for you...'));
+    try {
+      const vscode = spawnSync('code', [projectPath], { shell: false });
+      if (vscode.status === 0) {
+        console.log(chalk.green('✅ Project opened in VS Code / Claude Code.'));
+      } else {
+        throw new Error('VS Code returned non-zero exit code');
+      }
+    } catch (error) {
+      console.log(chalk.yellow('⚠️  Could not launch VS Code automatically.'));
+      console.log(chalk.dim(`   Please open ${projectPath} in Claude Code manually.`));
+    }
+    return;
+  }
+
+  if (agent === 'opencode') {
+    console.log(chalk.hex('#0099FF')('\n🐕 Launching Big Pickle (OpenCode + DeepSeek) workspace...'));
+    const url = 'http://localhost:3000';
+    try {
+      let command;
+      let args;
+
+      if (process.platform === 'darwin') {
+        command = 'open';
+        args = [url];
+      } else if (process.platform === 'win32') {
+        command = 'cmd';
+        args = ['/c', 'start', '', url];
+      } else {
+        command = 'xdg-open';
+        args = [url];
+      }
+
+      const opener = spawnSync(command, args, { shell: false, stdio: 'ignore' });
+      if (opener.status !== 0) {
+        throw new Error(`open command exited with ${opener.status}`);
+      }
+
+      console.log(chalk.green('✅ Big Pickle workspace opened in your browser.'));
+    } catch (error) {
+      console.log(chalk.yellow('⚠️  Could not automatically open Big Pickle.'));
+      console.log(chalk.dim(`   Open ${url} in your browser to continue.`));
+    }
+    return;
+  }
+
+  // Default: no auto-launch, but provide guidance
+  console.log(chalk.dim('\n🐕 Tip: open your project in your chosen AI tool to continue the workflow.'));
+}
+
+/**
+ * Handle post-welcome actions such as project scaffolding and guided setup
+ */
+async function handleWelcomeOutcome(result, context = {}) {
+  if (!result) {
+    return;
+  }
+
+  const { flowController } = context;
+
+  if (result.mode === 'existing') {
+    flowController?.transition('complete', 'Welcome back to your existing project.');
+    console.log(chalk.green('\n🐕 Welcome back to your Spec Kit project!'));
+    console.log(chalk.white('Use guided commands like `node spec-assistant.js run` or `node spec-assistant.js test` to keep moving.'));
+    return;
+  }
+
+  if (result.mode === 'new') {
+    ensureSpecKitInstalled();
+
+    const specifyAgent = mapAgentToSpecify(result.agent);
+    const injectArgs = [];
+    const callOptions = { skipAutoNextSteps: true };
+
+    if (specifyAgent) {
+      injectArgs.push('--ai', specifyAgent);
+    } else {
+      callOptions.allowDefaultAgent = false;
+    }
+
+    const scriptArgs = getDefaultScriptArgs(injectArgs);
+    if (scriptArgs.length) {
+      injectArgs.push(...scriptArgs);
+    }
+
+    flowController?.transition('projectInit', 'Scaffolding your Spec Kit project...');
+    await callSpecKit(['init', result.projectName], injectArgs, callOptions);
+
+    const projectPath = result.projectName === '.' ? process.cwd() : join(process.cwd(), result.projectName);
+
+    if (!existsSync(projectPath)) {
+      console.error(chalk.red(`\n❌ Could not find project directory at ${projectPath}`));
+      console.error(chalk.red('Please rerun the command or create the project manually with `specify init`.'));
+      return;
+    }
+
+    flowController?.transition('agentLaunch', 'Opening your AI workspace now.');
+    launchAgentExperience(result.agent, projectPath);
+    const { runSpecKitGuidedFlow } = await import('./src/onboarding/spec-kit-flow.js');
+    await runSpecKitGuidedFlow(projectPath, result.agent, context);
+  }
+}
+
+/**
  * Main command router
  */
 async function main() {
   // No args - run welcome flow
   if (args.length === 0) {
+    const flowController = new FlowController();
+    const sideQuestManager = new SideQuestManager(process.cwd());
+    const onboardingContext = { flowController, sideQuestManager };
+
     const { runWelcomeFlow } = await import('./src/onboarding/welcome-flow.js');
-    await runWelcomeFlow();
+    const onboardingResult = await runWelcomeFlow(onboardingContext);
+    await handleWelcomeOutcome(onboardingResult, onboardingContext);
     return;
   }
 
   // Ensure Spec Kit is installed for official commands
   if (SPEC_KIT_COMMANDS.includes(command)) {
     ensureSpecKitInstalled();
-    callSpecKit(args);
+    await callSpecKit(args);
     return;
   }
 
@@ -281,7 +444,7 @@ async function main() {
       console.log(chalk.yellow(`⚠️  Unknown command: ${command}`));
       console.log(chalk.dim('Attempting to pass through to Spec Kit...\n'));
       ensureSpecKitInstalled();
-      callSpecKit(args);
+      await callSpecKit(args);
   }
 }
 
