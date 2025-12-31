@@ -3,9 +3,9 @@
  */
 
 import chalk from 'chalk';
-import inquirer from 'inquirer';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { promptWithGuard } from './prompt-helpers.js';
 
 const dogTalking = chalk.hex('#0099FF')(`
      ∧＿∧
@@ -31,7 +31,7 @@ const dogWriting = chalk.green(`
 /**
  * Guide user through constitution creation
  */
-export async function guideConstitution(projectPath) {
+export async function guideConstitution(projectPath, context = {}) {
   console.log(dogTalking);
   console.log(chalk.hex('#0099FF').bold('First, let\'s create your project constitution!\n'));
   console.log(chalk.dim('This defines the principles and values for your project.\n'));
@@ -68,7 +68,10 @@ export async function guideConstitution(projectPath) {
     }
   ];
 
-  const answers = await inquirer.prompt(questions);
+  const answers = {};
+  for (const question of questions) {
+    answers[question.name] = await promptWithGuard({ ...question }, 'constitution', context);
+  }
 
   console.log(dogWriting);
 
@@ -108,7 +111,7 @@ ${answers.principles.split(',').map(p => `- ${p.trim()}`).join('\n')}
 /**
  * Guide user through spec creation
  */
-export async function guideSpec(projectPath, constitutionAnswers) {
+export async function guideSpec(projectPath, constitutionAnswers, context = {}) {
   console.log(dogTalking);
   console.log(chalk.hex('#0099FF').bold('Now let\'s create your first specification!\n'));
   console.log(chalk.dim('This describes WHAT to build (not how).\n'));
@@ -140,18 +143,25 @@ export async function guideSpec(projectPath, constitutionAnswers) {
     }
   ];
 
-  const answers = await inquirer.prompt(questions);
+  const answers = {};
+  for (const question of questions) {
+    answers[question.name] = await promptWithGuard({ ...question }, 'specification', context);
+  }
 
   console.log(dogWriting);
 
   // Create specs directory if it doesn't exist
   const specsDir = join(projectPath, 'specs');
   if (!existsSync(specsDir)) {
-    mkdirSync(specsDir);
+    mkdirSync(specsDir, { recursive: true });
   }
 
-  // Create spec file
   const specFileName = answers.featureName.toLowerCase().replace(/\s+/g, '-');
+  const featureDir = join(specsDir, specFileName);
+  if (!existsSync(featureDir)) {
+    mkdirSync(featureDir, { recursive: true });
+  }
+
   const spec = `# ${answers.featureName}
 
 ## User Story
@@ -173,18 +183,18 @@ _None identified yet_
 *Spec created with Spec Kit Assistant 🐕*
 `;
 
-  const specPath = join(specsDir, `${specFileName}.md`);
+  const specPath = join(featureDir, 'spec.md');
   writeFileSync(specPath, spec);
 
   console.log(chalk.green(`\n✅ Spec created at: ${specPath}\n`));
 
-  return { ...answers, specPath };
+  return { ...answers, specPath, featureDir, featureSlug: specFileName };
 }
 
 /**
  * Guide to next steps based on AI choice
  */
-export async function guideNextSteps(agent, projectPath, specPath) {
+export async function guideNextSteps(agent, projectPath, specPath, context = {}) {
   console.log(dogTalking);
   console.log(chalk.hex('#0099FF').bold('Perfect! Your project is ready to build!\n'));
 
@@ -206,14 +216,14 @@ export async function guideNextSteps(agent, projectPath, specPath) {
     }
 
   } else if (agent === 'opencode') {
-    console.log(chalk.white('🤖 Now let\'s use DeepSeek to implement this!\n'));
-    console.log(chalk.cyan('Option 1: Open WebUI (ChatGPT-like interface)'));
-    console.log(chalk.dim(`  Open: http://localhost:3000`));
-    console.log(chalk.dim(`  Share your spec with DeepSeek!\n`));
+    console.log(chalk.white('🤖 Big Pickle (OpenCode + DeepSeek) is ready to build!\n'));
+    console.log(chalk.cyan('Option 1: Open WebUI (zen mode)'));
+    console.log(chalk.dim('  Open: http://localhost:3000 (should already be open)'));
+    console.log(chalk.dim('  Choose the Big Pickle workspace and drop in your spec.\n'));
 
-    console.log(chalk.cyan('Option 2: CLI (terminal interface)'));
-    console.log(chalk.dim(`  Run: ollama run deepseek-coder:6.7b`));
-    console.log(chalk.dim(`  Paste your spec and ask it to implement!\n`));
+    console.log(chalk.cyan('Option 2: Terminal workflow'));
+    console.log(chalk.dim('  Run: ollama run deepseek-coder:6.7b'));
+    console.log(chalk.dim('  Paste your spec and let Big Pickle implement it!\n'));
 
   } else {
     console.log(chalk.white('🤖 Next steps:\n'));
