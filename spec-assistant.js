@@ -424,9 +424,14 @@ async function main() {
   if (command === 'init') {
     ensureSpecKitInstalled();
 
+    // Determine project path before running
+    const projectArg = args[1];
+    const isCurrentDir = projectArg === '.' || args.includes('--here');
+    const projectPath = isCurrentDir ? process.cwd() : join(process.cwd(), projectArg);
+
     // If no --ai flag provided, auto-detect
+    const agent = detectAIAgent();
     if (!args.includes('--ai')) {
-      const agent = detectAIAgent();
       console.log(chalk.dim(`🐕 Using AI agent: ${agent}\n`));
       args.splice(1, 0, '--ai', agent);
     }
@@ -438,6 +443,33 @@ async function main() {
     }
 
     await callSpecKit(args);
+
+    // Auto-launch Claude if that's the agent
+    if (agent === 'claude' && existsSync(projectPath)) {
+      console.log(chalk.hex('#0099FF')('\n🐕 Launching Claude Code in your new project...\n'));
+      console.log(chalk.dim(`   cd ${projectPath}`));
+      console.log(chalk.dim('   claude\n'));
+
+      // Small delay to let user see the message
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Launch Claude in the project directory
+      const claudeProcess = spawn('claude', [], {
+        cwd: projectPath,
+        stdio: 'inherit',
+        shell: false
+      });
+
+      claudeProcess.on('error', (error) => {
+        console.log(chalk.yellow('\n⚠️  Could not auto-launch Claude.'));
+        console.log(chalk.white('Run manually:'));
+        console.log(chalk.cyan(`  cd ${projectPath} && claude\n`));
+      });
+
+      // Don't wait for Claude to exit - let it take over
+      return;
+    }
+
     return;
   }
 
