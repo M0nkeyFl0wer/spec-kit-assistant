@@ -446,15 +446,69 @@ async function main() {
 
     // Auto-launch Claude if that's the agent
     if (agent === 'claude' && existsSync(projectPath)) {
-      console.log(chalk.hex('#0099FF')('\n🐕 Launching Claude Code in your new project...\n'));
-      console.log(chalk.dim(`   cd ${projectPath}`));
-      console.log(chalk.dim('   claude\n'));
+      // Create CLAUDE.md with guided workflow instructions
+      const claudeMdPath = join(projectPath, 'CLAUDE.md');
+      if (!existsSync(claudeMdPath)) {
+        const claudeMdContent = `# Spec Kit Project
+
+This is a spec-driven development project. Guide the user through the workflow.
+
+## Workflow Steps
+
+1. **Constitution** - Run \`/speckit.constitution\` with user's project description
+2. **Specification** - Run \`/speckit.specify <feature>\` for each feature
+3. **Planning** - Run \`/speckit.plan\` to create implementation plan
+4. **Tasks** - Run \`/speckit.tasks\` to generate actionable tasks
+5. **Implementation** - Run \`/speckit.implement\` to build it
+
+## Guided Mode
+
+When the user starts a new session, ask them:
+- What they want to build (if constitution not done)
+- What feature to specify next (if constitution done)
+
+Then run the appropriate slash command FOR them with their input.
+
+## Available Commands
+
+- \`/speckit.constitution\` - Establish project principles
+- \`/speckit.specify <description>\` - Create feature specification
+- \`/speckit.clarify\` - Clarify ambiguous requirements
+- \`/speckit.plan\` - Create implementation plan
+- \`/speckit.tasks\` - Generate tasks from plan
+- \`/speckit.implement\` - Execute implementation
+- \`/speckit.analyze\` - Cross-artifact consistency check
+- \`/speckit.checklist\` - Quality validation checklist
+`;
+        const { writeFileSync } = await import('fs');
+        writeFileSync(claudeMdPath, claudeMdContent);
+        console.log(chalk.dim('   Created CLAUDE.md with workflow guidance'));
+      }
+
+      console.log(chalk.hex('#0099FF')('\n🐕 Launching Claude Code with guided setup...\n'));
 
       // Small delay to let user see the message
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Launch Claude in the project directory
-      const claudeProcess = spawn('claude', [], {
+      // Guided prompt that walks user through the spec-kit workflow
+      const guidedPrompt = `🐕 Welcome to your new Spec Kit project!
+
+I'll guide you through setting up your project step by step.
+
+**Step 1: Project Constitution**
+First, let's establish your project's core principles and guidelines.
+
+Please tell me briefly:
+- What is this project? (1-2 sentences)
+- Who is it for?
+- Any key constraints or principles?
+
+Once you answer, I'll run /speckit.constitution to formalize these into your project's constitution.
+
+(Or if you'd like to skip ahead, just say "skip" and I'll show you all available commands.)`;
+
+      // Launch Claude with the guided prompt
+      const claudeProcess = spawn('claude', [guidedPrompt], {
         cwd: projectPath,
         stdio: 'inherit',
         shell: false
