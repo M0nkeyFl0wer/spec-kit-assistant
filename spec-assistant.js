@@ -130,36 +130,23 @@ function validateProjectName(name) {
 }
 
 /**
- * Call official Spec Kit CLI with optional argument injection
+ * Call official Spec Kit CLI (v1.0.0+)
  * SECURITY: Uses spawn() instead of execSync to prevent command injection
  */
-function callSpecKit(args, injectArgs = [], options = {}) {
-  const { skipAutoNextSteps = false, allowDefaultAgent = true } = options;
+function callSpecKit(args) {
   const allArgs = [...args];
-
-  if (injectArgs.length > 0) {
-    if (args[0] === 'init') {
-      allArgs.splice(1, 0, ...injectArgs);
-    } else {
-      allArgs.push(...injectArgs);
-    }
-  }
-
-  // Default to Claude if this is an init command without --ai specified
-  if (allowDefaultAgent && args[0] === 'init' && !allArgs.includes('--ai') && !allArgs.includes('claude')) {
-    allArgs.splice(1, 0, '--ai', 'claude');
-  }
 
   // Validate inputs to prevent command injection
   try {
-    if (allArgs[0] === 'init' && allArgs[1]) {
-      validateProjectName(allArgs[1]);
+    // Find project name (first non-flag argument after command)
+    const projectNameIndex = allArgs.findIndex((arg, i) => i > 0 && !arg.startsWith('--') && !['claude', 'sh', 'ps'].includes(arg));
+    if (projectNameIndex > 0) {
+      validateProjectName(allArgs[projectNameIndex]);
     }
 
     // Validate all arguments
-    allArgs.forEach((arg, index) => {
-      // Skip validation for known safe flags
-      if (arg.startsWith('--') || arg === 'init' || arg === 'check' || arg === 'constitution' || arg === 'claude') {
+    allArgs.forEach((arg) => {
+      if (arg.startsWith('--') || ['init', 'check', 'constitution', 'version', 'claude', 'sh', 'ps'].includes(arg)) {
         return;
       }
       validateInput(arg);
@@ -169,23 +156,19 @@ function callSpecKit(args, injectArgs = [], options = {}) {
     process.exit(1);
   }
 
-  // SECURITY FIX: Use spawn() instead of execSync to avoid shell interpretation
-  // Arguments are passed as array, not concatenated string
+  // Use specify (v1.0.0)
   const uvPath = join(process.env.HOME || '~', '.local', 'bin', 'uv');
-  const localSpecKitPath = join(__dirname, '..', 'spec-kit-official');
-  const specSource = existsSync(localSpecKitPath) ? localSpecKitPath : 'specify-cli';
-  const spawnArgs = ['tool', 'run', '--from', specSource, 'specify', ...allArgs];
+  const spawnArgs = ['tool', 'run', '--from', 'specify-cli', 'specify', ...allArgs];
 
   return new Promise((resolve) => {
     const specProcess = spawn(uvPath, spawnArgs, {
       stdio: 'inherit',
-      shell: false  // Explicitly disable shell to prevent injection
+      shell: false
     });
 
     specProcess.on('close', (code) => {
       if (code === 0) {
-        // After successful init, show next steps unless caller suppresses them
-        if (args[0] === 'init' && !skipAutoNextSteps) {
+        if (args[0] === 'init') {
           showNextSteps();
         }
         resolve(0);
@@ -391,23 +374,75 @@ async function handleWelcomeOutcome(result, context = {}) {
 }
 
 /**
+ * Auto-detect best AI agent
+ */
+function detectAIAgent() {
+  // Check for Claude Code CLI
+  try {
+    execSync('which claude', { stdio: 'pipe' });
+    return 'claude';
+  } catch {}
+
+  // Check for API key
+  if (process.env.ANTHROPIC_API_KEY) {
+    return 'claude';
+  }
+
+  // Check for OpenAI
+  if (process.env.OPENAI_API_KEY) {
+    return 'codex';
+  }
+
+  // Default to claude (most common)
+  return 'claude';
+}
+
+/**
  * Main command router
  */
 async function main() {
-  // No args - run welcome flow
+  // No args - quick start with auto-detection
   if (args.length === 0) {
-    const flowController = new FlowController();
-    const sideQuestManager = new SideQuestManager(process.cwd());
-    const onboardingContext = { flowController, sideQuestManager };
+    console.log(SpecLogo.pixelDog);
+    console.log(chalk.hex('#0099FF')('\n🐕 Spec Kit Assistant - Quick Start\n'));
 
-    const { runWelcomeFlow } = await import('./src/onboarding/welcome-flow.js');
-    const onboardingResult = await runWelcomeFlow(onboardingContext);
-    await handleWelcomeOutcome(onboardingResult, onboardingContext);
+    const agent = detectAIAgent();
+    console.log(chalk.dim(`   Detected AI: ${agent}\n`));
+
+    console.log(chalk.white('Usage:'));
+    console.log(chalk.white('  node spec-assistant.js init <project-name>  ') + chalk.dim('# Create new project'));
+    console.log(chalk.white('  node spec-assistant.js init .               ') + chalk.dim('# Initialize current directory'));
+    console.log(chalk.white('  node spec-assistant.js check                ') + chalk.dim('# Check project status'));
+    console.log(chalk.white('  node spec-assistant.js run "task"           ') + chalk.dim('# Deploy swarm'));
+    console.log();
+    console.log(chalk.hex('#10B981')('Quick start:'));
+    console.log(chalk.cyan(`  node spec-assistant.js init my-project\n`));
     return;
   }
 
-  // Ensure Spec Kit is installed for official commands
-  if (SPEC_KIT_COMMANDS.includes(command)) {
+  // Handle init specially - auto-detect agent and use v1.0.0 flags
+  if (command === 'init') {
+    ensureSpecKitInstalled();
+
+    // If no --ai flag provided, auto-detect
+    if (!args.includes('--ai')) {
+      const agent = detectAIAgent();
+      console.log(chalk.dim(`🐕 Using AI agent: ${agent}\n`));
+      args.splice(1, 0, '--ai', agent);
+    }
+
+    // Add script type if not specified
+    if (!args.includes('--script')) {
+      const scriptType = process.platform === 'win32' ? 'ps' : 'sh';
+      args.push('--script', scriptType);
+    }
+
+    await callSpecKit(args);
+    return;
+  }
+
+  // Other Spec Kit commands (check, constitution)
+  if (SPEC_KIT_COMMANDS.includes(command) && command !== 'init') {
     ensureSpecKitInstalled();
     await callSpecKit(args);
     return;
