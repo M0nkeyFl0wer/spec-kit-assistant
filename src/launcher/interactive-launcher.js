@@ -201,7 +201,8 @@ async function handleGeminiSetupFlow() {
   }
 
   if (isInstalled) {
-    console.log(chalk.green('✅ Gemini CLI is already installed!\n'));
+    console.log(dogs.CELEBRATION);
+    console.log(chalk.green.bold('✅ Gemini CLI is already installed!\n'));
 
     const { launchNow } = await inquirer.prompt([{
       type: 'confirm',
@@ -655,7 +656,9 @@ async function launchInProject(projectPath, projectName, stage = null) {
     return handleManualFlow(projectPath, projectName);
   }
 
-  console.log(`${chalk.cyan('Ready to launch!')} Using ${chalk.bold(preferred.name)}\n`);
+  // Found an installed agent!
+  console.log(dogs.ALERT);
+  console.log(chalk.green(`✓ Found ${chalk.bold(preferred.name)} installed!\n`));
 
   const { launch } = await inquirer.prompt([{
     type: 'confirm',
