@@ -27,6 +27,7 @@ import {
 } from './workflow-state.js';
 
 import { getKnownSessions, registerSession } from '../guided/utils/config-paths.js';
+import { runPostImplementation } from './post-implementation.js';
 
 // ASCII Art
 const DOG_GREETING = `
@@ -292,6 +293,33 @@ async function handleExistingProjectFlow(projectPath, projectName) {
   console.log(chalk.cyan(`📋 Project Status: ${getStageLabel(projectStage)}\n`));
   console.log(`${nextAction.message}\n`);
 
+  // If project is in late stage, offer to run/test directly
+  if (projectStage === WorkflowStage.COMPLETE ||
+      projectStage === WorkflowStage.TASKS_CREATED ||
+      projectStage === WorkflowStage.IMPLEMENTING) {
+
+    const { action } = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: `${chalk.green('▶️')}  Run/test the project`, value: 'run' },
+        { name: `${chalk.blue('🚀')} Launch AI agent to continue`, value: 'launch' },
+        { name: `${chalk.dim('👋')} Exit`, value: 'exit' }
+      ]
+    }]);
+
+    if (action === 'run') {
+      process.chdir(projectPath);
+      return runPostImplementation(projectPath);
+    }
+
+    if (action === 'exit') {
+      console.log(chalk.cyan('\n🐕 See you later!\n'));
+      return { action: 'exit' };
+    }
+  }
+
   return launchInProject(projectPath, projectName, projectStage);
 }
 
@@ -363,6 +391,24 @@ async function handleInAgentFlow(agentType, options) {
   const nextAction = getNextAction(projectStage);
 
   console.log(`${chalk.cyan('Current status:')} ${getStageLabel(projectStage)}\n`);
+
+  // If implementation is complete or tasks are ready, offer post-implementation flow
+  if (projectStage === WorkflowStage.COMPLETE ||
+      projectStage === WorkflowStage.TASKS_CREATED ||
+      projectStage === WorkflowStage.IMPLEMENTING) {
+
+    const { runIt } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'runIt',
+      message: 'Would you like to run/test your project?',
+      default: true
+    }]);
+
+    if (runIt) {
+      return runPostImplementation(cwd, options);
+    }
+  }
+
   console.log(`${nextAction.message}\n`);
 
   if (nextAction.command) {
