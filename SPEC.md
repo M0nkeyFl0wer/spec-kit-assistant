@@ -130,7 +130,7 @@ spec-kit-assistant/
 │   │
 │   ├── swarm/                   # Swarm orchestration (lazy-loaded)
 │   │   ├── orchestrator.js
-│   │   └── remote-server-deployer.js  # SSH deployment
+│   │   └── remote-deployer.js  # SSH deployment
 │   │
 │   └── specify_cli/             # Official Spec Kit (upstream)
 │       └── ...                  # Python CLI code
@@ -326,8 +326,8 @@ describe('Spec Kit Integration', () => {
 ### SSH Tests (Mocked)
 
 ```javascript
-// tests/remote-server.test.js
-describe('Remote-Server SSH Deployment', () => {
+// tests/remote-deploy.test.js
+describe('Remote SSH Deployment', () => {
   it('connects with keyring credentials', () => {
     // Mock ssh2, test connection
   });

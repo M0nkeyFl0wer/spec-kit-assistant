@@ -69,6 +69,10 @@ BASH-COMMANDS.md
 GRANT-APPLICATION-SUMMARY.md
 CURRENT-STATE.md
 ROADMAP-SUMMARY.md
+NEXT-STEPS.md
+SECURITY-IMPROVEMENTS.md
+SCAFFOLD-ETH-INTEGRATION.md
+clean-git-history.sh
 deploy-to-remote-server.sh
 deploy-*.sh
 *-swarm.js
