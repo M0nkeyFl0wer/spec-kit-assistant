@@ -52,20 +52,27 @@ echo "📦 Installing dependencies..."
 npm install --silent --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
 # Create the 'spec' command wrapper
-echo "🔧 Setting up 'spec' command..."
+echo "🔧 Setting up commands..."
 
 # Create bin directory if needed
 mkdir -p "$HOME/.local/bin"
 
-# Create the spec command script
+# Create the spec command script (direct CLI)
 cat > "$HOME/.local/bin/spec" << SPEC_EOF
 #!/bin/bash
 # Spec Kit Assistant - Quick launcher
 # Run 'spec' from anywhere!
 cd "$INSTALL_DIR" && ./run.sh "\$@"
 SPEC_EOF
-
 chmod +x "$HOME/.local/bin/spec"
+
+# Create the come-here-spec command (interactive launcher)
+cat > "$HOME/.local/bin/come-here-spec" << SPEC_EOF
+#!/bin/bash
+# Come Here Spec - Interactive project launcher
+exec "$INSTALL_DIR/come-here-spec.sh" "\$@"
+SPEC_EOF
+chmod +x "$HOME/.local/bin/come-here-spec"
 
 echo ""
 echo "✅ Installation complete!"
@@ -88,11 +95,12 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
 fi
 
 echo "🚀 Usage:"
+echo "   come-here-spec          # Interactive launcher (recommended!)"
 echo "   spec                    # Show help and available commands"
 echo "   spec init \"My Project\" # Start a new project"
 echo "   spec run \"build X\"     # Deploy AI swarm"
 echo ""
-echo "🐕 Woof! Ready to go! Run 'spec' to get started."
+echo "🐕 Woof! Ready to go! Run 'come-here-spec' to get started."
 echo ""
 
 # Ask if user wants to launch now
