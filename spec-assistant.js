@@ -12,12 +12,21 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { FlowController } from './src/onboarding/flow-controller.js';
 import { SideQuestManager } from './src/onboarding/side-quest-manager.js';
+import { FlowBridge } from './src/guided/flow-bridge.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Parse args
-const args = process.argv.slice(2);
+let args = process.argv.slice(2);
+
+// Check for JSON mode (--json flag) BEFORE determining command
+const isJsonMode = args.includes('--json');
+if (isJsonMode) {
+  // Remove --json from args for downstream processing
+  args = args.filter(arg => arg !== '--json');
+}
+
 const command = args[0];
 
 // Enhanced commands (our additions)
@@ -39,9 +48,14 @@ function displayHelp() {
   console.log(chalk.dim('Spec Kit Assistant\n'));
 
   console.log(chalk.hex('#10B981')('Spec Kit Commands:'));
-  console.log(chalk.white('  node spec-assistant.js init <PROJECT>    ') + chalk.dim('# Create new project'));
+  console.log(chalk.white('  node spec-assistant.js init <PROJECT>    ') + chalk.dim('# Create new project (guided)'));
   console.log(chalk.white('  node spec-assistant.js check             ') + chalk.dim('# Check project status'));
   console.log(chalk.white('  node spec-assistant.js constitution      ') + chalk.dim('# Create principles'));
+
+  console.log(chalk.hex('#8B5CF6')('\nInit Options:'));
+  console.log(chalk.white('  --guided                                 ') + chalk.dim('# Guided setup (default)'));
+  console.log(chalk.white('  --no-guided                              ') + chalk.dim('# Skip guided questions'));
+  console.log(chalk.white('  --advanced                               ') + chalk.dim('# Show advanced customization'));
 
   console.log(chalk.hex('#EC4899')('\nSwarm Commands:'));
   console.log(chalk.white('  node spec-assistant.js run <description> ') + chalk.dim('# Deploy swarm to implement'));
@@ -374,6 +388,35 @@ async function handleWelcomeOutcome(result, context = {}) {
 }
 
 /**
+ * Parse CLI args into JSON params for --json mode
+ */
+function parseJsonParams(args) {
+  const params = {};
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg.startsWith('--')) {
+      const key = arg.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+      const nextArg = args[i + 1];
+
+      if (!nextArg || nextArg.startsWith('--')) {
+        params[key] = true;
+      } else {
+        params[key] = nextArg;
+        i++;
+      }
+    } else if (i === 0) {
+      // First non-flag arg is usually the main param (e.g., projectName, description)
+      params.projectName = arg;
+      params.description = arg;
+    }
+  }
+
+  return params;
+}
+
+/**
  * Auto-detect best AI agent
  */
 function detectAIAgent() {
@@ -401,6 +444,27 @@ function detectAIAgent() {
  * Main command router
  */
 async function main() {
+  // JSON mode - start JSON-RPC interface for Little Helper
+  if (isJsonMode) {
+    const { CliJsonInterface } = await import('./src/integration/cli-json-interface.js');
+    const jsonInterface = new CliJsonInterface({ projectPath: process.cwd() });
+
+    // If there's a command, handle it as a single request
+    if (command) {
+      const request = JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: command,
+        params: parseJsonParams(args.slice(1))
+      });
+      await jsonInterface.handleRequest(request);
+    } else {
+      // Start listening for NDJSON on stdin
+      jsonInterface.startListening();
+    }
+    return;
+  }
+
   // No args - quick start with auto-detection
   if (args.length === 0) {
     console.log(SpecLogo.pixelDog);
@@ -422,17 +486,24 @@ async function main() {
 
   // Handle init specially - auto-detect agent and use v1.0.0 flags
   if (command === 'init') {
+    // Show the dog logo first!
+    console.log(SpecLogo.pixelDog);
+
     ensureSpecKitInstalled();
 
+    // Check for guided mode flag
+    const useGuided = args.includes('--guided') || !args.includes('--no-guided');
+    const showAdvanced = args.includes('--advanced');
+
     // Determine project path before running
-    const projectArg = args[1];
+    const projectArg = args.find(arg => !arg.startsWith('--') && arg !== 'init') || '.';
     const isCurrentDir = projectArg === '.' || args.includes('--here');
     const projectPath = isCurrentDir ? process.cwd() : join(process.cwd(), projectArg);
 
     // If no --ai flag provided, auto-detect
     const agent = detectAIAgent();
     if (!args.includes('--ai')) {
-      console.log(chalk.dim(`🐕 Using AI agent: ${agent}\n`));
+      console.log(chalk.dim(`Using AI agent: ${agent}\n`));
       args.splice(1, 0, '--ai', agent);
     }
 
@@ -443,6 +514,26 @@ async function main() {
     }
 
     await callSpecKit(args);
+
+    // Run guided onboarding if enabled
+    if (useGuided && existsSync(projectPath)) {
+      const flowBridge = new FlowBridge({
+        useGuidedFlow: true,
+        showAdvanced
+      });
+
+      const onboardingResult = await flowBridge.runOnboarding(projectPath, {
+        projectName: projectArg,
+        agent
+      });
+
+      if (!onboardingResult.success) {
+        if (onboardingResult.cancelled) {
+          console.log(chalk.dim('You can re-run guided setup anytime with: node spec-assistant.js init --guided'));
+        }
+        return;
+      }
+    }
 
     // Auto-launch Claude if that's the agent
     if (agent === 'claude' && existsSync(projectPath)) {
