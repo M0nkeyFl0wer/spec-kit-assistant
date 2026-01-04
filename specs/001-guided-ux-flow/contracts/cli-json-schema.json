@@ -1,0 +1,233 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Spec Kit Assistant CLI JSON Protocol",
+  "description": "JSON-RPC 2.0 protocol for Little Helper integration",
+  "version": "1.0.0",
+
+  "definitions": {
+    "PhaseType": {
+      "type": "string",
+      "enum": ["onboarding", "specify", "clarify", "plan", "tasks", "implement", "test"]
+    },
+
+    "PhaseStatus": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "complete", "skipped"]
+    },
+
+    "Request": {
+      "type": "object",
+      "required": ["jsonrpc", "method"],
+      "properties": {
+        "jsonrpc": { "const": "2.0" },
+        "id": { "type": ["string", "number"] },
+        "method": { "type": "string" },
+        "params": { "type": "object" }
+      }
+    },
+
+    "Response": {
+      "type": "object",
+      "required": ["jsonrpc"],
+      "properties": {
+        "jsonrpc": { "const": "2.0" },
+        "id": { "type": ["string", "number", "null"] },
+        "result": { "type": "object" },
+        "error": { "$ref": "#/definitions/Error" }
+      }
+    },
+
+    "Error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "integer" },
+        "message": { "type": "string" },
+        "data": { "type": "object" }
+      }
+    },
+
+    "StreamChunk": {
+      "type": "object",
+      "required": ["jsonrpc", "method", "params"],
+      "properties": {
+        "jsonrpc": { "const": "2.0" },
+        "method": { "const": "stream" },
+        "params": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["chunk", "progress", "done", "error"] },
+            "content": { "type": "string" },
+            "phase": { "$ref": "#/definitions/PhaseType" },
+            "progress": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        }
+      }
+    },
+
+    "Question": {
+      "type": "object",
+      "required": ["id", "question", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "question": { "type": "string" },
+        "type": { "enum": ["single", "multi", "text"] },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "type": "string" },
+              "description": { "type": "string" },
+              "isDefault": { "type": "boolean" }
+            }
+          }
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "value": {},
+            "confidence": { "type": "number" },
+            "reasoning": { "type": "string" }
+          }
+        },
+        "required": { "type": "boolean" },
+        "expandable": { "type": "boolean" }
+      }
+    }
+  },
+
+  "methods": {
+    "init": {
+      "description": "Initialize a new project",
+      "params": {
+        "type": "object",
+        "required": ["projectName"],
+        "properties": {
+          "projectName": { "type": "string" },
+          "projectPath": { "type": "string" },
+          "agent": { "enum": ["claude", "codex", "opencode", null] }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "status": { "enum": ["success", "error"] },
+          "projectPath": { "type": "string" },
+          "sessionId": { "type": "string" }
+        }
+      }
+    },
+
+    "specify": {
+      "description": "Create a feature specification",
+      "params": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string" },
+          "acceptDefaults": { "type": "boolean", "default": false }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "status": { "enum": ["success", "needs_input", "error"] },
+          "specPath": { "type": "string" },
+          "questions": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/Question" },
+            "maxItems": 3
+          }
+        }
+      }
+    },
+
+    "answer": {
+      "description": "Answer a clarification question",
+      "params": {
+        "type": "object",
+        "required": ["questionId", "answer"],
+        "properties": {
+          "questionId": { "type": "string" },
+          "answer": { "type": "string" }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "status": { "enum": ["success", "needs_more", "complete"] },
+          "nextQuestion": { "$ref": "#/definitions/Question" }
+        }
+      }
+    },
+
+    "status": {
+      "description": "Get current session status",
+      "params": {
+        "type": "object",
+        "properties": {
+          "projectPath": { "type": "string" }
+        }
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "currentPhase": { "$ref": "#/definitions/PhaseType" },
+          "phases": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "status": { "$ref": "#/definitions/PhaseStatus" },
+                "artifacts": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          },
+          "nextAction": { "type": "string" }
+        }
+      }
+    },
+
+    "plan": {
+      "description": "Generate implementation plan",
+      "params": { "type": "object" },
+      "result": {
+        "type": "object",
+        "properties": {
+          "status": { "enum": ["success", "error"] },
+          "planPath": { "type": "string" },
+          "researchPath": { "type": "string" }
+        }
+      }
+    },
+
+    "tasks": {
+      "description": "Generate tasks from plan",
+      "params": { "type": "object" },
+      "result": {
+        "type": "object",
+        "properties": {
+          "status": { "enum": ["success", "error"] },
+          "tasksPath": { "type": "string" },
+          "taskCount": { "type": "integer" }
+        }
+      }
+    }
+  },
+
+  "errorCodes": {
+    "-32700": "Parse error - Invalid JSON",
+    "-32600": "Invalid request - Not a valid JSON-RPC request",
+    "-32601": "Method not found",
+    "-32602": "Invalid params",
+    "-32603": "Internal error",
+    "1001": "Session not found",
+    "1002": "Project not initialized",
+    "1003": "Phase not ready - complete previous phases first",
+    "1004": "Validation failed"
+  }
+}
