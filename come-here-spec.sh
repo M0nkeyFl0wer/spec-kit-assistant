@@ -1,10 +1,27 @@
 #!/bin/bash
 # Come Here Spec - Interactive project launcher
 # Usage: come-here-spec
+#
+# This is a thin wrapper that launches the Node.js interactive launcher.
+# The Node.js version handles agent detection, workflow state, and smart suggestions.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check if node_modules exists
+if [ ! -d "$SCRIPT_DIR/node_modules" ]; then
+    echo "📦 Installing dependencies..."
+    cd "$SCRIPT_DIR" && npm install --silent --ignore-scripts 2>/dev/null || npm install --ignore-scripts
+fi
+
+# Launch the Node.js interactive launcher
+exec node "$SCRIPT_DIR/come-here.js" "$@"
+
+# ============================================================================
+# Legacy bash implementation below (kept for reference)
+# ============================================================================
+exit 0
 
 # Colors
 CYAN='\033[0;36m'

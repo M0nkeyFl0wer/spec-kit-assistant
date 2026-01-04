@@ -1,0 +1,409 @@
+/**
+ * Interactive Launcher
+ * Smart launcher that detects state and guides user to next step.
+ */
+
+import inquirer from 'inquirer';
+import chalk from 'chalk';
+import { execSync, spawn } from 'child_process';
+import { existsSync } from 'fs';
+import fs from 'fs-extra';
+import { join, basename } from 'path';
+import { homedir } from 'os';
+
+import {
+  detectInstalledAgents,
+  detectCurrentAgent,
+  getPreferredAgent,
+  getAgentMeta,
+  AgentType
+} from './agent-detector.js';
+
+import {
+  analyzeWorkflowState,
+  analyzeProjectState,
+  getNextAction,
+  WorkflowStage
+} from './workflow-state.js';
+
+import { getKnownSessions, registerSession } from '../guided/utils/config-paths.js';
+
+// ASCII Art
+const DOG_GREETING = `
+${chalk.cyan(`       / \\__`)}
+${chalk.cyan(`      (    @\\___`)}
+${chalk.cyan(`      /         O`)}
+${chalk.cyan(`     /   (_____/`)}
+${chalk.cyan(`    /_____/   U`)}
+`;
+
+const DOG_HAPPY = `
+${chalk.green(`    __`)}
+${chalk.green(` __/  \\__`)}
+${chalk.green(`(  o  o  )`)}
+${chalk.green(` \\  \\/  /`)}
+${chalk.green(`  \\    /`)}
+${chalk.green(`   \\__/  Woof!`)}
+`;
+
+/**
+ * Main interactive launcher
+ */
+export async function launch(options = {}) {
+  const { quiet = false } = options;
+
+  if (!quiet) {
+    console.log(DOG_GREETING);
+    console.log(chalk.bold("Woof! I'm Spec, your loyal assistant!\n"));
+  }
+
+  // Detect current state
+  const currentAgent = detectCurrentAgent();
+  const installedAgents = detectInstalledAgents();
+
+  // Are we inside an agent session?
+  if (currentAgent) {
+    return handleInAgentFlow(currentAgent, options);
+  }
+
+  // Analyze workflow state
+  const state = await analyzeWorkflowState({
+    installedAgents,
+    currentAgent: null,
+    projectPath: options.projectPath || null
+  });
+
+  // Route based on stage
+  switch (state.stage) {
+    case WorkflowStage.NO_AGENT:
+      return handleNoAgentFlow(installedAgents);
+
+    case WorkflowStage.NO_PROJECT:
+      return handleProjectSelectionFlow(state);
+
+    case WorkflowStage.PROJECT_SELECTED:
+      return handleLaunchAgentFlow(state);
+
+    default:
+      return handleProjectSelectionFlow(state);
+  }
+}
+
+/**
+ * Handle case when no agent is installed
+ */
+async function handleNoAgentFlow() {
+  console.log(chalk.yellow("I couldn't find any AI coding agents installed.\n"));
+  console.log("Spec Kit works best with an AI agent. Here are your options:\n");
+
+  const agents = [
+    {
+      name: 'Claude Code (Recommended)',
+      value: AgentType.CLAUDE_CODE,
+      description: 'Anthropic\'s official CLI - great for spec-driven dev'
+    },
+    {
+      name: 'GitHub Copilot',
+      value: AgentType.GITHUB_COPILOT,
+      description: 'GitHub\'s AI assistant'
+    },
+    {
+      name: 'Gemini CLI',
+      value: AgentType.GEMINI_CLI,
+      description: 'Google\'s AI in your terminal'
+    },
+    {
+      name: 'Skip for now',
+      value: 'skip',
+      description: 'Continue without an agent'
+    }
+  ];
+
+  const { choice } = await inquirer.prompt([{
+    type: 'list',
+    name: 'choice',
+    message: 'Which agent would you like to install?',
+    choices: agents.map(a => ({
+      name: `${a.name} - ${chalk.dim(a.description)}`,
+      value: a.value
+    }))
+  }]);
+
+  if (choice === 'skip') {
+    console.log(chalk.dim("\nOkay! You can always install an agent later.\n"));
+    return handleProjectSelectionFlow({ stage: WorkflowStage.NO_PROJECT, recentProjects: [] });
+  }
+
+  const meta = getAgentMeta(choice);
+  console.log(`\n${chalk.cyan('To install ' + meta.name + ':')}\n`);
+  console.log(`  ${chalk.bold(meta.installCmd)}\n`);
+  console.log(chalk.dim(`Learn more: ${meta.docs}\n`));
+
+  const { proceed } = await inquirer.prompt([{
+    type: 'confirm',
+    name: 'proceed',
+    message: 'Would you like me to run the install command?',
+    default: true
+  }]);
+
+  if (proceed) {
+    console.log(chalk.dim('\nInstalling...\n'));
+    try {
+      execSync(meta.installCmd, { stdio: 'inherit' });
+      console.log(chalk.green('\n✅ Installed! Run me again to continue.\n'));
+    } catch (error) {
+      console.log(chalk.red('\n❌ Installation failed. Try running manually:\n'));
+      console.log(`  ${meta.installCmd}\n`);
+    }
+  }
+
+  return { action: 'install_agent', agent: choice };
+}
+
+/**
+ * Handle project selection
+ */
+async function handleProjectSelectionFlow(state) {
+  const sessions = state.recentProjects || await getKnownSessions();
+
+  console.log(chalk.cyan("What would you like to do?\n"));
+
+  const choices = [
+    {
+      name: `${chalk.green('➕')} Start a new project`,
+      value: 'new'
+    }
+  ];
+
+  // Add recent projects
+  if (sessions.length > 0) {
+    choices.push(new inquirer.Separator(chalk.dim('── Recent Projects ──')));
+    for (const session of sessions.slice(0, 5)) {
+      const name = session.projectId || basename(session.projectPath);
+      choices.push({
+        name: `${chalk.blue('📁')} ${name} ${chalk.dim(`(${session.projectPath})`)}`,
+        value: { type: 'existing', path: session.projectPath, name }
+      });
+    }
+  }
+
+  choices.push(new inquirer.Separator());
+  choices.push({
+    name: `${chalk.dim('🔍')} Browse for a project`,
+    value: 'browse'
+  });
+
+  const { action } = await inquirer.prompt([{
+    type: 'list',
+    name: 'action',
+    message: 'Choose an option:',
+    choices
+  }]);
+
+  if (action === 'new') {
+    return handleNewProjectFlow();
+  }
+
+  if (action === 'browse') {
+    return handleBrowseProjectFlow();
+  }
+
+  // Existing project selected
+  return handleExistingProjectFlow(action.path, action.name);
+}
+
+/**
+ * Create a new project
+ */
+async function handleNewProjectFlow() {
+  const { name } = await inquirer.prompt([{
+    type: 'input',
+    name: 'name',
+    message: 'What should we call this project?',
+    validate: input => input.trim().length > 0 || 'Please enter a name'
+  }]);
+
+  // Create directory name
+  const dirName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const defaultPath = join(homedir(), 'Projects', dirName);
+  const cwdPath = join(process.cwd(), dirName);
+
+  const { location } = await inquirer.prompt([{
+    type: 'list',
+    name: 'location',
+    message: 'Where should I create it?',
+    choices: [
+      { name: `~/Projects/${dirName} ${chalk.dim('(recommended)')}`, value: defaultPath },
+      { name: `./${dirName} ${chalk.dim('(current directory)')}`, value: cwdPath },
+      { name: 'Custom location...', value: 'custom' }
+    ]
+  }]);
+
+  let targetPath = location;
+  if (location === 'custom') {
+    const { customPath } = await inquirer.prompt([{
+      type: 'input',
+      name: 'customPath',
+      message: 'Enter the full path:',
+      default: defaultPath
+    }]);
+    targetPath = customPath;
+  }
+
+  // Create directory
+  await fs.ensureDir(targetPath);
+
+  // Register session
+  await registerSession(targetPath, name);
+
+  console.log(chalk.green(`\n✅ Created: ${targetPath}\n`));
+
+  return launchInProject(targetPath, name);
+}
+
+/**
+ * Browse for existing project
+ */
+async function handleBrowseProjectFlow() {
+  const { path } = await inquirer.prompt([{
+    type: 'input',
+    name: 'path',
+    message: 'Enter the project path:',
+    default: process.cwd(),
+    validate: input => existsSync(input) || 'Directory not found'
+  }]);
+
+  const name = basename(path);
+  await registerSession(path, name);
+
+  return handleExistingProjectFlow(path, name);
+}
+
+/**
+ * Handle existing project
+ */
+async function handleExistingProjectFlow(projectPath, projectName) {
+  console.log(chalk.dim(`\nAnalyzing ${projectName}...\n`));
+
+  const projectStage = await analyzeProjectState(projectPath);
+  const nextAction = getNextAction(projectStage);
+
+  console.log(chalk.cyan(`📋 Project Status: ${getStageLabel(projectStage)}\n`));
+  console.log(`${nextAction.message}\n`);
+
+  return launchInProject(projectPath, projectName, projectStage);
+}
+
+/**
+ * Launch agent in project directory
+ */
+async function launchInProject(projectPath, projectName, stage = null) {
+  const agents = detectInstalledAgents();
+  const preferred = getPreferredAgent();
+
+  if (!preferred) {
+    console.log(chalk.yellow("No AI agent found. Let's continue without one.\n"));
+
+    // Just change to directory and show help
+    console.log(`${chalk.cyan('Next steps:')}\n`);
+    console.log(`  cd "${projectPath}"`);
+    console.log(`  spec init "${projectName}"\n`);
+
+    return { action: 'manual', projectPath };
+  }
+
+  console.log(`${chalk.cyan('Ready to launch!')} Using ${chalk.bold(preferred.name)}\n`);
+
+  const { launch } = await inquirer.prompt([{
+    type: 'confirm',
+    name: 'launch',
+    message: `Launch ${preferred.name} in ${projectName}?`,
+    default: true
+  }]);
+
+  if (!launch) {
+    console.log(chalk.dim('\nOkay! When you\'re ready:\n'));
+    console.log(`  cd "${projectPath}"`);
+    console.log(`  ${preferred.launchCmd}\n`);
+    return { action: 'deferred', projectPath };
+  }
+
+  console.log(DOG_HAPPY);
+  console.log(chalk.green(`Launching ${preferred.name}...\n`));
+
+  // Change to project directory and launch agent
+  process.chdir(projectPath);
+
+  // Spawn the agent
+  const child = spawn(preferred.launchCmd, [], {
+    stdio: 'inherit',
+    shell: true,
+    cwd: projectPath
+  });
+
+  return new Promise((resolve) => {
+    child.on('close', (code) => {
+      resolve({ action: 'launched', projectPath, exitCode: code });
+    });
+  });
+}
+
+/**
+ * Handle flow when already inside an agent
+ */
+async function handleInAgentFlow(agentType, options) {
+  const meta = getAgentMeta(agentType);
+
+  console.log(chalk.green(`\n🐕 You're already in ${meta?.name || 'an agent session'}!\n`));
+
+  // Check current directory for project state
+  const cwd = process.cwd();
+  const projectStage = await analyzeProjectState(cwd);
+  const nextAction = getNextAction(projectStage);
+
+  console.log(`${chalk.cyan('Current status:')} ${getStageLabel(projectStage)}\n`);
+  console.log(`${nextAction.message}\n`);
+
+  if (nextAction.command) {
+    console.log(`${chalk.cyan('Try:')} ${chalk.bold(nextAction.command)}\n`);
+  }
+
+  return {
+    action: 'in_agent',
+    stage: projectStage,
+    nextAction
+  };
+}
+
+/**
+ * Get human-readable stage label
+ */
+function getStageLabel(stage) {
+  const labels = {
+    [WorkflowStage.SPEC_INIT]: 'Project initialized, needs specification',
+    [WorkflowStage.SPEC_CREATED]: 'Spec created, needs planning',
+    [WorkflowStage.PLAN_CREATED]: 'Plan ready, needs task breakdown',
+    [WorkflowStage.TASKS_CREATED]: 'Tasks ready, start implementing!',
+    [WorkflowStage.IMPLEMENTING]: 'Implementation in progress',
+    [WorkflowStage.COMPLETE]: 'Complete! 🎉'
+  };
+  return labels[stage] || stage;
+}
+
+/**
+ * CLI entry point
+ */
+export async function main() {
+  try {
+    await launch();
+  } catch (error) {
+    if (error.name === 'ExitPromptError') {
+      // User cancelled
+      console.log(chalk.dim('\nSee you later! 🐕\n'));
+      process.exit(0);
+    }
+    console.error(chalk.red('Error:'), error.message);
+    process.exit(1);
+  }
+}
