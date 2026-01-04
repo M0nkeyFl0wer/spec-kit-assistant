@@ -82,11 +82,24 @@ async function handleNoAgentFlow() {
   console.log(chalk.yellow("I couldn't find any AI coding agents installed.\n"));
   console.log("Spec Kit works best with an AI agent. Here are your options:\n");
 
+  console.log(chalk.cyan.bold('─── FREE OPTIONS ───\n'));
+
   const agents = [
     {
-      name: 'Claude Code (Recommended)',
+      name: `${chalk.green('★')} Gemini CLI ${chalk.green('(FREE)')}`,
+      value: AgentType.GEMINI_CLI,
+      description: '1,500 requests/day free - just needs Google account'
+    },
+    {
+      name: `${chalk.green('★')} OpenCode + Local AI ${chalk.green('(FREE)')}`,
+      value: 'opencode',
+      description: 'Run AI locally with Ollama - no account needed!'
+    },
+    new inquirer.Separator(chalk.dim('\n─── PAID OPTIONS ───\n')),
+    {
+      name: 'Claude Code',
       value: AgentType.CLAUDE_CODE,
-      description: 'Anthropic\'s official CLI - best for spec-driven dev'
+      description: 'Anthropic\'s CLI - best for spec-driven dev'
     },
     {
       name: 'Cursor',
@@ -98,11 +111,7 @@ async function handleNoAgentFlow() {
       value: AgentType.GITHUB_COPILOT,
       description: 'GitHub\'s AI assistant'
     },
-    {
-      name: 'Gemini CLI',
-      value: AgentType.GEMINI_CLI,
-      description: 'Google\'s AI in your terminal'
-    },
+    new inquirer.Separator(''),
     {
       name: 'Continue without an agent',
       value: 'skip',
@@ -114,15 +123,31 @@ async function handleNoAgentFlow() {
     type: 'list',
     name: 'choice',
     message: 'Which agent would you like to install?',
-    choices: agents.map(a => ({
-      name: `${a.name} - ${chalk.dim(a.description)}`,
-      value: a.value
-    }))
+    choices: agents.map(a => {
+      // Handle separators
+      if (a instanceof inquirer.Separator || a.type === 'separator') {
+        return a;
+      }
+      return {
+        name: `${a.name} - ${chalk.dim(a.description)}`,
+        value: a.value
+      };
+    })
   }]);
 
   if (choice === 'skip') {
     console.log(chalk.dim("\nOkay! You can always install an agent later.\n"));
     return handleProjectSelectionFlow({ stage: WorkflowStage.NO_PROJECT, recentProjects: [] });
+  }
+
+  // Special handling for Gemini - it's free and easy!
+  if (choice === AgentType.GEMINI_CLI) {
+    return handleGeminiSetupFlow();
+  }
+
+  // Special handling for OpenCode - free with local models!
+  if (choice === 'opencode') {
+    return handleOpenCodeSetupFlow();
   }
 
   const meta = getAgentMeta(choice);
@@ -149,6 +174,307 @@ async function handleNoAgentFlow() {
   }
 
   return { action: 'install_agent', agent: choice };
+}
+
+/**
+ * Special setup flow for Gemini CLI - the free option!
+ */
+async function handleGeminiSetupFlow() {
+  console.log(dogs.EXCITED);
+  console.log(chalk.green.bold('\n🎉 Great choice! Gemini CLI is FREE to use.\n'));
+
+  console.log(chalk.cyan('Here\'s what you get with Gemini\'s free tier:\n'));
+  console.log(`  ${chalk.green('✓')} 1,500 requests per day`);
+  console.log(`  ${chalk.green('✓')} Access to Gemini 2.0 Flash`);
+  console.log(`  ${chalk.green('✓')} Full terminal integration`);
+  console.log(`  ${chalk.green('✓')} Works great with Spec Kit!\n`);
+
+  console.log(chalk.dim('─'.repeat(50) + '\n'));
+
+  // Check if already installed
+  let isInstalled = false;
+  try {
+    execSync('which gemini', { stdio: 'ignore' });
+    isInstalled = true;
+  } catch (e) {
+    // Not installed
+  }
+
+  if (isInstalled) {
+    console.log(chalk.green('✅ Gemini CLI is already installed!\n'));
+
+    const { launchNow } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'launchNow',
+      message: 'Launch Gemini now?',
+      default: true
+    }]);
+
+    if (launchNow) {
+      console.log(dogs.RUNNING);
+      console.log(chalk.green('Launching Gemini...\n'));
+
+      const child = spawn('gemini', [], {
+        stdio: 'inherit',
+        shell: true
+      });
+
+      return new Promise((resolve) => {
+        child.on('close', (code) => {
+          resolve({ action: 'launched', agent: AgentType.GEMINI_CLI, exitCode: code });
+        });
+      });
+    }
+
+    return { action: 'gemini_ready' };
+  }
+
+  // Installation steps
+  console.log(chalk.cyan.bold('📦 Installation Steps:\n'));
+
+  console.log(`  ${chalk.bold('1.')} Install Gemini CLI:`);
+  console.log(`     ${chalk.cyan('npm install -g @google/gemini-cli')}\n`);
+
+  console.log(`  ${chalk.bold('2.')} Run ${chalk.cyan('gemini')} and follow the auth prompts`);
+  console.log(`     ${chalk.dim('(Uses your Google account - no credit card needed)')}\n`);
+
+  console.log(`  ${chalk.bold('3.')} Come back here and run ${chalk.cyan('spec')} again!\n`);
+
+  const { installNow } = await inquirer.prompt([{
+    type: 'confirm',
+    name: 'installNow',
+    message: 'Install Gemini CLI now?',
+    default: true
+  }]);
+
+  if (installNow) {
+    console.log(dogs.WORKING);
+    console.log(chalk.dim('\nInstalling Gemini CLI...\n'));
+
+    try {
+      execSync('npm install -g @google/gemini-cli', { stdio: 'inherit' });
+
+      console.log(dogs.CELEBRATION);
+      console.log(chalk.green.bold('\n✅ Gemini CLI installed!\n'));
+
+      console.log(chalk.cyan('Now let\'s set it up:\n'));
+
+      const { setupNow } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'setupNow',
+        message: 'Run Gemini to complete setup? (authenticates with Google)',
+        default: true
+      }]);
+
+      if (setupNow) {
+        console.log(chalk.dim('\nLaunching Gemini for authentication...\n'));
+        console.log(chalk.yellow('Follow the prompts to sign in with Google.\n'));
+
+        const child = spawn('gemini', [], {
+          stdio: 'inherit',
+          shell: true
+        });
+
+        return new Promise((resolve) => {
+          child.on('close', (code) => {
+            if (code === 0) {
+              console.log(dogs.LOVE);
+              console.log(chalk.green.bold('\n🎉 You\'re all set! Gemini is ready to use.\n'));
+            }
+            resolve({ action: 'gemini_setup', exitCode: code });
+          });
+        });
+      }
+
+      console.log(chalk.dim('\nWhen ready, just run: gemini\n'));
+      return { action: 'gemini_installed' };
+
+    } catch (error) {
+      console.log(dogs.SAD);
+      console.log(chalk.red('\n❌ Installation failed.\n'));
+      console.log(chalk.dim('Try running manually:'));
+      console.log(chalk.cyan('  npm install -g @google/gemini-cli\n'));
+      return { action: 'install_failed', error };
+    }
+  }
+
+  console.log(chalk.dim('\nNo problem! Run the command above when ready.\n'));
+  return { action: 'deferred' };
+}
+
+/**
+ * Special setup flow for OpenCode + Ollama - completely free local AI!
+ */
+async function handleOpenCodeSetupFlow() {
+  console.log(dogs.EXCITED);
+  console.log(chalk.green.bold('\n🎉 OpenCode + Local AI = Completely FREE!\n'));
+
+  console.log(chalk.cyan('Why this combo is great:\n'));
+  console.log(`  ${chalk.green('✓')} No account required`);
+  console.log(`  ${chalk.green('✓')} No API keys needed`);
+  console.log(`  ${chalk.green('✓')} Runs 100% locally on your machine`);
+  console.log(`  ${chalk.green('✓')} Your code never leaves your computer`);
+  console.log(`  ${chalk.green('✓')} Works great with Spec Kit!\n`);
+
+  console.log(chalk.dim('─'.repeat(50) + '\n'));
+
+  // Check what's installed
+  let hasOpenCode = false;
+  let hasOllama = false;
+
+  try {
+    execSync('which opencode', { stdio: 'ignore' });
+    hasOpenCode = true;
+  } catch (e) {}
+
+  try {
+    execSync('which ollama', { stdio: 'ignore' });
+    hasOllama = true;
+  } catch (e) {}
+
+  // Show status
+  console.log(chalk.cyan.bold('Current Status:\n'));
+  console.log(`  OpenCode: ${hasOpenCode ? chalk.green('✓ Installed') : chalk.yellow('○ Not installed')}`);
+  console.log(`  Ollama:   ${hasOllama ? chalk.green('✓ Installed') : chalk.yellow('○ Not installed')}\n`);
+
+  if (hasOpenCode && hasOllama) {
+    console.log(dogs.CELEBRATION);
+    console.log(chalk.green.bold('Both are installed! You\'re ready to go.\n'));
+
+    // Check if a model is pulled
+    console.log(chalk.dim('Checking for local models...\n'));
+    try {
+      const models = execSync('ollama list 2>/dev/null', { encoding: 'utf8' });
+      if (models.includes('llama') || models.includes('codellama') || models.includes('qwen')) {
+        console.log(chalk.green('✓ Found local models ready to use!\n'));
+      } else {
+        console.log(chalk.yellow('No coding models found. Let\'s download one:\n'));
+        console.log(chalk.dim('  Recommended: qwen2.5-coder (good balance of speed and quality)\n'));
+
+        const { pullModel } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'pullModel',
+          message: 'Download qwen2.5-coder model? (~4GB)',
+          default: true
+        }]);
+
+        if (pullModel) {
+          console.log(dogs.WORKING);
+          console.log(chalk.dim('\nDownloading model (this may take a few minutes)...\n'));
+          try {
+            execSync('ollama pull qwen2.5-coder:7b', { stdio: 'inherit' });
+            console.log(chalk.green('\n✓ Model downloaded!\n'));
+          } catch (e) {
+            console.log(chalk.yellow('\nDownload interrupted. You can run: ollama pull qwen2.5-coder:7b\n'));
+          }
+        }
+      }
+    } catch (e) {
+      console.log(chalk.dim('Could not check models. Make sure Ollama is running.\n'));
+    }
+
+    const { launchNow } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'launchNow',
+      message: 'Launch OpenCode now?',
+      default: true
+    }]);
+
+    if (launchNow) {
+      console.log(dogs.RUNNING);
+      console.log(chalk.green('Launching OpenCode...\n'));
+      console.log(chalk.dim('Tip: Use /models to select your local Ollama model\n'));
+
+      const child = spawn('opencode', [], {
+        stdio: 'inherit',
+        shell: true
+      });
+
+      return new Promise((resolve) => {
+        child.on('close', (code) => {
+          resolve({ action: 'launched', agent: 'opencode', exitCode: code });
+        });
+      });
+    }
+
+    return { action: 'opencode_ready' };
+  }
+
+  // Installation needed
+  console.log(chalk.cyan.bold('📦 Installation Steps:\n'));
+
+  if (!hasOllama) {
+    console.log(`  ${chalk.bold('1.')} Install Ollama (local AI runtime):`);
+    console.log(`     ${chalk.cyan('curl -fsSL https://ollama.com/install.sh | sh')}`);
+    console.log(`     ${chalk.dim('or visit: https://ollama.com/download')}\n`);
+  }
+
+  if (!hasOpenCode) {
+    console.log(`  ${chalk.bold(hasOllama ? '1.' : '2.')} Install OpenCode:`);
+    console.log(`     ${chalk.cyan('npm install -g opencode-ai')}\n`);
+  }
+
+  console.log(`  ${chalk.bold(hasOllama ? '2.' : '3.')} Pull a coding model:`);
+  console.log(`     ${chalk.cyan('ollama pull qwen2.5-coder:7b')}`);
+  console.log(`     ${chalk.dim('(~4GB, good balance of speed and quality)')}\n`);
+
+  console.log(`  ${chalk.bold(hasOllama ? '3.' : '4.')} Launch and select model:`);
+  console.log(`     ${chalk.cyan('opencode')}`);
+  console.log(`     ${chalk.dim('Then use /models to select your Ollama model')}\n`);
+
+  const { installChoice } = await inquirer.prompt([{
+    type: 'list',
+    name: 'installChoice',
+    message: 'What would you like to do?',
+    choices: [
+      { name: 'Install Ollama first (required)', value: 'ollama', disabled: hasOllama ? 'Already installed' : false },
+      { name: 'Install OpenCode', value: 'opencode', disabled: hasOpenCode ? 'Already installed' : false },
+      { name: 'I\'ll install manually', value: 'manual' }
+    ]
+  }]);
+
+  if (installChoice === 'ollama') {
+    console.log(dogs.WORKING);
+    console.log(chalk.dim('\nInstalling Ollama...\n'));
+
+    try {
+      execSync('curl -fsSL https://ollama.com/install.sh | sh', { stdio: 'inherit' });
+      console.log(dogs.CELEBRATION);
+      console.log(chalk.green.bold('\n✅ Ollama installed!\n'));
+
+      // Recurse to continue setup
+      return handleOpenCodeSetupFlow();
+    } catch (error) {
+      console.log(dogs.SAD);
+      console.log(chalk.red('\n❌ Installation failed.\n'));
+      console.log(chalk.dim('Try: curl -fsSL https://ollama.com/install.sh | sh'));
+      console.log(chalk.dim('Or visit: https://ollama.com/download\n'));
+    }
+  }
+
+  if (installChoice === 'opencode') {
+    console.log(dogs.WORKING);
+    console.log(chalk.dim('\nInstalling OpenCode...\n'));
+
+    try {
+      execSync('npm install -g opencode-ai', { stdio: 'inherit' });
+      console.log(dogs.CELEBRATION);
+      console.log(chalk.green.bold('\n✅ OpenCode installed!\n'));
+
+      // Recurse to continue setup
+      return handleOpenCodeSetupFlow();
+    } catch (error) {
+      console.log(dogs.SAD);
+      console.log(chalk.red('\n❌ Installation failed.\n'));
+      console.log(chalk.dim('Try: npm install -g opencode-ai\n'));
+    }
+  }
+
+  console.log(chalk.dim('\nNo problem! Follow the steps above when ready.\n'));
+  console.log(dogs.LOVE);
+  console.log(chalk.cyan('Come back and run `spec` once you\'re set up! 🐕\n'));
+
+  return { action: 'deferred' };
 }
 
 /**
@@ -420,22 +746,26 @@ async function handleManualFlow(projectPath, projectName) {
   console.log(chalk.white("I can still guide you through the spec-driven process."));
   console.log(chalk.dim("You'll just need to run a few commands manually.\n"));
 
+  console.log(chalk.green.bold('💡 Tip: Get a FREE AI agent in minutes!\n'));
+  console.log(chalk.dim('   • Gemini CLI - free with Google account'));
+  console.log(chalk.dim('   • OpenCode + Ollama - free local AI, no account needed\n'));
+
   const { choice } = await inquirer.prompt([{
     type: 'list',
     name: 'choice',
     message: 'What would you like to do?',
     choices: [
       {
-        name: `${chalk.green('📝')} Start with a feature description`,
+        name: `${chalk.green('★')} Get a FREE AI agent ${chalk.green('(recommended)')}`,
+        value: 'install'
+      },
+      {
+        name: `${chalk.blue('📝')} Start with a feature description (manual)`,
         value: 'describe'
       },
       {
-        name: `${chalk.blue('📋')} View the spec-driven workflow`,
+        name: `${chalk.dim('📋')} View the spec-driven workflow`,
         value: 'workflow'
-      },
-      {
-        name: `${chalk.yellow('⚡')} Install an AI agent (recommended)`,
-        value: 'install'
       },
       {
         name: `${chalk.dim('👋')} Exit`,
