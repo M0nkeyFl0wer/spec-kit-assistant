@@ -30,15 +30,18 @@ echo ""
 echo "🐕 Installing Spec Kit Assistant..."
 echo ""
 
+# Determine install location
+INSTALL_DIR="${SPEC_INSTALL_DIR:-$HOME/spec-kit-assistant}"
+
 # Clone repo
-if [ -d "spec-kit-assistant" ]; then
+if [ -d "$INSTALL_DIR" ]; then
     echo "📁 Directory exists, pulling latest..."
-    cd spec-kit-assistant
+    cd "$INSTALL_DIR"
     git pull --quiet
 else
     echo "📥 Cloning repository..."
-    git clone --quiet https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-    cd spec-kit-assistant
+    git clone --quiet https://github.com/M0nkeyFl0wer/spec-kit-assistant.git "$INSTALL_DIR"
+    cd "$INSTALL_DIR"
 fi
 
 # Make run script executable
@@ -48,11 +51,53 @@ chmod +x run.sh
 echo "📦 Installing dependencies..."
 npm install --silent --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
+# Create the 'spec' command wrapper
+echo "🔧 Setting up 'spec' command..."
+
+# Create bin directory if needed
+mkdir -p "$HOME/.local/bin"
+
+# Create the spec command script
+cat > "$HOME/.local/bin/spec" << SPEC_EOF
+#!/bin/bash
+# Spec Kit Assistant - Quick launcher
+# Run 'spec' from anywhere!
+cd "$INSTALL_DIR" && ./run.sh "\$@"
+SPEC_EOF
+
+chmod +x "$HOME/.local/bin/spec"
+
 echo ""
 echo "✅ Installation complete!"
 echo ""
-echo "🚀 Launching Spec Kit Assistant..."
+
+# Check if ~/.local/bin is in PATH
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    echo "📝 Add this to your shell config to use 'spec' command anywhere:"
+    echo ""
+
+    # Detect shell
+    if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ] || [ "$SHELL" = "/usr/bin/zsh" ]; then
+        echo "   echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.config/zsh/exports.zsh"
+        echo "   source ~/.config/zsh/exports.zsh"
+    else
+        echo "   echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.bashrc"
+        echo "   source ~/.bashrc"
+    fi
+    echo ""
+fi
+
+echo "🚀 Usage:"
+echo "   spec                    # Show help and available commands"
+echo "   spec init \"My Project\" # Start a new project"
+echo "   spec run \"build X\"     # Deploy AI swarm"
+echo ""
+echo "🐕 Woof! Ready to go! Run 'spec' to get started."
 echo ""
 
-# Auto-launch
-./run.sh
+# Ask if user wants to launch now
+read -p "Launch Spec Kit Assistant now? [Y/n] " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
+    ./run.sh
+fi
