@@ -79,4 +79,7 @@ remote-server-results/
 test*/
 template/
 
-# Keep only: spec-assistant.js, enhanced-swarm-orchestrator.js, src/, docs/.speckit/
+# Keep only: spec-assistant.js, enhanced-swarm-orchestrator.js, src/, docs/
+
+# Local session data (created per-project)
+.speckit/
