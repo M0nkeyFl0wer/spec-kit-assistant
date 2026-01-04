@@ -9,6 +9,7 @@ import { analyzeProjectState, WorkflowStage } from './workflow-state.js';
 import { getAvailableActions } from './project-runner.js';
 import fs from 'fs-extra';
 import { join } from 'path';
+import dogs, { MINI } from '../character/ascii-dogs.js';
 
 /**
  * Helpful prompts for each workflow stage
@@ -260,40 +261,40 @@ export async function runGuidedPrompt(projectPath, options = {}) {
 }
 
 /**
- * Generate a helpful nudge message
+ * Generate a helpful nudge message with inline dog emoji
  */
 export function getNudge(stage) {
   const nudges = {
     [WorkflowStage.SPEC_INIT]: [
-      "🐕 What are we building today?",
-      "🐕 Ready when you are! Just tell me what you need.",
-      "🐕 Got an idea? Let's turn it into a spec!",
-      "🐕 Describe your feature and I'll help you plan it."
+      `${MINI.thinking} What are we building today?`,
+      `${MINI.happy} Ready when you are! Just tell me what you need.`,
+      `${MINI.excited} Got an idea? Let's turn it into a spec!`,
+      `${MINI.wink} Describe your feature and I'll help you plan it.`
     ],
     [WorkflowStage.SPEC_CREATED]: [
-      "🐕 Your spec looks good! Time to plan?",
-      "🐕 Ready to figure out how to build this?",
-      "🐕 Want me to analyze your codebase and create a plan?"
+      `${MINI.happy} Your spec looks good! Time to plan?`,
+      `${MINI.thinking} Ready to figure out how to build this?`,
+      `${MINI.wink} Want me to analyze your codebase and create a plan?`
     ],
     [WorkflowStage.PLAN_CREATED]: [
-      "🐕 Plan's ready! Let's break it into tasks?",
-      "🐕 Time to create actionable tasks!",
-      "🐕 Ready to get specific about what needs to be done?"
+      `${MINI.excited} Plan's ready! Let's break it into tasks?`,
+      `${MINI.happy} Time to create actionable tasks!`,
+      `${MINI.wink} Ready to get specific about what needs to be done?`
     ],
     [WorkflowStage.TASKS_CREATED]: [
-      "🐕 Tasks are lined up! Ready to start coding?",
-      "🐕 Everything's planned out. Time to build!",
-      "🐕 Let's start implementing!"
+      `${MINI.run} Tasks are lined up! Ready to start coding?`,
+      `${MINI.excited} Everything's planned out. Time to build!`,
+      `${MINI.cool} Let's start implementing!`
     ],
     [WorkflowStage.IMPLEMENTING]: [
-      "🐕 How's it going? Need any help?",
-      "🐕 Making progress! Want me to run the tests?",
-      "🐕 Keep going! You've got this!"
+      `${MINI.thinking} How's it going? Need any help?`,
+      `${MINI.wink} Making progress! Want me to run the tests?`,
+      `${MINI.happy} Keep going! You've got this!`
     ],
     [WorkflowStage.COMPLETE]: [
-      "🐕 Woof! Great job! What's next?",
-      "🐕 Feature done! Ready for another adventure?",
-      "🐕 Nice work! Take a break or start something new?"
+      `${MINI.love} Woof! Great job! What's next?`,
+      `${MINI.excited} Feature done! Ready for another adventure?`,
+      `${MINI.cool} Nice work! Take a break or start something new?`
     ]
   };
 

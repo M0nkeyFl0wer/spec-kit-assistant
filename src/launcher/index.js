@@ -50,5 +50,7 @@ export {
 export {
   setupAgentInstructions,
   hasAgentInstructions,
-  getAgentInstructions
+  getAgentInstructions,
+  detectAgentSetup,
+  getSupportedAgents
 } from './setup-agent-instructions.js';
