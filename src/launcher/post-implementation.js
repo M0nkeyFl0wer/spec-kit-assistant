@@ -8,36 +8,7 @@ import chalk from 'chalk';
 import { spawn } from 'child_process';
 import { getAvailableActions, detectProjectType, ActionType } from './project-runner.js';
 import { MicroCelebrations } from '../guided/micro-celebrations.js';
-
-// Celebration ASCII art
-const CELEBRATION_DOG = `
-${chalk.yellow(`    ∩＿∩`)}
-${chalk.yellow(`   ( ・∀・)  ✨`)}
-${chalk.yellow(`  ＿(_つ/ ￣￣￣/＿`)}
-${chalk.yellow(`   ＼/   DONE!  /`)}
-`;
-
-const RUNNING_DOG = `
-${chalk.cyan(`      /^ ^\\`)}
-${chalk.cyan(`     / 0 0 \\   Running...`)}
-${chalk.cyan(`     V\\ Y /V`)}
-${chalk.cyan(`      / - \\`)}
-${chalk.cyan(`     /    |`)}
-${chalk.cyan(`  __(    )||`)}
-`;
-
-const SUCCESS_DOG = `
-${chalk.green(`       __`)}
-${chalk.green(`   ___( o)>`)}
-${chalk.green(`   \\ <_. )`)}
-${chalk.green(`    \`---'    Woof! Success!`)}
-`;
-
-const FAILURE_DOG = `
-${chalk.red(`      /\\_/\\`)}
-${chalk.red(`     ( o.o )  Uh oh...`)}
-${chalk.red(`      > ^ <`)}
-`;
+import dogs, { getRandomCelebration } from '../character/ascii-dogs.js';
 
 /**
  * Main post-implementation flow
@@ -47,7 +18,7 @@ export async function runPostImplementation(projectPath, options = {}) {
   const celebrations = MicroCelebrations.enabled();
 
   if (!quiet) {
-    console.log(CELEBRATION_DOG);
+    console.log(getRandomCelebration());
     console.log(chalk.bold.green('\n🎉 Implementation Complete!\n'));
   }
 
@@ -163,7 +134,7 @@ async function runActionLoop(projectPath, actions, custom, celebrations) {
  * Execute a command and show output
  */
 async function executeCommand(cmd, cwd) {
-  console.log(RUNNING_DOG);
+  console.log(dogs.RUNNING);
   console.log(chalk.dim(`$ ${cmd}\n`));
 
   return new Promise((resolve) => {
@@ -177,18 +148,18 @@ async function executeCommand(cmd, cwd) {
       console.log('');
 
       if (code === 0) {
-        console.log(SUCCESS_DOG);
+        console.log(dogs.COOL);
         console.log(chalk.green('✅ Command completed successfully!\n'));
         resolve({ success: true, code });
       } else {
-        console.log(FAILURE_DOG);
+        console.log(dogs.SAD);
         console.log(chalk.red(`❌ Command exited with code ${code}\n`));
         resolve({ success: false, code });
       }
     });
 
     child.on('error', (err) => {
-      console.log(FAILURE_DOG);
+      console.log(dogs.SAD);
       console.log(chalk.red(`❌ Error: ${err.message}\n`));
       resolve({ success: false, error: err });
     });
@@ -231,7 +202,8 @@ async function showProjectStatus(projectPath) {
  * Prompt for next feature
  */
 async function promptNextFeature(projectPath) {
-  console.log(chalk.cyan('\n🌟 Ready for the next feature!\n'));
+  console.log(dogs.ALERT);
+  console.log(chalk.cyan('🌟 Ready for the next feature!\n'));
 
   const { description } = await inquirer.prompt([{
     type: 'input',

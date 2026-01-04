@@ -28,25 +28,8 @@ import {
 
 import { getKnownSessions, registerSession } from '../guided/utils/config-paths.js';
 import { runPostImplementation } from './post-implementation.js';
-import { setupAgentInstructions } from './setup-agent-instructions.js';
-
-// ASCII Art
-const DOG_GREETING = `
-${chalk.cyan(`       / \\__`)}
-${chalk.cyan(`      (    @\\___`)}
-${chalk.cyan(`      /         O`)}
-${chalk.cyan(`     /   (_____/`)}
-${chalk.cyan(`    /_____/   U`)}
-`;
-
-const DOG_HAPPY = `
-${chalk.green(`    __`)}
-${chalk.green(` __/  \\__`)}
-${chalk.green(`(  o  o  )`)}
-${chalk.green(` \\  \\/  /`)}
-${chalk.green(`  \\    /`)}
-${chalk.green(`   \\__/  Woof!`)}
-`;
+import { setupAgentInstructions, detectAgentSetup } from './setup-agent-instructions.js';
+import dogs from '../character/ascii-dogs.js';
 
 /**
  * Main interactive launcher
@@ -55,7 +38,7 @@ export async function launch(options = {}) {
   const { quiet = false } = options;
 
   if (!quiet) {
-    console.log(DOG_GREETING);
+    console.log(dogs.WELCOME);
     console.log(chalk.bold("Woof! I'm Spec, your loyal assistant!\n"));
   }
 
@@ -95,6 +78,7 @@ export async function launch(options = {}) {
  * Handle case when no agent is installed
  */
 async function handleNoAgentFlow() {
+  console.log(dogs.CURIOUS);
   console.log(chalk.yellow("I couldn't find any AI coding agents installed.\n"));
   console.log("Spec Kit works best with an AI agent. Here are your options:\n");
 
@@ -102,7 +86,12 @@ async function handleNoAgentFlow() {
     {
       name: 'Claude Code (Recommended)',
       value: AgentType.CLAUDE_CODE,
-      description: 'Anthropic\'s official CLI - great for spec-driven dev'
+      description: 'Anthropic\'s official CLI - best for spec-driven dev'
+    },
+    {
+      name: 'Cursor',
+      value: AgentType.CURSOR,
+      description: 'AI-powered code editor'
     },
     {
       name: 'GitHub Copilot',
@@ -115,9 +104,9 @@ async function handleNoAgentFlow() {
       description: 'Google\'s AI in your terminal'
     },
     {
-      name: 'Skip for now',
+      name: 'Continue without an agent',
       value: 'skip',
-      description: 'Continue without an agent'
+      description: 'I\'ll guide you through manually'
     }
   ];
 
@@ -337,14 +326,7 @@ async function launchInProject(projectPath, projectName, stage = null) {
   const preferred = getPreferredAgent();
 
   if (!preferred) {
-    console.log(chalk.yellow("No AI agent found. Let's continue without one.\n"));
-
-    // Just change to directory and show help
-    console.log(`${chalk.cyan('Next steps:')}\n`);
-    console.log(`  cd "${projectPath}"`);
-    console.log(`  spec init "${projectName}"\n`);
-
-    return { action: 'manual', projectPath };
+    return handleManualFlow(projectPath, projectName);
   }
 
   console.log(`${chalk.cyan('Ready to launch!')} Using ${chalk.bold(preferred.name)}\n`);
@@ -363,7 +345,7 @@ async function launchInProject(projectPath, projectName, stage = null) {
     return { action: 'deferred', projectPath };
   }
 
-  console.log(DOG_HAPPY);
+  console.log(dogs.EXCITED);
   console.log(chalk.green(`Launching ${preferred.name}...\n`));
 
   // Change to project directory and launch agent
@@ -426,6 +408,166 @@ async function handleInAgentFlow(agentType, options) {
     stage: projectStage,
     nextAction
   };
+}
+
+/**
+ * Handle manual flow for users without an AI agent
+ * This provides a guided experience even without Claude/Cursor/etc
+ */
+async function handleManualFlow(projectPath, projectName) {
+  console.log(dogs.WORKING);
+  console.log(chalk.cyan.bold("No AI agent detected - but don't worry!\n"));
+  console.log(chalk.white("I can still guide you through the spec-driven process."));
+  console.log(chalk.dim("You'll just need to run a few commands manually.\n"));
+
+  const { choice } = await inquirer.prompt([{
+    type: 'list',
+    name: 'choice',
+    message: 'What would you like to do?',
+    choices: [
+      {
+        name: `${chalk.green('📝')} Start with a feature description`,
+        value: 'describe'
+      },
+      {
+        name: `${chalk.blue('📋')} View the spec-driven workflow`,
+        value: 'workflow'
+      },
+      {
+        name: `${chalk.yellow('⚡')} Install an AI agent (recommended)`,
+        value: 'install'
+      },
+      {
+        name: `${chalk.dim('👋')} Exit`,
+        value: 'exit'
+      }
+    ]
+  }]);
+
+  if (choice === 'exit') {
+    console.log(dogs.SLEEPING);
+    console.log(chalk.cyan("See you later! 🐕\n"));
+    return { action: 'exit', projectPath };
+  }
+
+  if (choice === 'install') {
+    return handleNoAgentFlow();
+  }
+
+  if (choice === 'workflow') {
+    console.log(dogs.THINKING);
+    console.log(chalk.cyan.bold('\n📋 The Spec-Driven Workflow\n'));
+    console.log(chalk.white('The spec-driven approach breaks features into 4 stages:\n'));
+
+    console.log(`  ${chalk.green('1.')} ${chalk.bold('Specify')} - Describe what you want to build`);
+    console.log(`     ${chalk.dim('Creates .speckit/spec.md with your feature requirements')}\n`);
+
+    console.log(`  ${chalk.green('2.')} ${chalk.bold('Plan')} - Analyze codebase and plan implementation`);
+    console.log(`     ${chalk.dim('Creates .speckit/plan.md with architectural approach')}\n`);
+
+    console.log(`  ${chalk.green('3.')} ${chalk.bold('Tasks')} - Break into actionable work items`);
+    console.log(`     ${chalk.dim('Creates .speckit/tasks.md with ordered task list')}\n`);
+
+    console.log(`  ${chalk.green('4.')} ${chalk.bold('Implement')} - Execute tasks one by one`);
+    console.log(`     ${chalk.dim('Work through tasks until feature is complete')}\n`);
+
+    console.log(chalk.dim('─'.repeat(50) + '\n'));
+
+    // Return to main menu
+    return handleManualFlow(projectPath, projectName);
+  }
+
+  if (choice === 'describe') {
+    console.log(dogs.ALERT);
+    console.log(chalk.cyan.bold('\nLet\'s describe your feature!\n'));
+
+    const { description } = await inquirer.prompt([{
+      type: 'input',
+      name: 'description',
+      message: 'What would you like to build?',
+      validate: input => input.trim().length > 0 || 'Please describe your feature'
+    }]);
+
+    // Create a basic spec file
+    const specContent = `# Feature Specification
+
+## What We're Building
+${description}
+
+## User Stories
+- As a user, I want to [primary action] so that [benefit]
+
+## Requirements
+- [ ] Core functionality
+- [ ] Error handling
+- [ ] Testing
+
+## Notes
+Created: ${new Date().toISOString().split('T')[0]}
+`;
+
+    const fs = await import('fs-extra');
+    const { join } = await import('path');
+
+    const speckitDir = join(projectPath, '.speckit');
+    await fs.default.ensureDir(speckitDir);
+    await fs.default.writeFile(join(speckitDir, 'spec.md'), specContent);
+
+    console.log(dogs.EXCITED);
+    console.log(chalk.green.bold('\n✅ Spec created!\n'));
+    console.log(chalk.dim(`  → ${join(speckitDir, 'spec.md')}\n`));
+
+    console.log(chalk.cyan('Next steps:\n'));
+    console.log(`  ${chalk.bold('1.')} Open ${chalk.cyan('.speckit/spec.md')} and add more details`);
+    console.log(`  ${chalk.bold('2.')} Install an AI agent for guided implementation:`);
+    console.log(`     ${chalk.dim('npm install -g @anthropic-ai/claude-code')}`);
+    console.log(`  ${chalk.bold('3.')} Run ${chalk.cyan('claude')} to get AI assistance\n`);
+
+    // Offer to open the spec file
+    const { openIt } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'openIt',
+      message: 'Open the spec file in your editor?',
+      default: true
+    }]);
+
+    if (openIt) {
+      const { execSync } = await import('child_process');
+      const specPath = join(speckitDir, 'spec.md');
+
+      // Try common editors
+      const editors = ['code', 'cursor', 'subl', 'atom', 'nano', 'vim'];
+      let opened = false;
+
+      for (const editor of editors) {
+        try {
+          execSync(`which ${editor}`, { stdio: 'ignore' });
+          const child = spawn(editor, [specPath], {
+            stdio: 'ignore',
+            detached: true,
+            shell: true
+          });
+          child.unref();
+          opened = true;
+          console.log(chalk.dim(`\nOpened in ${editor}\n`));
+          break;
+        } catch (e) {
+          // Try next editor
+        }
+      }
+
+      if (!opened) {
+        console.log(chalk.dim(`\nOpen ${specPath} in your preferred editor.\n`));
+      }
+    }
+
+    console.log(dogs.LOVE);
+    console.log(chalk.cyan.bold("You're all set! Happy building! 🐕\n"));
+
+    return { action: 'manual', projectPath, specCreated: true };
+  }
+
+  return { action: 'manual', projectPath };
 }
 
 /**

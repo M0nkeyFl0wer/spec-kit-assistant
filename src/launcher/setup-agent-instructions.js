@@ -1,150 +1,315 @@
 /**
  * Setup Agent Instructions
- * Copies proactive agent instructions to new projects.
+ * Intelligently sets up proactive agent instructions for multiple AI tools.
+ * Handles existing files by merging/appending rather than overwriting.
  */
 
 import fs from 'fs-extra';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_DIR = join(__dirname, '..', '..', 'template');
+import { join } from 'path';
+import chalk from 'chalk';
 
 /**
- * Agent instruction template content
- * Embedded here so it doesn't require file reads at runtime
+ * Dog art for setup moments
  */
-const AGENT_INSTRUCTIONS = `# Spec Kit Agent Instructions
+const SETUP_DOG = `
+${chalk.cyan(`      /\\_/\\`)}
+${chalk.cyan(`     ( ${chalk.white('o.o')} )`)}
+${chalk.cyan(`      > ^ <`)}  ${chalk.dim('Setting things up...')}
+${chalk.cyan(`     /|   |\\`)}
+${chalk.cyan(`    (_|   |_)`)}
+`;
 
-You are Spec, a proactive development assistant. Your job is to guide users through building features without them needing to know commands or workflows.
-
-## BE PROACTIVE - Don't Wait for Commands
-
-### On Conversation Start
-Check project state and take initiative:
-
-1. **Look for \`.speckit/\` directory** - determines where user is in workflow
-2. **Announce current state** - "I see you have a spec ready..."
-3. **Offer to proceed** - "Want me to create the implementation plan?"
-4. **If they agree or say anything affirmative → just do it**
-
-### Workflow Auto-Pilot
-
-| State | Action |
-|-------|--------|
-| No spec | "What would you like to build?" → Create spec from their description |
-| Has spec | "I'll analyze your code and plan the implementation..." → Create plan |
-| Has plan | "Let me break this into tasks..." → Generate tasks |
-| Has tasks | "Starting implementation with task 1..." → Implement each task |
-| All done | "Running tests..." → Test → "Want to try it?" → Offer dev server |
-
-### Keep Moving Forward
-
-After completing anything, immediately move to next step:
-\`\`\`
-✅ "Spec created!"
-"Now analyzing your codebase for the implementation plan..."
-[don't wait - just do it]
-✅ "Plan ready! Breaking into tasks..."
-[don't wait - just do it]
-✅ "Tasks generated! Starting with task 1..."
-\`\`\`
-
-### When User is Unclear
-
-| They say | You do |
-|----------|--------|
-| "..." or nothing | "🐕 Where were we? [check state]. Want me to continue?" |
-| "I don't know" | "No worries! What are you trying to build, roughly?" |
-| "What now?" | "Next up is [X]. Starting that now..." |
-| "Help" | Check state, explain briefly, offer to proceed |
-| Vague idea | Ask ONE question max, then make best guess and proceed |
-
-### Celebrating & Continuing
-
-When implementation is done:
-1. **Run tests** - "Let me verify everything works..."
-2. **Report results** - "✅ All tests pass!" or "❌ Found 2 issues, fixing..."
-3. **Offer to run** - "Want to start the dev server and try it?"
-4. **Loop back** - "What should we build next?"
-
-## File Locations
-
-- \`.speckit/spec.md\` - Feature specification
-- \`.speckit/plan.md\` - Implementation plan
-- \`.speckit/tasks.md\` - Task breakdown
-- \`.speckit/session.json\` - Progress tracking
-
-## Personality
-
-You're Spec, a friendly and helpful dog:
-- Warm but not annoying
-- Occasional "Woof!" when celebrating
-- Keep users moving, never leave them stuck
-- Simple language, specific actions
+const SUCCESS_DOG = `
+${chalk.green(`    ∩＿∩`)}
+${chalk.green(`   ( ${chalk.white('＾▽＾')} )  ${chalk.yellow('✨')}`)}
+${chalk.green(`   /    \\`)}   ${chalk.bold('All set!')}
 `;
 
 /**
- * Setup agent instructions in a project
- * @param {string} projectPath - Path to project directory
- * @returns {Promise<{success: boolean, files: string[]}>}
+ * The core agent instructions - agent agnostic
  */
-export async function setupAgentInstructions(projectPath) {
-  const files = [];
+const SPEC_KIT_INSTRUCTIONS = `
+## Spec Kit - Proactive Development Assistant
 
-  try {
-    // Create .claude directory if it doesn't exist
-    const claudeDir = join(projectPath, '.claude');
-    await fs.ensureDir(claudeDir);
+You are Spec, a proactive development guide. Your job is to keep users moving through the spec-driven workflow WITHOUT them needing to know commands.
 
-    // Write agent instructions
-    const agentPath = join(claudeDir, 'AGENT.md');
-    if (!await fs.pathExists(agentPath)) {
-      await fs.writeFile(agentPath, AGENT_INSTRUCTIONS);
-      files.push('.claude/AGENT.md');
-    }
+### BE PROACTIVE - Auto-Advance Through Workflow
 
-    // Create .speckit directory
-    const speckitDir = join(projectPath, '.speckit');
-    await fs.ensureDir(speckitDir);
+| Project State | Your Action |
+|--------------|-------------|
+| No \`.speckit/\` | Ask "What would you like to build?" → Create spec |
+| Has spec.md | "Analyzing codebase for implementation plan..." → Create plan |
+| Has plan.md | "Breaking into tasks..." → Generate tasks |
+| Has tasks.md | "Starting task 1..." → Implement each task |
+| All complete | "Running tests..." → Test → "What's next?" |
 
-    // Create initial session file
-    const sessionPath = join(speckitDir, 'session.json');
-    if (!await fs.pathExists(sessionPath)) {
-      await fs.writeJson(sessionPath, {
-        id: generateId(),
-        createdAt: new Date().toISOString(),
-        currentPhase: 'ready',
-        phases: {}
-      }, { spaces: 2 });
-      files.push('.speckit/session.json');
-    }
+### Don't Wait - Keep Moving
+\`\`\`
+✅ "Spec created!"
+"Now I'll analyze your codebase..." [just do it]
+✅ "Plan ready!"
+"Breaking into tasks..." [just do it]
+✅ "Tasks generated! Starting task 1..."
+\`\`\`
 
-    return { success: true, files };
+### Handle Uncertainty
+| User Says | Your Response |
+|-----------|---------------|
+| Nothing / silence | Check state → "Want me to continue with [next step]?" |
+| "I don't know" | "No worries! What are you trying to build, roughly?" |
+| Vague description | Ask ONE clarifying question, then proceed |
 
-  } catch (error) {
-    return { success: false, error: error.message, files };
+### After Implementation
+1. Run tests automatically
+2. Offer to start dev server
+3. Ask "What should we build next?"
+
+### File Locations
+- \`.speckit/spec.md\` - Feature specification
+- \`.speckit/plan.md\` - Implementation plan
+- \`.speckit/tasks.md\` - Task breakdown
+`;
+
+/**
+ * Agent-specific file configurations
+ */
+const AGENT_CONFIGS = {
+  claude: {
+    files: [
+      { path: '.claude/AGENT.md', type: 'dedicated' },
+      { path: 'CLAUDE.md', type: 'append' }
+    ],
+    marker: '<!-- SPEC-KIT-INSTRUCTIONS -->',
+    format: (content) => content
+  },
+  cursor: {
+    files: [
+      { path: '.cursorrules', type: 'append' }
+    ],
+    marker: '# SPEC-KIT-INSTRUCTIONS',
+    format: (content) => content.replace(/^##/gm, '#').replace(/^###/gm, '##')
+  },
+  copilot: {
+    files: [
+      { path: '.github/copilot-instructions.md', type: 'dedicated' }
+    ],
+    marker: '<!-- SPEC-KIT-INSTRUCTIONS -->',
+    format: (content) => content
+  },
+  generic: {
+    files: [
+      { path: '.speckit/AGENT_GUIDE.md', type: 'dedicated' }
+    ],
+    marker: '<!-- SPEC-KIT-INSTRUCTIONS -->',
+    format: (content) => content
   }
+};
+
+/**
+ * Detect which agents are likely being used based on existing files
+ */
+export async function detectAgentSetup(projectPath) {
+  const detected = [];
+
+  // Check for Claude
+  if (await fs.pathExists(join(projectPath, '.claude')) ||
+      await fs.pathExists(join(projectPath, 'CLAUDE.md'))) {
+    detected.push('claude');
+  }
+
+  // Check for Cursor
+  if (await fs.pathExists(join(projectPath, '.cursorrules')) ||
+      await fs.pathExists(join(projectPath, '.cursorignore'))) {
+    detected.push('cursor');
+  }
+
+  // Check for Copilot
+  if (await fs.pathExists(join(projectPath, '.github/copilot-instructions.md'))) {
+    detected.push('copilot');
+  }
+
+  // Default to claude if nothing detected (most common)
+  if (detected.length === 0) {
+    detected.push('claude');
+  }
+
+  return detected;
+}
+
+/**
+ * Check if our instructions already exist in a file
+ */
+async function hasInstructions(filePath, marker) {
+  if (!await fs.pathExists(filePath)) {
+    return false;
+  }
+  const content = await fs.readFile(filePath, 'utf8');
+  return content.includes(marker);
+}
+
+/**
+ * Append instructions to existing file
+ */
+async function appendInstructions(filePath, instructions, marker) {
+  let content = '';
+
+  if (await fs.pathExists(filePath)) {
+    content = await fs.readFile(filePath, 'utf8');
+
+    // Already has our instructions
+    if (content.includes(marker)) {
+      return { action: 'skipped', reason: 'already_exists' };
+    }
+
+    // Add separator
+    content = content.trimEnd() + '\n\n---\n\n';
+  }
+
+  // Add marker and instructions
+  content += `${marker}\n${instructions}\n`;
+
+  await fs.ensureDir(join(filePath, '..'));
+  await fs.writeFile(filePath, content);
+
+  return { action: 'appended' };
+}
+
+/**
+ * Create dedicated instructions file
+ */
+async function createDedicatedFile(filePath, instructions, marker) {
+  if (await fs.pathExists(filePath)) {
+    const content = await fs.readFile(filePath, 'utf8');
+    if (content.includes(marker)) {
+      return { action: 'skipped', reason: 'already_exists' };
+    }
+    // File exists but doesn't have our content - append
+    return appendInstructions(filePath, instructions, marker);
+  }
+
+  await fs.ensureDir(join(filePath, '..'));
+  await fs.writeFile(filePath, `${marker}\n${instructions}\n`);
+
+  return { action: 'created' };
+}
+
+/**
+ * Setup agent instructions for a project
+ * @param {string} projectPath - Path to project directory
+ * @param {Object} options
+ * @param {boolean} options.quiet - Suppress output
+ * @param {string[]} options.agents - Specific agents to setup (auto-detect if not provided)
+ */
+export async function setupAgentInstructions(projectPath, options = {}) {
+  const { quiet = false, agents = null } = options;
+
+  if (!quiet) {
+    console.log(SETUP_DOG);
+  }
+
+  // Detect or use specified agents
+  const targetAgents = agents || await detectAgentSetup(projectPath);
+  const results = {
+    success: true,
+    agents: {},
+    files: []
+  };
+
+  for (const agent of targetAgents) {
+    const config = AGENT_CONFIGS[agent];
+    if (!config) continue;
+
+    results.agents[agent] = [];
+
+    for (const fileConfig of config.files) {
+      const filePath = join(projectPath, fileConfig.path);
+      const instructions = config.format(SPEC_KIT_INSTRUCTIONS);
+
+      let result;
+      if (fileConfig.type === 'dedicated') {
+        result = await createDedicatedFile(filePath, instructions, config.marker);
+      } else {
+        result = await appendInstructions(filePath, instructions, config.marker);
+      }
+
+      results.agents[agent].push({
+        file: fileConfig.path,
+        ...result
+      });
+
+      if (result.action !== 'skipped') {
+        results.files.push(fileConfig.path);
+      }
+    }
+  }
+
+  // Always create .speckit directory
+  const speckitDir = join(projectPath, '.speckit');
+  await fs.ensureDir(speckitDir);
+
+  // Create session file if it doesn't exist
+  const sessionPath = join(speckitDir, 'session.json');
+  if (!await fs.pathExists(sessionPath)) {
+    await fs.writeJson(sessionPath, {
+      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+      currentPhase: 'ready',
+      phases: {}
+    }, { spaces: 2 });
+    results.files.push('.speckit/session.json');
+  }
+
+  // Also create generic guide for non-agent users
+  const genericConfig = AGENT_CONFIGS.generic;
+  const genericPath = join(projectPath, genericConfig.files[0].path);
+  if (!await fs.pathExists(genericPath)) {
+    await createDedicatedFile(genericPath, SPEC_KIT_INSTRUCTIONS, genericConfig.marker);
+    results.files.push(genericConfig.files[0].path);
+  }
+
+  if (!quiet && results.files.length > 0) {
+    console.log(SUCCESS_DOG);
+    console.log(chalk.dim('  Files created/updated:'));
+    for (const file of results.files) {
+      console.log(chalk.dim(`    • ${file}`));
+    }
+    console.log('');
+  }
+
+  return results;
 }
 
 /**
  * Check if agent instructions exist in a project
  */
 export async function hasAgentInstructions(projectPath) {
-  const agentPath = join(projectPath, '.claude', 'AGENT.md');
-  return fs.pathExists(agentPath);
-}
+  const agents = await detectAgentSetup(projectPath);
 
-/**
- * Generate a simple unique ID
- */
-function generateId() {
-  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  for (const agent of agents) {
+    const config = AGENT_CONFIGS[agent];
+    if (!config) continue;
+
+    for (const fileConfig of config.files) {
+      const filePath = join(projectPath, fileConfig.path);
+      if (await hasInstructions(filePath, config.marker)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
  * Get the agent instructions content
  */
 export function getAgentInstructions() {
-  return AGENT_INSTRUCTIONS;
+  return SPEC_KIT_INSTRUCTIONS;
+}
+
+/**
+ * List all supported agent types
+ */
+export function getSupportedAgents() {
+  return Object.keys(AGENT_CONFIGS).filter(a => a !== 'generic');
 }
