@@ -28,6 +28,7 @@ import {
 
 import { getKnownSessions, registerSession } from '../guided/utils/config-paths.js';
 import { runPostImplementation } from './post-implementation.js';
+import { setupAgentInstructions } from './setup-agent-instructions.js';
 
 // ASCII Art
 const DOG_GREETING = `
@@ -255,10 +256,15 @@ async function handleNewProjectFlow() {
   // Create directory
   await fs.ensureDir(targetPath);
 
+  // Setup agent instructions for proactive guidance
+  console.log(chalk.dim('Setting up project...'));
+  await setupAgentInstructions(targetPath);
+
   // Register session
   await registerSession(targetPath, name);
 
-  console.log(chalk.green(`\n✅ Created: ${targetPath}\n`));
+  console.log(chalk.green(`\n✅ Created: ${targetPath}`));
+  console.log(chalk.dim('   Agent instructions installed for proactive guidance.\n'));
 
   return launchInProject(targetPath, name);
 }

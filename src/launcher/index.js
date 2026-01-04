@@ -37,3 +37,18 @@ export {
   quickTest,
   quickDev
 } from './post-implementation.js';
+
+export {
+  analyzeAndGuide,
+  getContextualHelp,
+  runGuidedPrompt,
+  getNudge,
+  needsGuidance,
+  formatSuggestions
+} from './proactive-guide.js';
+
+export {
+  setupAgentInstructions,
+  hasAgentInstructions,
+  getAgentInstructions
+} from './setup-agent-instructions.js';
