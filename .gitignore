@@ -80,7 +80,10 @@ logs/
 remote-results/
 remote-server-results/
 .swarm/
-test*/
+# Test results and coverage (not test source code)
+test-results/
+.nyc_output/
+coverage/
 template/
 
 # Keep only: spec-assistant.js, enhanced-swarm-orchestrator.js, src/, docs/

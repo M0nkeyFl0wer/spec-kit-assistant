@@ -126,6 +126,39 @@ Don't ask permission at each step. Announce and proceed:
 3. Ask about next feature
 4. If they describe something new → loop back to spec creation
 
+## Testing
+
+Test commands:
+```bash
+npm test              # Run unit tests with coverage
+npm run test:watch    # Watch mode for development
+npm run test:unit     # Unit tests only
+npm run test:integration  # Integration tests
+npm run test:ci       # Full CI suite (unit + integration)
+```
+
+Test structure:
+- `tests/unit/` - Unit tests (fast, no external dependencies)
+- `tests/integration/` - Integration tests (may require specify CLI)
+- `tests/helpers/` - Mock utilities for exec, fs, and gh CLI
+- `tests/fixtures/` - Sample data and mock projects
+
+Coverage targets (per constitution NFR3.3):
+- Lines: 80%
+- Functions: 80%
+- Branches: 70%
+- Statements: 80%
+
+## GitHub Integration
+
+Sync tasks.md to GitHub Issues:
+```bash
+node src/github/cli.js auth          # Check authentication
+node src/github/cli.js status        # Show sync status
+node src/github/cli.js sync          # Sync to issues
+node src/github/cli.js sync --dry-run  # Preview changes
+```
+
 ## Development Notes
 
 - Used Spec Kit itself to build this fork (meta!)
@@ -136,6 +169,8 @@ Don't ask permission at each step. Announce and proceed:
 ## Active Technologies
 - Node.js 20+ (ES Modules), JavaScript + chalk, inquirer, commander, ora (existing); fs-extra (persistence) (001-guided-ux-flow)
 - Local JSON files in `~/.config/spec-kit-assistant/` or project `.speckit/` (001-guided-ux-flow)
+- Node.js 18+ with ES Modules (`"type": "module"`) + chalk, inquirer, fs-extra, commander, axios (existing); node:test (new - built-in) (002-quality-automation)
+- File system (tasks.md, .speckit/sync-state.json), GitHub API (issues) (002-quality-automation)
 
 ## Recent Changes
 - 001-guided-ux-flow: Added Node.js 20+ (ES Modules), JavaScript + chalk, inquirer, commander, ora (existing); fs-extra (persistence)
