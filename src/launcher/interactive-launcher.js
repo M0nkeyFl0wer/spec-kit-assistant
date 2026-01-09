@@ -695,22 +695,25 @@ async function launchInProject(projectPath, projectName, stage = null) {
   // Change to project directory and launch agent
   process.chdir(projectPath);
 
-  // Build launch command - pass initial prompt to trigger proactive guidance
-  const initialPrompt = 'Check project state and guide me through next steps';
-  let launchCmd = preferred.launchCmd;
-  let launchArgs = [];
+  // Launch the agent
+  console.log(chalk.dim(`\nLaunching ${preferred.launchCmd}...\n`));
 
-  // Claude Code accepts prompt as argument
-  if (preferred.type === 'claude' || preferred.launchCmd === 'claude') {
-    launchArgs = ['-p', initialPrompt];
-  }
+  // Display proactive guidance prompt
+  console.log(chalk.hex('#8B5CF6')('╭─────────────────────────────────────────────────────────╮'));
+  console.log(chalk.hex('#8B5CF6')('│') + chalk.white(' 🐕 Just say "hi" or describe what you want to build!  ') + chalk.hex('#8B5CF6')('│'));
+  console.log(chalk.hex('#8B5CF6')('│') + chalk.dim('    Spec will check your project and guide you forward.  ') + chalk.hex('#8B5CF6')('│'));
+  console.log(chalk.hex('#8B5CF6')('╰─────────────────────────────────────────────────────────╯'));
+  console.log('');
 
-  console.log(chalk.dim(`\nLaunching with proactive guidance enabled...\n`));
-
-  // Spawn the agent without shell to avoid escaping issues
-  const child = spawn(launchCmd, launchArgs, {
+  // Use exec with shell for better compatibility
+  const child = spawn(preferred.launchCmd, [], {
     stdio: 'inherit',
     cwd: projectPath
+  });
+
+  child.on('error', (err) => {
+    console.error(chalk.red(`\nFailed to launch: ${err.message}`));
+    console.log(chalk.dim(`Try running manually: ${preferred.launchCmd}`));
   });
 
   return new Promise((resolve) => {
