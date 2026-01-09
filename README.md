@@ -481,21 +481,6 @@ MIT License - See [LICENSE](LICENSE)
 - **Remote-Server Server** - For hosting our swarm deployments
 - **You** - For reading this far! Have a treat! 🦴
 
-```
-                    _
-                   / )
-                  / /
-    |\         _.'  '.
-    ) \___---'         )
-    |                 /
-     \     ...:::::::_/
-      \   :::::::::::'
-       '._:::::::::'
-          '::::::' hjw
-            ||||
-           (:::)
-            \(
-
     "Thanks for using Spec Kit Assistant!"
     "Woof woof! Happy spec-driven development!"
 ```
