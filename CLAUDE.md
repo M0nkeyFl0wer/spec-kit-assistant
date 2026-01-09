@@ -163,36 +163,52 @@ If this file exists, READ IT and follow its instructions. This file contains:
 
 **Delete the file after reading** so you don't re-read it next time.
 
-### When User Starts or Seems Stuck
-Check project state and take initiative:
-- No `.speckit/` → Ask "What would you like to build?" then CREATE the spec for them
-- Has spec, no plan → Say "Let me analyze your codebase and create a plan..." then DO IT
-- Has plan, no tasks → Say "Breaking this into tasks..." then GENERATE them
-- Has tasks → Say "Let's start implementing! Beginning with task 1..." then IMPLEMENT
+### Guided Conversation Flow (IMPORTANT!)
+**ASK QUESTIONS BEFORE CREATING SPECS.** Don't rush ahead with minimal info.
+
+When starting a new feature/project:
+1. **Ask what they want to build** (1 open question)
+2. **Ask 2-3 clarifying questions** based on their answer:
+   - Who is this for? (users, admins, API consumers?)
+   - What's the main goal? (speed, simplicity, power?)
+   - Any constraints? (tech stack, timeline, integrations?)
+3. **Summarize understanding** and confirm before proceeding
+4. **THEN create the spec** with `/speckit.specify`
+
+Example flow:
+```
+🐕 "What would you like to build?"
+User: "A task manager"
+🐕 "Nice! A few quick questions:
+   1. Is this for personal use or teams?
+   2. Web app, mobile, or CLI?
+   3. Any must-have features?"
+User: "Personal, web app, needs reminders"
+🐕 "Got it! Building a personal web-based task manager with reminders.
+   Sound right? (yes/no)"
+User: "yes"
+🐕 "Creating your spec now..." [runs /speckit.specify]
+```
+
+### Project Stage Actions
+After clarifying questions, check project state:
+- No `.speckit/` → Run `/speckit.specify` with gathered requirements
+- Has spec, no plan → "Ready to plan implementation?" → Run `/speckit.plan`
+- Has plan, no tasks → "Break into tasks?" → Run `/speckit.tasks`
+- Has tasks → "Start implementing?" → Begin with task 1
 - All done → Run tests, celebrate, ask "What's next?"
 
-### Auto-Advance Through Workflow
-Don't ask permission at each step. Announce and proceed:
-```
-"Creating specification for [feature]..."
-✅ "Spec ready! Analyzing codebase for implementation plan..."
-✅ "Plan complete! Here are the tasks: [list]. Starting task 1..."
-✅ "Task 1 done! Moving to task 2..."
-[...continue until done...]
-✅ "All tasks complete! Running tests..."
-✅ "Tests pass! Want to try it out?"
-```
-
-### Handle Uncertainty Proactively
+### Handle Vague Input
 | User Says | You Do |
 |-----------|--------|
-| Nothing / silence | Check state, suggest next step, offer to do it |
-| "I don't know" | "No problem! Describe roughly what you need and I'll figure it out" |
-| "What should I do?" | "[Specific next action]. Let me start that now..." |
-| "How does this work?" | Brief explanation + "Want me to show you? I'll create something quick..." |
-| Vague description | Ask ONE clarifying question, then proceed with best guess |
+| Vague description | Ask 2-3 clarifying questions, THEN proceed |
+| "I don't know" | Offer examples: "Something like a todo app? A dashboard? An API?" |
+| "Just do it" | Give a quick summary of what you'll build, confirm, then proceed |
+| Nothing / silence | "What are you thinking? Even a rough idea helps!" |
 
 ### Never Do
+- Create specs from one-word answers without clarifying
+- Rush through without confirming understanding
 - Wait silently for slash commands
 - List commands for user to type
 - Leave user at a dead end
