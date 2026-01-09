@@ -30,6 +30,7 @@ import { getKnownSessions, registerSession } from '../guided/utils/config-paths.
 import { runPostImplementation } from './post-implementation.js';
 import { setupAgentInstructions, detectAgentSetup } from './setup-agent-instructions.js';
 import dogs from '../character/ascii-dogs.js';
+import { SpecLogo } from '../character/spec-logo.js';
 
 /**
  * Main interactive launcher
@@ -38,8 +39,8 @@ export async function launch(options = {}) {
   const { quiet = false } = options;
 
   if (!quiet) {
-    console.log(dogs.WELCOME);
-    console.log(chalk.bold("Woof! I'm Spec, your loyal assistant!\n"));
+    // Show the beautiful pixel dog logo
+    console.log(SpecLogo.pixelDog);
   }
 
   // Detect current state
@@ -694,8 +695,19 @@ async function launchInProject(projectPath, projectName, stage = null) {
   // Change to project directory and launch agent
   process.chdir(projectPath);
 
+  // Build launch args - pass initial prompt to trigger proactive guidance
+  const initialPrompt = 'Check the project state (.speckit/ folder) and guide me through next steps. Be proactive!';
+  let launchArgs = [];
+
+  // Claude Code accepts prompt as argument
+  if (preferred.type === 'claude' || preferred.launchCmd === 'claude') {
+    launchArgs = ['-p', initialPrompt];
+  }
+
+  console.log(chalk.dim(`\nLaunching with proactive guidance enabled...\n`));
+
   // Spawn the agent
-  const child = spawn(preferred.launchCmd, [], {
+  const child = spawn(preferred.launchCmd, launchArgs, {
     stdio: 'inherit',
     shell: true,
     cwd: projectPath
