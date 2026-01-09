@@ -486,46 +486,45 @@ async function handleProjectSelectionFlow(state) {
 
   console.log(chalk.cyan("What would you like to do?\n"));
 
-  const choices = [
-    {
-      name: `${chalk.green('➕')} Start a new project`,
-      value: 'new'
-    }
-  ];
+  // Build simple numbered menu
+  const options = [];
+
+  console.log(`  ${chalk.green('1)')} Start a new project`);
+  options.push({ value: 'new' });
 
   // Add recent projects
+  let optionNum = 2;
   if (sessions.length > 0) {
-    choices.push(new inquirer.Separator(chalk.dim('── Recent Projects ──')));
+    console.log(chalk.dim('\n  ── Recent Projects ──'));
     for (const session of sessions.slice(0, 5)) {
       const name = session.projectId || basename(session.projectPath);
-      choices.push({
-        name: `${chalk.blue('📁')} ${name} ${chalk.dim(`(${session.projectPath})`)}`,
-        value: { type: 'existing', path: session.projectPath, name }
-      });
+      console.log(`  ${chalk.blue(optionNum + ')')} ${name} ${chalk.dim(`(${session.projectPath})`)}`);
+      options.push({ value: { type: 'existing', path: session.projectPath, name } });
+      optionNum++;
     }
   }
 
-  choices.push(new inquirer.Separator());
-  choices.push({
-    name: `${chalk.dim('🔍')} Browse for a project`,
-    value: 'browse'
-  });
+  console.log(`\n  ${chalk.dim(optionNum + ')')} Browse for a project`);
+  options.push({ value: 'browse' });
 
-  // Check if terminal supports interactive prompts
-  if (!process.stdin.isTTY) {
-    console.log(chalk.yellow('\nNon-interactive terminal detected.\n'));
-    console.log('Run in an interactive terminal, or use:');
-    console.log(chalk.cyan('  spec init "My Project"'));
-    console.log(chalk.cyan('  spec run'));
-    return { action: 'non_interactive' };
-  }
+  console.log('');
 
-  const { action } = await inquirer.prompt([{
-    type: 'list',
-    name: 'action',
-    message: 'Choose an option:',
-    choices
+  // Use simple input prompt instead of list
+  const { choice } = await inquirer.prompt([{
+    type: 'input',
+    name: 'choice',
+    message: 'Enter number (1-' + optionNum + '):',
+    validate: input => {
+      const num = parseInt(input, 10);
+      if (isNaN(num) || num < 1 || num > optionNum) {
+        return `Please enter a number between 1 and ${optionNum}`;
+      }
+      return true;
+    }
   }]);
+
+  const selectedIndex = parseInt(choice, 10) - 1;
+  const action = options[selectedIndex]?.value;
 
   if (action === 'new') {
     return handleNewProjectFlow();
@@ -535,20 +534,14 @@ async function handleProjectSelectionFlow(state) {
     return handleBrowseProjectFlow();
   }
 
-  // Handle unexpected input (user typed instead of selected)
-  if (typeof action === 'string' && action !== 'new' && action !== 'browse') {
-    console.log(chalk.yellow(`\nUnexpected input: "${action}"`));
-    console.log(chalk.dim('Please use arrow keys to select from the menu.\n'));
-    return handleProjectSelectionFlow(state);
+  // Existing project selected
+  if (action && action.path) {
+    return handleExistingProjectFlow(action.path, action.name);
   }
 
-  // Existing project selected - validate it has required fields
-  if (!action || !action.path) {
-    console.log(chalk.yellow('\nInvalid selection. Please try again.\n'));
-    return handleProjectSelectionFlow(state);
-  }
-
-  return handleExistingProjectFlow(action.path, action.name);
+  // Fallback
+  console.log(chalk.yellow('\nInvalid selection. Please try again.\n'));
+  return handleProjectSelectionFlow(state);
 }
 
 /**
