@@ -511,6 +511,15 @@ async function handleProjectSelectionFlow(state) {
     value: 'browse'
   });
 
+  // Check if terminal supports interactive prompts
+  if (!process.stdin.isTTY) {
+    console.log(chalk.yellow('\nNon-interactive terminal detected.\n'));
+    console.log('Run in an interactive terminal, or use:');
+    console.log(chalk.cyan('  spec init "My Project"'));
+    console.log(chalk.cyan('  spec run'));
+    return { action: 'non_interactive' };
+  }
+
   const { action } = await inquirer.prompt([{
     type: 'list',
     name: 'action',
@@ -526,7 +535,19 @@ async function handleProjectSelectionFlow(state) {
     return handleBrowseProjectFlow();
   }
 
-  // Existing project selected
+  // Handle unexpected input (user typed instead of selected)
+  if (typeof action === 'string' && action !== 'new' && action !== 'browse') {
+    console.log(chalk.yellow(`\nUnexpected input: "${action}"`));
+    console.log(chalk.dim('Please use arrow keys to select from the menu.\n'));
+    return handleProjectSelectionFlow(state);
+  }
+
+  // Existing project selected - validate it has required fields
+  if (!action || !action.path) {
+    console.log(chalk.yellow('\nInvalid selection. Please try again.\n'));
+    return handleProjectSelectionFlow(state);
+  }
+
   return handleExistingProjectFlow(action.path, action.name);
 }
 
