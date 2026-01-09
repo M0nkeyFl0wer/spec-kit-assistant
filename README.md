@@ -1,12 +1,11 @@
-# 🌱 Spec Kit Assistant + Scaffold-ETH-2
+# 🌱 Spec Kit Assistant - includes support for Ralph, multi-agent swarms, Scaffold ETH and more.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Scaffold-ETH](https://img.shields.io/badge/Scaffold--ETH--2-Integrated-purple)](https://github.com/scaffold-eth/scaffold-eth-2)
 [![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
 
 ```
-╭─flower@FlowerPowered ~/Projects/spec-kit-assistant on  002-quality-automation ✘38 !41 🔀  
-╰─➜ come-here-spec 
+
                                          ██████          ██████
                                        ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██
                                        ██▓▓▓▓██          ██▓▓▓▓██
@@ -23,95 +22,7 @@
                                                 ██░░██
                                                  ████
 
-      🐕 Your Loyal Spec Kit Assistant
 
-What would you like to do?
-
-  1) Start a new project
-
-  ── Recent Projects ──
-  2) spec-kit-assistant (/home/flower/Projects/spec-kit-assistant)
-
-  3) Browse for a project
-
-✔ Enter number (1-3): 1
-✔ What should we call this project? happiness-machine
-✔ Where should I create it? Projects
-Setting up project...
-
-      /\_/\
-     ( o.o )
-      > ^ <  Setting things up...
-     /|   |\
-    (_|   |_)
-
-
-    ∩＿∩
-   ( ＾▽＾ )  ✨
-   /    \   All set!
-
-  Files created/updated:
-    • .claude/AGENT.md
-    • CLAUDE.md
-    • .speckit/session.json
-    • .speckit/AGENT_GUIDE.md
-
-
-✅ Created: Projects
-   Agent instructions installed for proactive guidance.
-
-
-       /\___/\
-      (  o o  )
-      (  =^=  )    Ready!
-       )     (
-      (       )
-     ( (  )  ) )
-    (__(__)__))
-
-✓ Found Claude Code installed!
-
-✔ Launch Claude Code in happiness-machine? Yes
-
-    ∩＿∩
-   ( ＾▽＾ )  ✨
-  ＿(つ/ ￣￣￣/＿
-   ＼/  WOOF! /
-
-Launching Claude Code...
-
-
-Launching with proactive guidance enabled...
-
-node:events:497
-      throw er; // Unhandled 'error' event
-      ^
-
-Error: spawn /bin/sh ENOENT
-    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
-    at onErrorNT (node:internal/child_process:483:16)
-    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
-Emitted 'error' event on ChildProcess instance at:
-    at ChildProcess._handle.onexit (node:internal/child_process:291:12)
-    at onErrorNT (node:internal/child_process:483:16)
-    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
-  errno: -2,
-  code: 'ENOENT',
-  syscall: 'spawn /bin/sh',
-  path: '/bin/sh',
-  spawnargs: [
-    '-c',
-    'claude -p Check the project state (.speckit/ folder) and guide me through next steps. Be proactive!'
-  ]
-}
-
-Node.js v22.21.1
-
-╭─flower@FlowerPowered ~/Projects/spec-kit-assistant on  002-quality-automation ✘38 !41 ?2 🔀  
-╰─✗ 
-
-          🌱 Spec Kit Assistant + 🔗 Scaffold-ETH-2 Integration
-        AI-Powered dApp Development | Spec-Driven | Production-Ready
 ```
 
 > **AI-powered wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit) with deep [Scaffold-ETH-2](https://github.com/scaffold-eth/scaffold-eth-2) integration**
