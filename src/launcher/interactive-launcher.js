@@ -698,16 +698,12 @@ async function launchInProject(projectPath, projectName, stage = null) {
   // Launch the agent
   console.log(chalk.dim(`\nLaunching ${preferred.launchCmd}...\n`));
 
-  // Display proactive guidance prompt
-  console.log(chalk.hex('#8B5CF6')('╭─────────────────────────────────────────────────────────╮'));
-  console.log(chalk.hex('#8B5CF6')('│') + chalk.white(' 🐕 Just say "hi" or describe what you want to build!  ') + chalk.hex('#8B5CF6')('│'));
-  console.log(chalk.hex('#8B5CF6')('│') + chalk.dim('    Spec will check your project and guide you forward.  ') + chalk.hex('#8B5CF6')('│'));
-  console.log(chalk.hex('#8B5CF6')('╰─────────────────────────────────────────────────────────╯'));
-  console.log('');
+  // Initial prompt to trigger proactive guidance
+  const initialPrompt = 'Check project state and guide me through the spec-kit workflow. What should I do next?';
 
-  // Use exec with shell for better compatibility
+  // Spawn with piped stdin so we can send initial prompt, inherit stdout/stderr
   const child = spawn(preferred.launchCmd, [], {
-    stdio: 'inherit',
+    stdio: ['pipe', 'inherit', 'inherit'],
     shell: true,
     cwd: projectPath
   });
@@ -717,8 +713,19 @@ async function launchInProject(projectPath, projectName, stage = null) {
     console.log(chalk.dim(`Try running manually: ${preferred.launchCmd}`));
   });
 
+  // Send initial prompt to trigger proactive guidance
+  child.stdin.write(initialPrompt + '\n');
+
+  // Forward user's stdin to child process for continued interaction
+  process.stdin.setRawMode && process.stdin.setRawMode(true);
+  process.stdin.resume();
+  process.stdin.pipe(child.stdin);
+
   return new Promise((resolve) => {
     child.on('close', (code) => {
+      // Restore terminal state
+      process.stdin.setRawMode && process.stdin.setRawMode(false);
+      process.stdin.pause();
       resolve({ action: 'launched', projectPath, exitCode: code });
     });
   });
