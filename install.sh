@@ -196,12 +196,8 @@ echo "   spec                    # Show help and available commands"
 echo "   spec init \"My Project\" # Start a new project"
 echo "   spec run \"build X\"     # Deploy AI swarm"
 echo ""
-echo "🐕 Woof! Ready to go! Run 'come-here-spec' to get started."
+echo "🐕 Woof! Ready to go! Launching now..."
 echo ""
 
-# Ask if user wants to launch now
-read -p "Launch Spec Kit Assistant now? [Y/n] " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Yy]$ ]] || [[ -z $REPLY ]]; then
-    ./run.sh
-fi
+# Auto-launch the assistant
+exec ./run.sh
