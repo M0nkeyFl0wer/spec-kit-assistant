@@ -687,6 +687,41 @@ function fzfSelectDir(startPath) {
 }
 
 /**
+ * Scan for projects (directories with .git)
+ */
+function scanForProjects(startPath, maxDepth = 3) {
+  const projects = [];
+
+  function scan(dir, depth) {
+    if (depth > maxDepth) return;
+
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        if (entry.name.startsWith('.') && entry.name !== '.git') continue;
+
+        const fullPath = join(dir, entry.name);
+
+        if (entry.name === '.git') {
+          // Found a project - add parent directory
+          projects.push(dir);
+          return; // Don't go deeper in this project
+        }
+
+        scan(fullPath, depth + 1);
+      }
+    } catch {
+      // Permission denied or other error - skip
+    }
+  }
+
+  scan(startPath, 0);
+  return projects.sort();
+}
+
+/**
  * Browse for existing project
  */
 async function handleBrowseProjectFlow() {
@@ -714,14 +749,52 @@ async function handleBrowseProjectFlow() {
       inputPath = response.path;
     }
   } else {
-    // No fzf, use manual input
-    const response = await inquirer.prompt([{
-      type: 'input',
-      name: 'path',
-      message: 'Enter the project path:',
-      default: process.cwd()
-    }]);
-    inputPath = response.path;
+    // No fzf - scan for projects and show as list
+    const projectsDir = join(homedir(), 'Projects');
+    const searchDir = existsSync(projectsDir) ? projectsDir : homedir();
+
+    console.log(chalk.dim('\nScanning for projects...\n'));
+    const foundProjects = scanForProjects(searchDir);
+
+    if (foundProjects.length > 0) {
+      // Show found projects as a list
+      const choices = foundProjects.map(p => ({
+        name: `${basename(p)} ${chalk.dim(`(${p})`)}`,
+        value: p
+      }));
+      choices.push(new inquirer.Separator());
+      choices.push({ name: 'Enter path manually...', value: '__manual__' });
+
+      const { selected } = await inquirer.prompt([{
+        type: 'list',
+        name: 'selected',
+        message: 'Select a project:',
+        choices,
+        pageSize: 15
+      }]);
+
+      if (selected === '__manual__') {
+        const response = await inquirer.prompt([{
+          type: 'input',
+          name: 'path',
+          message: 'Enter the project path:',
+          default: process.cwd()
+        }]);
+        inputPath = response.path;
+      } else {
+        inputPath = selected;
+      }
+    } else {
+      // No projects found, manual input
+      console.log(chalk.yellow('No git projects found in ~/Projects\n'));
+      const response = await inquirer.prompt([{
+        type: 'input',
+        name: 'path',
+        message: 'Enter the project path:',
+        default: process.cwd()
+      }]);
+      inputPath = response.path;
+    }
   }
 
   // Expand ~ to home directory
