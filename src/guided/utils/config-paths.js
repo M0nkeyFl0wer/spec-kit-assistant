@@ -5,7 +5,7 @@
  */
 
 import { homedir, platform } from 'os';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import fs from 'fs-extra';
 
 const APP_NAME = 'spec-kit-assistant';
@@ -115,6 +115,9 @@ export async function registerSession(projectPath, projectId) {
   await ensureConfigDir();
   const indexPath = getSessionsIndexPath();
 
+  // Always resolve to absolute path
+  const absolutePath = resolve(projectPath);
+
   let data = { sessions: [] };
   if (await fs.pathExists(indexPath)) {
     try {
@@ -125,13 +128,13 @@ export async function registerSession(projectPath, projectId) {
   }
 
   // Remove existing entry for this path
-  data.sessions = data.sessions.filter(s => s.projectPath !== projectPath);
+  data.sessions = data.sessions.filter(s => s.projectPath !== absolutePath);
 
-  // Add new entry
+  // Add new entry with absolute path
   data.sessions.push({
-    projectPath,
+    projectPath: absolutePath,
     projectId,
-    sessionPath: getProjectSessionPath(projectPath),
+    sessionPath: getProjectSessionPath(absolutePath),
     lastAccessed: new Date().toISOString()
   });
 
