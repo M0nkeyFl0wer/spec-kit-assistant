@@ -5,21 +5,110 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
 
 ```
+╭─flower@FlowerPowered ~/Projects/spec-kit-assistant on  002-quality-automation ✘38 !41 🔀  
+╰─➜ come-here-spec 
                                          ██████          ██████
                                        ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██
                                        ██▓▓▓▓██          ██▓▓▓▓██
                                        ██▓▓████    ▓▓▓▓▓▓████▓▓██
-   ███████╗██████╗ ███████╗ ██████╗    ██  ██  ██▓▓██▓▓██  ██
-   ██╔════╝██╔══██╗██╔════╝██╔════╝        ██    ▓▓▓▓▓▓██
+   ███████╗██████╗ ███████╗ ██████╗     ██  ██  ██▓▓██▓▓██  ██
+   ██╔════╝██╔══██╗██╔════╝██╔════╝         ██    ▓▓▓▓▓▓██
    ███████╗██████╔╝█████╗  ██║            ██              ██
    ╚════██║██╔═══╝ ██╔══╝  ██║            ██    ██████    ██
-   ███████║██║     ███████╗╚██████╗       ██    ██████    ██
-   ╚══════╝╚═╝     ╚══════╝ ╚═════╝       ██              ██
+   ███████║██║     ███████╗╚██████╗      ██    ██████    ██
+   ╚══════╝╚═╝     ╚══════╝ ╚═════╝      ██              ██
                                             ██    ██    ██
-                                               ████░░████
-                                                 ██░░██
-                                                 ██░░██
-                                                   ████
+                                              ████░░████
+                                                ██░░██
+                                                ██░░██
+                                                 ████
+
+      🐕 Your Loyal Spec Kit Assistant
+
+What would you like to do?
+
+  1) Start a new project
+
+  ── Recent Projects ──
+  2) spec-kit-assistant (/home/flower/Projects/spec-kit-assistant)
+
+  3) Browse for a project
+
+✔ Enter number (1-3): 1
+✔ What should we call this project? happiness-machine
+✔ Where should I create it? Projects
+Setting up project...
+
+      /\_/\
+     ( o.o )
+      > ^ <  Setting things up...
+     /|   |\
+    (_|   |_)
+
+
+    ∩＿∩
+   ( ＾▽＾ )  ✨
+   /    \   All set!
+
+  Files created/updated:
+    • .claude/AGENT.md
+    • CLAUDE.md
+    • .speckit/session.json
+    • .speckit/AGENT_GUIDE.md
+
+
+✅ Created: Projects
+   Agent instructions installed for proactive guidance.
+
+
+       /\___/\
+      (  o o  )
+      (  =^=  )    Ready!
+       )     (
+      (       )
+     ( (  )  ) )
+    (__(__)__))
+
+✓ Found Claude Code installed!
+
+✔ Launch Claude Code in happiness-machine? Yes
+
+    ∩＿∩
+   ( ＾▽＾ )  ✨
+  ＿(つ/ ￣￣￣/＿
+   ＼/  WOOF! /
+
+Launching Claude Code...
+
+
+Launching with proactive guidance enabled...
+
+node:events:497
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: spawn /bin/sh ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+Emitted 'error' event on ChildProcess instance at:
+    at ChildProcess._handle.onexit (node:internal/child_process:291:12)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'spawn /bin/sh',
+  path: '/bin/sh',
+  spawnargs: [
+    '-c',
+    'claude -p Check the project state (.speckit/ folder) and guide me through next steps. Be proactive!'
+  ]
+}
+
+Node.js v22.21.1
+
+╭─flower@FlowerPowered ~/Projects/spec-kit-assistant on  002-quality-automation ✘38 !41 ?2 🔀  
+╰─✗ 
 
           🌱 Spec Kit Assistant + 🔗 Scaffold-ETH-2 Integration
         AI-Powered dApp Development | Spec-Driven | Production-Ready
@@ -144,24 +233,6 @@ spec-assistant run "implement feature X"   # Deploy builder swarm
 spec-assistant test                        # Run test swarms
 spec-assistant deploy                      # Production deployment
 spec-assistant swarm                       # Swarm management
-```
-
-```
-    "These are MY special commands! I call in my swarm friends!"
-
-       ,--._______,-.
-      ( )   (  \_O/( )
-       |\    \  / '|
-       | \  .~  / |
-        \  \   /  /
-        |    ~   |
-        |  (\/) |
-
-         >> Builder Swarm
-         >> Red-Team Swarm
-         >> Data Science Swarm
-         >> Production Swarm
-         >> Security Swarm
 ```
 
 ---
@@ -384,12 +455,6 @@ This project **used Spec Kit to build itself**:
 
 ```
     "Want to help? I'd love that!"
-
-       ,--._______,-.
-      ( )   (  \_O/( )
-       |\    \  / '|
-       | \  .~  / |
-        \  \   /  /
 
     Pull requests welcome!
 ```
