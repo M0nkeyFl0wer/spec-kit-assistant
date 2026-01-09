@@ -700,7 +700,7 @@ async function launchInProject(projectPath, projectName, stage = null) {
   const nextAction = getNextAction(projectStage);
 
   // Write startup context that Claude should read immediately
-  const contextFile = path.join(projectPath, '.speckit', 'startup-context.md');
+  const contextFile = join(projectPath, '.speckit', 'startup-context.md');
   const contextContent = `# 🐕 Spec Kit Assistant - Startup Context
 
 **READ THIS FIRST AND ACT ON IT IMMEDIATELY!**
@@ -730,22 +730,29 @@ Based on the stage above, take the appropriate action:
 `;
 
   // Ensure .speckit directory exists
-  const speckitDir = path.join(projectPath, '.speckit');
+  const speckitDir = join(projectPath, '.speckit');
   if (!fs.existsSync(speckitDir)) {
     fs.mkdirSync(speckitDir, { recursive: true });
   }
   fs.writeFileSync(contextFile, contextContent);
 
-  console.log(chalk.dim(`\nLaunching ${preferred.launchCmd}...\n`));
-  console.log(chalk.hex('#8B5CF6')('╭────────────────────────────────────────────────────────────╮'));
-  console.log(chalk.hex('#8B5CF6')('│') + chalk.white(' 🐕 Context written! Just say "hi" to start guided flow.  ') + chalk.hex('#8B5CF6')('│'));
-  console.log(chalk.hex('#8B5CF6')('╰────────────────────────────────────────────────────────────╯'));
-  console.log('');
+  console.log(chalk.dim(`\nLaunching ${preferred.launchCmd} with guided prompt...\n`));
 
-  // Launch normally - fully interactive
-  const child = spawn(preferred.launchCmd, [], {
+  // Build the guided prompt - conversational, not auto-executing
+  const guidedPrompt = `🐕 Woof! I'm Spec, your loyal assistant.
+
+**Project**: ${projectName}
+**Current stage**: ${getStageLabel(projectStage)}
+
+${nextAction.message}
+
+${nextAction.command ? `Ready to run \`${nextAction.command}\`? Or tell me what you'd like to do.` : 'What would you like to build today?'}`;
+
+  // Launch Claude with the guided prompt as positional argument
+  // This was the original working approach from commit 8865dfb
+  const child = spawn(preferred.launchCmd, [guidedPrompt], {
     stdio: 'inherit',
-    shell: true,
+    shell: false,
     cwd: projectPath
   });
 
