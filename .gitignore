@@ -80,10 +80,32 @@ logs/
 remote-results/
 remote-server-results/
 .swarm/
-test*/
+# Test results and coverage (not test source code)
+test-results/
+.nyc_output/
+coverage/
 template/
 
 # Keep only: spec-assistant.js, enhanced-swarm-orchestrator.js, src/, docs/
 
 # Local session data (created per-project)
 .speckit/
+
+# Runtime state files (Ralph/circuit breaker)
+.call_count
+.circuit_breaker_*
+.exit_signals
+.last_output_length
+.last_reset
+.response_analysis
+progress.json
+status.json
+
+# Generated files (Ralph)
+@AGENT.md
+@fix_plan.md
+PROMPT.md
+
+# Test fixtures
+test-project/
+testest/

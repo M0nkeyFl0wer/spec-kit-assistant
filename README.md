@@ -353,6 +353,75 @@ This project **used Spec Kit to build itself**:
 
 ---
 
+## 🤖 Ralph Integration
+
+Spec Kit Assistant integrates with [Ralph](https://github.com/anthropics/ralph) for autonomous code implementation. This bridges structured Spec Kit planning with autonomous execution.
+
+### Quick Start with Ralph
+
+```bash
+# Initialize Ralph project files from spec artifacts
+node src/ralph/init.js
+
+# Start Ralph execution
+node src/ralph/start.js
+
+# Check progress
+node src/ralph/status.js
+```
+
+### Generated Files
+
+| File | Purpose |
+|------|---------|
+| `@fix_plan.md` | Task checklist converted from tasks.md |
+| `PROMPT.md` | Combined context from spec artifacts |
+| `@AGENT.md` | Build/test commands for agent |
+
+### Remote Execution
+
+Deploy to remote servers for heavy compute tasks:
+
+```bash
+# Set environment variables (or use .env)
+export RALPH_REMOTE_HOST=your-server.example.com
+export RALPH_REMOTE_USER=deploy
+export RALPH_REMOTE_PATH=/home/deploy/project
+export RALPH_REMOTE_PORT=22  # optional
+
+# Deploy and run
+node src/ralph/remote.js run
+```
+
+Environment variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `RALPH_REMOTE_HOST` | Yes | SSH host |
+| `RALPH_REMOTE_USER` | Yes | SSH username |
+| `RALPH_REMOTE_PATH` | Yes | Remote directory |
+| `RALPH_REMOTE_PORT` | No | SSH port (default: 22) |
+| `RALPH_REMOTE_EXCLUDES` | No | Comma-separated exclude patterns |
+
+### Hooks
+
+Claude Code hooks for validation and progress tracking:
+
+```bash
+# Copy hooks to your project
+cp hooks/*.sh your-project/hooks/
+
+# Configure in .claude/settings.json
+{
+  "hooks": {
+    "PreToolUse": ["./hooks/validate-against-spec.sh"],
+    "PostToolUse": ["./hooks/update-progress.sh"]
+  }
+}
+```
+
+---
+
 ## 📚 Documentation
 
 - [📜 Constitution](CONSTITUTION.md) - Project principles
