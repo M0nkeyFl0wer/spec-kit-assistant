@@ -596,10 +596,14 @@ async function handleNewProjectFlow() {
   const projectsDir = join(homedir(), 'Projects');
   const targetPath = join(projectsDir, dirName);
 
-  // Ensure ~/Projects exists
+  // Check if ~/Projects exists, create if not
+  const projectsDirExists = existsSync(projectsDir);
+  if (!projectsDirExists) {
+    console.log(chalk.cyan(`\n🐕 Creating ~/Projects folder for your projects...\n`));
+  }
   await fs.ensureDir(projectsDir);
 
-  console.log(chalk.cyan(`\n🐕 Creating project at: ${targetPath}\n`));
+  console.log(chalk.cyan(`🐕 Creating project at: ${targetPath}\n`));
 
   // Create directory
   await fs.ensureDir(targetPath);
