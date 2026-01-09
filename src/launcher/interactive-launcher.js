@@ -657,15 +657,72 @@ async function handleNewProjectFlow() {
 }
 
 /**
+ * Check if fzf is available
+ */
+function hasFzf() {
+  try {
+    execSync('which fzf', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Use fzf to select a directory
+ */
+function fzfSelectDir(startPath) {
+  try {
+    // Find directories up to 4 levels deep, pipe to fzf
+    const result = execSync(
+      `find "${startPath}" -maxdepth 4 -type d -name ".git" 2>/dev/null | ` +
+      `sed 's/\\/\\.git$//' | sort -u | ` +
+      `fzf --height 40% --reverse --prompt="Select project: "`,
+      { encoding: 'utf8', stdio: ['inherit', 'pipe', 'inherit'] }
+    );
+    return result.trim();
+  } catch {
+    return null; // User cancelled or error
+  }
+}
+
+/**
  * Browse for existing project
  */
 async function handleBrowseProjectFlow() {
-  const { path: inputPath } = await inquirer.prompt([{
-    type: 'input',
-    name: 'path',
-    message: 'Enter the project path:',
-    default: process.cwd()
-  }]);
+  let inputPath;
+
+  // Try fzf first for a nice fuzzy finder experience
+  if (hasFzf()) {
+    const projectsDir = join(homedir(), 'Projects');
+    const searchDir = existsSync(projectsDir) ? projectsDir : homedir();
+
+    console.log(chalk.cyan('\n🐕 Opening fuzzy finder... (Ctrl+C to cancel)\n'));
+
+    const selected = fzfSelectDir(searchDir);
+    if (selected) {
+      inputPath = selected;
+    } else {
+      // User cancelled fzf, fall back to manual input
+      console.log(chalk.dim('Cancelled. Enter path manually:\n'));
+      const response = await inquirer.prompt([{
+        type: 'input',
+        name: 'path',
+        message: 'Enter the project path:',
+        default: process.cwd()
+      }]);
+      inputPath = response.path;
+    }
+  } else {
+    // No fzf, use manual input
+    const response = await inquirer.prompt([{
+      type: 'input',
+      name: 'path',
+      message: 'Enter the project path:',
+      default: process.cwd()
+    }]);
+    inputPath = response.path;
+  }
 
   // Expand ~ to home directory
   let resolvedPath = inputPath;
