@@ -556,7 +556,42 @@ async function handleNewProjectFlow() {
     validate: input => input.trim().length > 0 || 'Please enter a name'
   }]);
 
-  // Create directory name
+  // Detect if user means "current directory" with natural language
+  const herePatterns = /^(here|this directory|current directory|this folder|cwd|pwd|\.)$/i;
+  const nameLower = name.trim().toLowerCase();
+
+  if (herePatterns.test(nameLower)) {
+    // User wants to use current directory
+    const cwd = process.cwd();
+    const cwdName = basename(cwd);
+
+    console.log(chalk.cyan(`\n🐕 Got it! Using current directory: ${cwd}\n`));
+
+    const { confirm } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirm',
+      message: `Initialize spec-kit in "${cwdName}" (${cwd})?`,
+      default: true
+    }]);
+
+    if (!confirm) {
+      console.log(chalk.dim('Okay, let\'s start over.\n'));
+      return handleNewProjectFlow();
+    }
+
+    // Use current directory as-is
+    await fs.ensureDir(join(cwd, '.speckit'));
+    console.log(chalk.dim('Setting up project...'));
+    await setupAgentInstructions(cwd);
+    await registerSession(cwd, cwdName);
+
+    console.log(chalk.green(`\n✅ Initialized: ${cwd}`));
+    console.log(chalk.dim('   Agent instructions installed for proactive guidance.\n'));
+
+    return launchInProject(cwd, cwdName);
+  }
+
+  // Normal flow - create new directory
   const dirName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   const defaultPath = join(homedir(), 'Projects', dirName);
