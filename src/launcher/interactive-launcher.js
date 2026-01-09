@@ -591,66 +591,15 @@ async function handleNewProjectFlow() {
     return launchInProject(cwd, cwdName);
   }
 
-  // Normal flow - create new directory
+  // Normal flow - create new directory in ~/Projects/
   const dirName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  const defaultPath = join(homedir(), 'Projects', dirName);
-  const cwdPath = join(process.cwd(), dirName);
-
-  const { location } = await inquirer.prompt([{
-    type: 'list',
-    name: 'location',
-    message: 'Where should I create it?',
-    choices: [
-      { name: `~/Projects/${dirName} ${chalk.dim('(recommended)')}`, value: defaultPath },
-      { name: `./${dirName} ${chalk.dim('(current directory)')}`, value: cwdPath },
-      { name: 'Custom location...', value: 'custom' }
-    ]
-  }]);
-
-  let targetPath = location;
-  if (location === 'custom') {
-    const { customPath } = await inquirer.prompt([{
-      type: 'input',
-      name: 'customPath',
-      message: 'Enter the full path:',
-      default: defaultPath
-    }]);
-    targetPath = customPath;
-  }
-
-  // Handle common path shortcuts
   const projectsDir = join(homedir(), 'Projects');
+  const targetPath = join(projectsDir, dirName);
 
-  // If user just typed "Projects" or "projects", they want ~/Projects/{project-name}
-  if (/^projects?$/i.test(targetPath)) {
-    targetPath = join(projectsDir, dirName);
-    console.log(chalk.cyan(`\n🐕 Got it! Creating in: ${targetPath}\n`));
-  }
-  // If relative path without leading . or /, resolve to absolute
-  else if (!targetPath.startsWith('/') && !targetPath.startsWith('.') && !targetPath.startsWith('~')) {
-    const resolvedPath = join(process.cwd(), targetPath);
-    console.log(chalk.yellow(`\n⚠️  "${targetPath}" is a relative path.`));
-    console.log(chalk.dim(`   This will create: ${resolvedPath}\n`));
+  // Ensure ~/Projects exists
+  await fs.ensureDir(projectsDir);
 
-    const { confirmPath } = await inquirer.prompt([{
-      type: 'confirm',
-      name: 'confirmPath',
-      message: `Create project at ${resolvedPath}?`,
-      default: true
-    }]);
-
-    if (!confirmPath) {
-      targetPath = join(projectsDir, dirName);
-      console.log(chalk.cyan(`\n🐕 Using default: ${targetPath}\n`));
-    } else {
-      targetPath = resolvedPath;
-    }
-  }
-  // Expand ~ to home directory
-  else if (targetPath.startsWith('~')) {
-    targetPath = targetPath.replace(/^~/, homedir());
-  }
+  console.log(chalk.cyan(`\n🐕 Creating project at: ${targetPath}\n`));
 
   // Create directory
   await fs.ensureDir(targetPath);
@@ -707,18 +656,52 @@ async function handleNewProjectFlow() {
  * Browse for existing project
  */
 async function handleBrowseProjectFlow() {
-  const { path } = await inquirer.prompt([{
+  const { path: inputPath } = await inquirer.prompt([{
     type: 'input',
     name: 'path',
     message: 'Enter the project path:',
-    default: process.cwd(),
-    validate: input => existsSync(input) || 'Directory not found'
+    default: process.cwd()
   }]);
 
-  const name = basename(path);
-  await registerSession(path, name);
+  // Expand ~ to home directory
+  let resolvedPath = inputPath;
+  if (resolvedPath.startsWith('~')) {
+    resolvedPath = resolvedPath.replace(/^~/, homedir());
+  }
 
-  return handleExistingProjectFlow(path, name);
+  // If directory doesn't exist, offer to create it
+  if (!existsSync(resolvedPath)) {
+    console.log(chalk.yellow(`\n⚠️  Directory doesn't exist: ${resolvedPath}`));
+
+    const { action } = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: 'What would you like to do?',
+      choices: [
+        { name: 'Create it as a new project', value: 'create' },
+        { name: 'Try a different path', value: 'retry' },
+        { name: 'Go back to menu', value: 'back' }
+      ]
+    }]);
+
+    if (action === 'create') {
+      await fs.ensureDir(resolvedPath);
+      const name = basename(resolvedPath);
+      await setupAgentInstructions(resolvedPath);
+      await registerSession(resolvedPath, name);
+      console.log(chalk.green(`\n✅ Created: ${resolvedPath}\n`));
+      return launchInProject(resolvedPath, name);
+    } else if (action === 'retry') {
+      return handleBrowseProjectFlow();
+    } else {
+      return launch();
+    }
+  }
+
+  const name = basename(resolvedPath);
+  await registerSession(resolvedPath, name);
+
+  return handleExistingProjectFlow(resolvedPath, name);
 }
 
 /**
