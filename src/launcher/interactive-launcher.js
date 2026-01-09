@@ -695,8 +695,9 @@ async function launchInProject(projectPath, projectName, stage = null) {
   // Change to project directory and launch agent
   process.chdir(projectPath);
 
-  // Build launch args - pass initial prompt to trigger proactive guidance
-  const initialPrompt = 'Check the project state (.speckit/ folder) and guide me through next steps. Be proactive!';
+  // Build launch command - pass initial prompt to trigger proactive guidance
+  const initialPrompt = 'Check project state and guide me through next steps';
+  let launchCmd = preferred.launchCmd;
   let launchArgs = [];
 
   // Claude Code accepts prompt as argument
@@ -706,10 +707,9 @@ async function launchInProject(projectPath, projectName, stage = null) {
 
   console.log(chalk.dim(`\nLaunching with proactive guidance enabled...\n`));
 
-  // Spawn the agent
-  const child = spawn(preferred.launchCmd, launchArgs, {
+  // Spawn the agent without shell to avoid escaping issues
+  const child = spawn(launchCmd, launchArgs, {
     stdio: 'inherit',
-    shell: true,
     cwd: projectPath
   });
 
