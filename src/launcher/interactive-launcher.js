@@ -619,8 +619,76 @@ async function handleNewProjectFlow() {
     targetPath = customPath;
   }
 
+  // Handle common path shortcuts
+  const projectsDir = join(homedir(), 'Projects');
+
+  // If user just typed "Projects" or "projects", they want ~/Projects/{project-name}
+  if (/^projects?$/i.test(targetPath)) {
+    targetPath = join(projectsDir, dirName);
+    console.log(chalk.cyan(`\n🐕 Got it! Creating in: ${targetPath}\n`));
+  }
+  // If relative path without leading . or /, resolve to absolute
+  else if (!targetPath.startsWith('/') && !targetPath.startsWith('.') && !targetPath.startsWith('~')) {
+    const resolvedPath = join(process.cwd(), targetPath);
+    console.log(chalk.yellow(`\n⚠️  "${targetPath}" is a relative path.`));
+    console.log(chalk.dim(`   This will create: ${resolvedPath}\n`));
+
+    const { confirmPath } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'confirmPath',
+      message: `Create project at ${resolvedPath}?`,
+      default: true
+    }]);
+
+    if (!confirmPath) {
+      targetPath = join(projectsDir, dirName);
+      console.log(chalk.cyan(`\n🐕 Using default: ${targetPath}\n`));
+    } else {
+      targetPath = resolvedPath;
+    }
+  }
+  // Expand ~ to home directory
+  else if (targetPath.startsWith('~')) {
+    targetPath = targetPath.replace(/^~/, homedir());
+  }
+
   // Create directory
   await fs.ensureDir(targetPath);
+
+  // Check if there's an existing .speckit folder with old project data
+  const existingSpeckit = join(targetPath, '.speckit');
+  if (await fs.pathExists(existingSpeckit)) {
+    const hasSpec = await fs.pathExists(join(existingSpeckit, 'spec.md'));
+    const hasPlan = await fs.pathExists(join(existingSpeckit, 'plan.md'));
+
+    if (hasSpec || hasPlan) {
+      console.log(chalk.yellow('\n⚠️  Found existing project data in this directory!'));
+      if (hasSpec) console.log(chalk.dim('   - spec.md exists'));
+      if (hasPlan) console.log(chalk.dim('   - plan.md exists'));
+
+      const { action } = await inquirer.prompt([{
+        type: 'list',
+        name: 'action',
+        message: 'What would you like to do?',
+        choices: [
+          { name: 'Start fresh (clear old data)', value: 'fresh' },
+          { name: 'Continue with existing project', value: 'continue' },
+          { name: 'Choose different location', value: 'different' }
+        ]
+      }]);
+
+      if (action === 'fresh') {
+        await fs.remove(existingSpeckit);
+        console.log(chalk.green('✓ Cleared old project data\n'));
+      } else if (action === 'continue') {
+        console.log(chalk.cyan('🐕 Continuing with existing project!\n'));
+        return launchInProject(targetPath, name);
+      } else {
+        // Recurse to pick new location
+        return handleNewProjectFlow();
+      }
+    }
+  }
 
   // Setup agent instructions for proactive guidance
   console.log(chalk.dim('Setting up project...'));
