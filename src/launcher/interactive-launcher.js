@@ -956,7 +956,25 @@ Based on the stage above, take the appropriate action:
   }
   fs.writeFileSync(contextFile, contextContent);
 
-  console.log(chalk.dim(`\nLaunching ${preferred.launchCmd} with guided prompt...\n`));
+  // Show epic loading art while Claude Code starts up
+  console.log(chalk.cyan(`
+                                         ██████          ██████
+                                       ██${chalk.yellow('▓▓▓▓▓▓')}██████████${chalk.yellow('▓▓▓▓▓▓')}██
+                                       ██${chalk.yellow('▓▓▓▓')}██          ██${chalk.yellow('▓▓▓▓')}██
+                                       ██${chalk.yellow('▓▓')}████    ${chalk.white('▓▓▓▓▓▓')}████${chalk.yellow('▓▓')}██
+  ${chalk.magenta('███████╗██████╗ ███████╗ ██████╗')}     ██  ██  ██${chalk.white('▓▓')}██${chalk.white('▓▓')}██  ██
+  ${chalk.magenta('██╔════╝██╔══██╗██╔════╝██╔════╝')}       ██    ${chalk.white('▓▓▓▓▓▓')}██
+  ${chalk.magenta('███████╗██████╔╝█████╗  ██║')}          ██              ██
+  ${chalk.magenta('╚════██║██╔═══╝ ██╔══╝  ██║')}          ██    ${chalk.green('██████')}    ██
+  ${chalk.magenta('███████║██║     ███████╗╚██████╗')}     ██    ${chalk.green('██████')}    ██
+  ${chalk.magenta('╚══════╝╚═╝     ╚══════╝ ╚═════╝')}     ██              ██
+                                           ██    ██    ██
+                                             ████${chalk.dim('░░')}████
+                                               ██${chalk.dim('░░')}██
+                                               ██${chalk.dim('░░')}██
+                                                 ████
+`));
+  console.log(chalk.dim(`  Starting ${preferred.launchCmd}... (this takes a moment)\n`));
 
   // Build the guided prompt - conversational, not auto-executing
   const guidedPrompt = `🐕 Woof! I'm Spec, your loyal assistant.
