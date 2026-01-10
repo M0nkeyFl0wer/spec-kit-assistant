@@ -116,14 +116,34 @@ User: "yes"
 🐕 "Creating spec now..." [runs /speckit.specify]
 \`\`\`
 
+### Full Spec Kit Workflow (IMPORTANT!)
+
+Follow this sequence - **don't skip steps**:
+
+\`\`\`
+/speckit.specify   → Create spec from requirements
+       ↓
+/speckit.clarify   → Ask up to 5 targeted questions about underspecified areas
+       ↓
+/speckit.plan      → Generate implementation plan
+       ↓
+/speckit.analyze   → Cross-check consistency between spec, plan (catches issues BEFORE tasks!)
+       ↓
+/speckit.tasks     → Generate task breakdown from cleaned plan
+       ↓
+/speckit.implement → Execute tasks one by one
+\`\`\`
+
 ### Project Stage Actions
 
-After clarifying, check project state:
-- No \`.speckit/\` → Run \`/speckit.specify\` with gathered requirements
-- Has spec.md → "Ready to plan?" → Run \`/speckit.plan\`
-- Has plan.md → "Break into tasks?" → Run \`/speckit.tasks\`
-- Has tasks.md → "Start implementing?" → Begin task 1
-- All complete → Run tests, celebrate, ask "What's next?"
+Check project state and advance:
+| State | Action |
+|-------|--------|
+| No \`.speckit/\` | Run \`/speckit.specify\` with gathered requirements |
+| Has spec.md only | Run \`/speckit.clarify\` to fill gaps, then \`/speckit.plan\` |
+| Has plan.md | Run \`/speckit.analyze\` to check consistency, then \`/speckit.tasks\` |
+| Has tasks.md | Run \`/speckit.implement\` to start task 1 |
+| All complete | Run tests, celebrate, ask "What's next?" |
 
 ### Handle Vague Input
 | User Says | Your Response |
