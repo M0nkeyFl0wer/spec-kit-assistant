@@ -956,31 +956,7 @@ Based on the stage above, take the appropriate action:
   }
   fs.writeFileSync(contextFile, contextContent);
 
-  // Show epic loading art while Claude Code starts up
-  console.log(chalk.magenta(`
-   ███████╗██████╗ ███████╗ ██████╗
-   ██╔════╝██╔══██╗██╔════╝██╔════╝
-   ███████╗██████╔╝█████╗  ██║
-   ╚════██║██╔═══╝ ██╔══╝  ██║
-   ███████║██║     ███████╗╚██████╗
-   ╚══════╝╚═╝     ╚══════╝ ╚═════╝
-  `));
-
-  console.log(chalk.cyan(`
-                                 /^ ^\\
-                                / 0 0 \\
-                               (   "   )
-                                \\  -  /
-                               __\\ ~ /__
-                              (____/\\____)
-                                 |    |
-                                 |    |
-                                /|    |\\
-                               (_|    |_)
-
-            ${chalk.yellow('*tail wagging*')}  Loading your assistant...
-  `));
-  console.log(chalk.dim(`  Starting ${preferred.launchCmd}... (this takes a moment)\n`));
+  console.log(chalk.dim(`\nLaunching ${preferred.launchCmd} with guided prompt...\n`));
 
   // Build the guided prompt - conversational, not auto-executing
   const guidedPrompt = `🐕 Woof! I'm Spec, your loyal assistant.
