@@ -957,23 +957,29 @@ Based on the stage above, take the appropriate action:
   fs.writeFileSync(contextFile, contextContent);
 
   // Show epic loading art while Claude Code starts up
+  console.log(chalk.magenta(`
+   ███████╗██████╗ ███████╗ ██████╗
+   ██╔════╝██╔══██╗██╔════╝██╔════╝
+   ███████╗██████╔╝█████╗  ██║
+   ╚════██║██╔═══╝ ██╔══╝  ██║
+   ███████║██║     ███████╗╚██████╗
+   ╚══════╝╚═╝     ╚══════╝ ╚═════╝
+  `));
+
   console.log(chalk.cyan(`
-                                         ██████          ██████
-                                       ██${chalk.yellow('▓▓▓▓▓▓')}██████████${chalk.yellow('▓▓▓▓▓▓')}██
-                                       ██${chalk.yellow('▓▓▓▓')}██          ██${chalk.yellow('▓▓▓▓')}██
-                                       ██${chalk.yellow('▓▓')}████    ${chalk.white('▓▓▓▓▓▓')}████${chalk.yellow('▓▓')}██
-  ${chalk.magenta('███████╗██████╗ ███████╗ ██████╗')}     ██  ██  ██${chalk.white('▓▓')}██${chalk.white('▓▓')}██  ██
-  ${chalk.magenta('██╔════╝██╔══██╗██╔════╝██╔════╝')}       ██    ${chalk.white('▓▓▓▓▓▓')}██
-  ${chalk.magenta('███████╗██████╔╝█████╗  ██║')}          ██              ██
-  ${chalk.magenta('╚════██║██╔═══╝ ██╔══╝  ██║')}          ██    ${chalk.green('██████')}    ██
-  ${chalk.magenta('███████║██║     ███████╗╚██████╗')}     ██    ${chalk.green('██████')}    ██
-  ${chalk.magenta('╚══════╝╚═╝     ╚══════╝ ╚═════╝')}     ██              ██
-                                           ██    ██    ██
-                                             ████${chalk.dim('░░')}████
-                                               ██${chalk.dim('░░')}██
-                                               ██${chalk.dim('░░')}██
-                                                 ████
-`));
+                                 /^ ^\\
+                                / 0 0 \\
+                               (   "   )
+                                \\  -  /
+                               __\\ ~ /__
+                              (____/\\____)
+                                 |    |
+                                 |    |
+                                /|    |\\
+                               (_|    |_)
+
+            ${chalk.yellow('*tail wagging*')}  Loading your assistant...
+  `));
   console.log(chalk.dim(`  Starting ${preferred.launchCmd}... (this takes a moment)\n`));
 
   // Build the guided prompt - conversational, not auto-executing
