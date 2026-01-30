@@ -8,14 +8,18 @@
         ]
       },
       {
+        "src": "..",
         "files": [
-          "../README.md",
-          "../CONTRIBUTING.md",
-          "../CODE_OF_CONDUCT.md",
-          "../SECURITY.md",
-          "../SUPPORT.md"
+          "README.md"
         ],
         "dest": "."
+      },
+      {
+        "src": "reference",
+        "files": [
+          "*.md"
+        ],
+        "dest": "reference"
       }
     ],
     "resource": [

@@ -41,7 +41,7 @@
 ## Existing Assets Inventory
 
 ### 1. Official GitHub Spec Kit (v0.0.90) - External Dependency
-**Location**: `spec-kit-official/` (fresh clone from https://github.com/github/spec-kit)
+**Upstream Source**: [github/spec-kit](https://github.com/github/spec-kit) (clone it separately when needed)
 
 **What it provides**:
 - Core Python CLI (`specify` command)
@@ -959,7 +959,7 @@ def display_art(art_key, mood=None, animation=False):
 1. **Old test projects**: `test-check/`, `my-project/`, `Your-Little-Helper/`, `i/`, `testest/`
 2. **Deprecated swarm files**: `deploy-*-swarm.js`, `red-team-*-swarm.js`
 3. **Ralph integration**: `src/ralph/`
-4. **Old spec-kit copy**: `spec-kit-official/`
+4. **Old spec-kit copy**: Removed from this repo to keep size manageable (clone from the upstream repo above if you need it)
 5. **Node wrapper**: `spec-assistant.js`, `package.json`, `node_modules/`
 6. **Duplicate scripts**: Consolidate bash scripts
 
