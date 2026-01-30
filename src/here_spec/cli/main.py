@@ -7,7 +7,7 @@ Progressive checkpoints throughout Spec-Driven Development workflow
 import typer
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm
+from rich.prompt import Confirm, Prompt
 from pathlib import Path
 import sys
 import json
@@ -43,9 +43,18 @@ def init(
     """
     display_welcome()
 
+    # Get or prompt for project name
+    if not project_name:
+        project_name = Prompt.ask(
+            "🐕 What would you like to name your project?", default="my-project"
+        )
+
     # Setup project directory
-    project_path = Path.cwd() if not project_name else Path(project_name)
+    project_path = Path.cwd() / project_name
     project_path.mkdir(exist_ok=True)
+
+    console.print(f"\n[green]✅ Created project: {project_name}[/green]")
+    console.print(f"[dim]Location: {project_path.absolute()}[/dim]\n")
 
     # System detection
     console.print("\n[dim]🔍 Checking your system...[/dim]")
@@ -117,7 +126,10 @@ def _run_progressive_flow(agent: str, checkpoints: CheckpointManager, project_pa
         if context is None:
             # User chose to pause
             console.print(f"\n[yellow]⏸️  Paused at {step} step[/yellow]")
-            console.print("[dim]Run 'here-spec continue' to resume[/dim]")
+            console.print(f"\n[dim]Project: {project_path.name}[/dim]")
+            console.print("\n[bold]To resume:[/bold]")
+            console.print(f"  cd {project_path.name}")
+            console.print("  here-spec continue")
             return
 
         if step == "build":
@@ -130,8 +142,16 @@ def _run_progressive_flow(agent: str, checkpoints: CheckpointManager, project_pa
             # Ask if they want to continue
             if not Confirm.ask(f"\nContinue to next step?", default=True):
                 console.print(f"\n[yellow]Paused after {step}[/yellow]")
-                console.print("[dim]Run 'here-spec continue' to resume[/dim]")
+                console.print(f"\n[dim]Project: {project_path.name}[/dim]")
+                console.print("\n[bold]To resume:[/bold]")
+                console.print(f"  cd {project_path.name}")
+                console.print("  here-spec continue")
                 return
+
+    # All steps completed!
+    console.print(f"\n[bold green]✅ All steps completed for {project_path.name}![/bold green]")
+    console.print("\n[dim]Your project is ready at:[/dim]")
+    console.print(f"  {project_path.absolute()}")
 
 
 def _run_step_agent(agent: str, context: dict, project_path: Path):
@@ -157,9 +177,11 @@ def _run_build_step(agent: str, checkpoints: CheckpointManager, project_path: Pa
     context = checkpoints.run_checkpoint("build")
 
     if context is None:
-        console.print(
-            "\n[yellow]Build paused. Run 'here-spec continue' to start building.[/yellow]"
-        )
+        console.print("\n[yellow]⏸️  Build paused[/yellow]")
+        console.print(f"\n[dim]Project: {project_path.name}[/dim]")
+        console.print("\n[bold]To resume building:[/bold]")
+        console.print(f"  cd {project_path.name}")
+        console.print("  here-spec continue")
         return
 
     # Mark build as in progress
@@ -181,17 +203,47 @@ def _run_build_step(agent: str, checkpoints: CheckpointManager, project_path: Pa
 
 @app.command()
 def continue_project(
-    path: str = typer.Argument(".", help="Path to existing project"),
+    path: str = typer.Argument(
+        ".", help="Path to existing project (optional - auto-detects current directory)"
+    ),
 ):
     """
     Continue from last checkpoint
     Resumes the progressive workflow where you left off
+
+    If run without arguments, automatically detects if you're in a project directory.
     """
     project_path = Path(path).resolve()
     checkpoint_file = project_path / ".speckit" / "checkpoints.json"
 
     if not checkpoint_file.exists():
-        console.print("[red]❌ No project found. Run 'here-spec init' first.[/red]")
+        # Check if maybe we're in a parent directory with projects
+        if path == ".":
+            console.print("[yellow]🤔 Hmm, I don't see a project here...[/yellow]")
+            console.print("\n[dim]Are you looking for one of these projects?[/dim]")
+
+            # Look for projects in current directory
+            projects_found = []
+            for item in Path.cwd().iterdir():
+                if item.is_dir() and (item / ".speckit" / "checkpoints.json").exists():
+                    projects_found.append(item.name)
+
+            if projects_found:
+                console.print("\n[bold]Projects found:[/bold]")
+                for i, proj in enumerate(projects_found, 1):
+                    console.print(f"  {i}. {proj}")
+                console.print("\n[dim]To continue a project:[/dim]")
+                console.print(f"  cd [project-name] && here-spec continue")
+                console.print(f"\n[dim]Or:[/dim]")
+                console.print(f"  here-spec continue [project-name]")
+            else:
+                console.print("[red]❌ No projects found in current directory.[/red]")
+                console.print("\n[dim]To start a new project:[/dim]")
+                console.print("  here-spec init [project-name]")
+        else:
+            console.print(f"[red]❌ No project found at: {path}[/red]")
+            console.print("\n[dim]To start a new project:[/dim]")
+            console.print("  here-spec init [project-name]")
         raise typer.Exit(1)
 
     # Load checkpoint state
