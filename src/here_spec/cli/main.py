@@ -5,6 +5,7 @@ Progressive checkpoints throughout Spec-Driven Development workflow
 """
 
 import typer
+from typer import Context
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
@@ -505,6 +506,59 @@ def interactive_config():
             break
         elif choice == "6":
             break
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(ctx: Context):
+    """
+    Spec Kit Assistant - Just run 'here-spec' and go!
+
+    Automatically detects what to do:
+    - In a project directory? Continue where you left off
+    - Not in a project? Start creating a new one
+    """
+    if ctx.invoked_subcommand is not None:
+        return
+
+    # No command specified - be smart about it
+    checkpoint_file = Path.cwd() / ".speckit" / "checkpoints.json"
+
+    if checkpoint_file.exists():
+        # Already in a project - continue it
+        console.print("[dim]🐕 Detected project in current directory![/dim]")
+        continue_project(".")
+    else:
+        # Not in a project - start a new one
+        console.print("[dim]🐕 Starting new project...[/dim]\n")
+        # Call init with no arguments
+        display_welcome()
+
+        # Setup project directory
+        project_name = Prompt.ask(
+            "🐕 What would you like to name your project?", default="my-project"
+        )
+        project_path = Path.cwd() / project_name
+        project_path.mkdir(exist_ok=True)
+
+        console.print(f"\n[green]✅ Created project: {project_name}[/green]")
+        console.print(f"[dim]Location: {project_path.absolute()}[/dim]\n")
+
+        # System detection
+        console.print("[dim]🔍 Checking your system...[/dim]")
+        detector = SystemDetector()
+        system_info = detector.detect()
+        display_system_check(system_info)
+
+        # Agent selection
+        agent = select_agent(system_info, False)
+
+        # Initialize checkpoint manager
+        checkpoints = CheckpointManager(console, project_path)
+        checkpoints.state["agent"] = agent
+        checkpoints._save_state()
+
+        # Run progressive flow
+        _run_progressive_flow(agent, checkpoints, project_path)
 
 
 def main():
