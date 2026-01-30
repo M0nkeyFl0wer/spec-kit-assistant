@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 from rich.align import Align
+import textwrap
 
 console = Console()
 
@@ -31,81 +32,108 @@ SPEC_LOGO = """[bright_cyan]
                                                    ████                                                                 
 [/bright_cyan]"""
 
-# Dog art collection
+
+# Dog art collection (dedented for consistent alignment)
+def _art(text: str) -> str:
+    return textwrap.dedent(text).rstrip("\n")
+
+
 DOG_ART = {
-    "welcome": """
-    🐕 Hi! I'm Spec! Let's build something amazing together!
-    
-       /^-----^\\
-      ( ◕     ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "happy": """
-       /^-----^\\
-      ( ◕     ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "thinking": """
-       /^-----^\\
-      ( ◕  ?  ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-            💭
-    """,
-    "detective": """
-       /^-----^\\   🔍
-      ( ◔     ◔ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "working": """
-       /^-----^\\   💻
-      ( ◕  ▄  ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "celebrating": """
-       /^-----^\\   🎉
-      ( ★     ★ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-      *WOOF!*
-    """,
-    "listening": """
-       /^-----^\\   👂
-      ( ◕     ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "builder": """
-       /^-----^\\   ⚒️
-      ( ◕  ⚙️  ◕ )
-       \\  ^___^  /
-        \\   ---   /
-         ^^^     ^^^
-    """,
-    "ultimate": """
-    ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
-    ⭐                                          ⭐
-    ⭐        /^─────────^\\                         ⭐
-    ⭐       ( ◕   🏆   ◕ )                        ⭐
-    ⭐        \\    ⭐    /                         ⭐
-    ⭐         \\  ^___^  /                        ⭐
-    ⭐          \\   ---   /                       ⭐
-    ⭐           ^^^     ^^^                      ⭐
-    ⭐                                            ⭐
-    ⭐    🏆 PROJECT COMPLETE! 🏆                 ⭐
-    ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
-    """,
+    "welcome": _art(
+        r"""
+            /^ ^\
+           / 0 0 \
+           V\ Y /V
+            / - \
+           /    |
+          V__) ||
+        """
+    ),
+    "happy": _art(
+        r"""
+            /\_/\
+           ( ^.^ )
+            > ^ <
+           /|   |\
+          (_|   |_)
+        """
+    ),
+    "thinking": _art(
+        r"""
+             /\_/\
+            ( o.o )
+             > ^ <   Hmm...
+            /|   |\
+           (_|   |_)
+            /   \
+           /_____\
+        """
+    ),
+    "detective": _art(
+        r"""
+             /^-----^\
+            (  ◕ ◕  )
+             \  ^  /   🔍
+          ____/   \____
+         /             \
+        |   SNIFF...    |
+         \_____   _____/
+              \ /
+               V
+        """
+    ),
+    "working": _art(
+        r"""
+            /\_/\
+           ( o.o )    *tap tap tap*
+            > ^ <
+           /|   |\
+          (_|   |_)
+        """
+    ),
+    "celebrating": _art(
+        r"""
+            ★    ★
+          \  ^  ^  /
+           (  ◕‿◕  )   🎉
+          <)      (>
+           \    //
+            \__//
+        """
+    ),
+    "listening": _art(
+        r"""
+            /^ ^\
+           ( ◕ ◕ )
+            \  ?  /
+             \   /
+              \_/
+        """
+    ),
+    "builder": _art(
+        r"""
+            /\_/\   ⚙️
+           ( •.• )  Let's build!
+            / ^ \
+           /|   |\
+          /_|___|_\
+        """
+    ),
+    "ultimate": _art(
+        r"""
+        ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+        ⭐                                          ⭐
+        ⭐        /^─────────^\                         ⭐
+        ⭐       ( ◕   🏆   ◕ )                        ⭐
+        ⭐        \    ⭐    /                         ⭐
+        ⭐         \  ^___^  /                        ⭐
+        ⭐          \   ---   /                       ⭐
+        ⭐           ^^^     ^^^                      ⭐
+        ⭐                                            ⭐
+        ⭐    🏆 PROJECT COMPLETE! 🏆                 ⭐
+        ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+        """
+    ),
     "mini": "(◕‿◕)🐕",
     "mini_working": "(◕‿◕)🐕💻",
     "mini_celebrating": "(★‿★)🐕🎉",
@@ -143,17 +171,20 @@ def display_logo():
 def display_art(art_key: str, title: str = "", style: str = "blue"):
     """Display ASCII art with optional title"""
     art_text = DOG_ART.get(art_key, DOG_ART["happy"])
+    renderable = Align.left(art_text)
 
     if title:
-        console.print(Panel(art_text, title=title, border_style=style, padding=(1, 2)))
+        console.print(Panel(renderable, title=title, border_style=style, padding=(1, 2)))
     else:
-        console.print(art_text)
+        console.print(renderable)
 
 
 def display_welcome():
     """Display welcome banner with full color logo and dog"""
     display_logo()
     console.print(Align.center("[dim]🐕 Your Friendly Spec Development Guide 🐕[/dim]"))
+    console.print()
+    console.print(Align.center("🐕 Hi! I'm Spec! Let's build something amazing together!"))
     console.print()
 
     # Show the friendly dog mascot below
