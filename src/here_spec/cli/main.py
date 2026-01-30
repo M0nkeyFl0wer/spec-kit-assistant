@@ -208,7 +208,31 @@ def continue_project(
     agent = checkpoints.state.get("agent", "claude")
 
     # Continue from current step
-    _run_progressive_flow(agent, checkpoints, project_path)
+    current_step = checkpoints.get_next_step()
+
+    # Map the current step to resume properly
+    if current_step == "building":
+        console.print("\n[yellow]Build was in progress. Restarting build step...[/yellow]")
+        _run_build_step(agent, checkpoints, project_path)
+    elif current_step in ["constitution", "spec", "plan", "tasks", "validate", "build"]:
+        # Run from current checkpoint
+        context = checkpoints.run_checkpoint(current_step)
+        if context is None:
+            console.print(f"\n[yellow]⏸️  Paused at {current_step} step[/yellow]")
+            console.print("[dim]Run 'here-spec continue' to resume[/dim]")
+            return
+
+        if current_step == "build":
+            _run_build_step(agent, checkpoints, project_path)
+        else:
+            _run_step_agent(agent, context, project_path)
+
+            # Ask if they want to continue to next steps
+            if Confirm.ask(f"\nContinue with remaining steps?", default=True):
+                _run_progressive_flow(agent, checkpoints, project_path)
+    else:
+        # Unknown state, run full flow
+        _run_progressive_flow(agent, checkpoints, project_path)
 
 
 @app.command()
