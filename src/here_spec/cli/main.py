@@ -8,10 +8,11 @@ import typer
 from typer import Context
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm, Prompt
+from rich.prompt import Confirm, Prompt, IntPrompt
 from pathlib import Path
 import sys
 import json
+from typing import Optional, List
 
 from here_spec.art.dog_art import (
     display_art,
@@ -218,34 +219,17 @@ def continue_project(
     checkpoint_file = project_path / ".speckit" / "checkpoints.json"
 
     if not checkpoint_file.exists():
-        # Check if maybe we're in a parent directory with projects
         if path == ".":
-            console.print("[yellow]🤔 Hmm, I don't see a project here...[/yellow]")
-            console.print("\n[dim]Are you looking for one of these projects?[/dim]")
-
-            # Look for projects in current directory
-            projects_found = []
-            for item in Path.cwd().iterdir():
-                if item.is_dir() and (item / ".speckit" / "checkpoints.json").exists():
-                    projects_found.append(item.name)
-
-            if projects_found:
-                console.print("\n[bold]Projects found:[/bold]")
-                for i, proj in enumerate(projects_found, 1):
-                    console.print(f"  {i}. {proj}")
-                console.print("\n[dim]To continue a project:[/dim]")
-                console.print(f"  cd [project-name] && here-spec continue")
-                console.print(f"\n[dim]Or:[/dim]")
-                console.print(f"  here-spec continue [project-name]")
-            else:
-                console.print("[red]❌ No projects found in current directory.[/red]")
-                console.print("\n[dim]To start a new project:[/dim]")
-                console.print("  here-spec init [project-name]")
+            selected_project = _choose_project_from_directory(Path.cwd())
+            if not selected_project:
+                raise typer.Exit(1)
+            project_path = selected_project
+            checkpoint_file = project_path / ".speckit" / "checkpoints.json"
         else:
             console.print(f"[red]❌ No project found at: {path}[/red]")
             console.print("\n[dim]To start a new project:[/dim]")
             console.print("  here-spec init [project-name]")
-        raise typer.Exit(1)
+            raise typer.Exit(1)
 
     # Load checkpoint state
     checkpoints = CheckpointManager(console, project_path)
@@ -377,7 +361,7 @@ def config(
     if show:
         if config_path.exists():
             with open(config_path) as f:
-                console.print_json(json.load(f))
+                console.print_json(data=json.load(f))
         else:
             console.print("[dim]No configuration found. Using defaults.[/dim]")
     elif reset:
@@ -498,7 +482,7 @@ def interactive_config():
             if quality in ["prototype", "production"]:
                 config["default_quality"] = quality
         elif choice == "4":
-            console.print_json(config)
+            console.print_json(data=config)
         elif choice == "5":
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
@@ -506,6 +490,41 @@ def interactive_config():
             break
         elif choice == "6":
             break
+
+
+def _discover_projects(base_path: Path) -> List[Path]:
+    projects: List[Path] = []
+    for item in sorted(base_path.iterdir()):
+        checkpoint = item / ".speckit" / "checkpoints.json"
+        if item.is_dir() and checkpoint.exists():
+            projects.append(item)
+    return projects
+
+
+def _choose_project_from_directory(base_path: Path) -> Optional[Path]:
+    projects = _discover_projects(base_path)
+    if not projects:
+        console.print("[red]❌ No projects found in this directory.[/red]")
+        console.print("\n[dim]To start a new project:[/dim]")
+        console.print("  here-spec init [project-name]")
+        return None
+
+    if len(projects) == 1:
+        console.print(f"[dim]Found project: {projects[0].name}[/dim]")
+        console.print("[dim]Resuming automatically...[/dim]")
+        return projects[0]
+
+    console.print("\n[bold]Select a project to continue:[/bold]")
+    for idx, project in enumerate(projects, 1):
+        console.print(f"  {idx}. {project.name}")
+
+    selection = IntPrompt.ask("Enter number", default=1, show_default=True)
+
+    try:
+        return projects[selection - 1]
+    except IndexError:
+        console.print("[red]Invalid selection.[/red]")
+        return None
 
 
 @app.callback(invoke_without_command=True)
