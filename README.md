@@ -1,15 +1,22 @@
 # Spec Kit Assistant (here-spec)
 
 ```
-         /^-----^\
-        V  o o  V
-         |  Y  |
-          \ Q /
-          / - \
-          |    \
-          |     \
-          || (___\
-         (__||__||__)
+        /^-----^\
+       V  o o  V
+        |  Y  |
+         \ Q /
+         / - \
+         |    \
+         |     \
+         || (___\
+        (__||__||__)
+
+## TL;DR Quickstart
+
+```bash
+pipx install "git+https://github.com/M0nkeyFl0wer/spec-kit-assistant.git"
+here-spec        # starts new project or resumes current one
+```
 ```
 
 Friendly, progressive onboarding for [GitHub Spec Kit](https://github.com/github/spec-kit). The `here-spec` CLI walks absolute beginners through every step of the Spec-Driven Development workflow, keeps track of progress, and launches your favorite AI coding agent with the right context.
