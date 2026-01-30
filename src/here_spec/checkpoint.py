@@ -1,0 +1,288 @@
+"""
+Checkpoint Manager - Progressive Questions Before Each Spec Kit Step
+Handles interview moments throughout the workflow, not just at the start
+"""
+
+import json
+from pathlib import Path
+from typing import Dict, Optional, List
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt, IntPrompt, Confirm
+
+from here_spec.art.dog_art import display_art
+
+
+class CheckpointManager:
+    """
+    Manages progressive checkpoints throughout spec kit workflow.
+    Each step has its own mini-interview before the AI agent runs.
+    """
+
+    def __init__(self, console: Console, project_path: Path):
+        self.console = console
+        self.project_path = project_path
+        self.state_file = project_path / ".speckit" / "checkpoints.json"
+        self.state = self._load_state()
+
+    def _load_state(self) -> Dict:
+        """Load checkpoint state"""
+        if self.state_file.exists():
+            with open(self.state_file) as f:
+                return json.load(f)
+        return {"project_name": "", "current_step": "init", "completed_steps": [], "answers": {}}
+
+    def _save_state(self):
+        """Save checkpoint state"""
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.state_file, "w") as f:
+            json.dump(self.state, f, indent=2)
+
+    def run_checkpoint(self, step: str) -> Optional[Dict]:
+        """
+        Run the interview for a specific step.
+        Returns context dict if ready to proceed, None if user wants to pause.
+        """
+        if step == "constitution":
+            return self._checkpoint_constitution()
+        elif step == "spec":
+            return self._checkpoint_spec()
+        elif step == "plan":
+            return self._checkpoint_plan()
+        elif step == "tasks":
+            return self._checkpoint_tasks()
+        elif step == "validate":
+            return self._checkpoint_validate()
+        elif step == "build":
+            return self._checkpoint_build()
+        return None
+
+    def _checkpoint_constitution(self) -> Optional[Dict]:
+        """Step 1: Questions before creating constitution"""
+        display_art("thinking", "Step 1: Project Foundation", "blue")
+
+        self.console.print("\n[bold]Let's establish your project's foundation![/bold]\n")
+
+        # Q1: Project name (if not set)
+        if not self.state["project_name"]:
+            self.state["project_name"] = Prompt.ask(
+                "What should we call this project?", default="my-project"
+            )
+
+        # Q2: Big picture - what are we building
+        if "big_picture" not in self.state["answers"]:
+            self.state["answers"]["big_picture"] = Prompt.ask(
+                "In 1-2 sentences, what does this do?",
+                default=f"A {self.state['project_name']} application",
+            )
+
+        # Q3: Who is this for
+        if "audience" not in self.state["answers"]:
+            self.console.print("\n[bold]Who will use this?[/bold]")
+            options = [
+                ("personal", "Just me"),
+                ("team", "My team"),
+                ("public", "Public/Customers"),
+            ]
+            for i, (value, label) in enumerate(options, 1):
+                self.console.print(f"  {i}. {label}")
+            choice = IntPrompt.ask("Select", default=1)
+            self.state["answers"]["audience"] = (
+                options[choice - 1][0] if 1 <= choice <= len(options) else "personal"
+            )
+
+        # Confirm and proceed
+        self.console.print(
+            f"\n[dim]Ready to create constitution for: {self.state['project_name']}[/dim]"
+        )
+        if Confirm.ask("Create constitution now?", default=True):
+            self.state["current_step"] = "spec"  # Next step
+            self._save_state()
+            return self._build_context("constitution")
+
+        self._save_state()
+        return None  # User wants to pause
+
+    def _checkpoint_spec(self) -> Optional[Dict]:
+        """Step 2: Questions before creating spec"""
+        display_art("listening", "Step 2: Requirements", "blue")
+
+        self.console.print("\n[bold]Let's define what we're building![/bold]\n")
+
+        # Q4: Core features
+        if "features" not in self.state["answers"]:
+            self.state["answers"]["features"] = Prompt.ask(
+                "What are the 2-3 most important features?",
+                default="Core functionality, user interface, data management",
+            )
+
+        # Q5: Constraints/requirements
+        if "constraints" not in self.state["answers"]:
+            self.console.print("\n[bold]Any specific requirements?[/bold]")
+            constraints = []
+            if Confirm.ask("Must work offline?", default=False):
+                constraints.append("offline")
+            if Confirm.ask("Mobile/tablet support needed?", default=False):
+                constraints.append("mobile")
+            if Confirm.ask("Extra security?", default=False):
+                constraints.append("security")
+            if Confirm.ask("High performance?", default=False):
+                constraints.append("performance")
+            self.state["answers"]["constraints"] = constraints
+
+        self.console.print("\n[dim]Ready to create specification[/dim]")
+        if Confirm.ask("Create spec now?", default=True):
+            self.state["current_step"] = "plan"
+            self._mark_complete("constitution")
+            self._save_state()
+            return self._build_context("spec")
+
+        self._save_state()
+        return None
+
+    def _checkpoint_plan(self) -> Optional[Dict]:
+        """Step 3: Questions before creating plan"""
+        display_art("builder", "Step 3: Technical Approach", "blue")
+
+        self.console.print("\n[bold]How should we build this?[/bold]\n")
+
+        # Q6: Tech stack preference
+        if "tech_stack" not in self.state["answers"]:
+            if Confirm.ask("Do you have preferred technologies?", default=False):
+                self.state["answers"]["tech_stack"] = Prompt.ask(
+                    "What technologies?", default="auto"
+                )
+            else:
+                self.state["answers"]["tech_stack"] = "auto"
+
+        # Q7: Quality level
+        if "quality_level" not in self.state["answers"]:
+            self.console.print("\n[bold]What's the quality approach?[/bold]")
+            options = [
+                ("prototype", "🚀 Quick prototype - get it working fast"),
+                ("production", "💎 Production-quality - do it right"),
+            ]
+            for i, (value, label) in enumerate(options, 1):
+                self.console.print(f"  {i}. {label}")
+            choice = IntPrompt.ask("Select", default=2)
+            self.state["answers"]["quality_level"] = (
+                options[choice - 1][0] if 1 <= choice <= len(options) else "production"
+            )
+
+        self.console.print("\n[dim]Ready to create implementation plan[/dim]")
+        if Confirm.ask("Create plan now?", default=True):
+            self.state["current_step"] = "tasks"
+            self._mark_complete("spec")
+            self._save_state()
+            return self._build_context("plan")
+
+        self._save_state()
+        return None
+
+    def _checkpoint_tasks(self) -> Optional[Dict]:
+        """Step 4: Questions before creating task list"""
+        display_art("working", "Step 4: Task Breakdown", "blue")
+
+        self.console.print("\n[bold]Let's break this into actionable tasks![/bold]\n")
+
+        # Confirm we're ready
+        self.console.print(
+            f"Based on your [bold]{self.state['answers'].get('quality_level', 'production')}[/bold] approach,"
+        )
+        self.console.print("I'll create a detailed task breakdown.")
+
+        if Confirm.ask("\nReady to generate tasks?", default=True):
+            self.state["current_step"] = "validate"
+            self._mark_complete("plan")
+            self._save_state()
+            return self._build_context("tasks")
+
+        self._save_state()
+        return None
+
+    def _checkpoint_validate(self) -> Optional[Dict]:
+        """Step 5: Questions before validation"""
+        display_art("detective", "Step 5: Validation", "blue")
+
+        self.console.print("\n[bold]Let's validate everything is ready![/bold]\n")
+
+        self.console.print("I'll verify:")
+        self.console.print("  ✅ Constitution is complete")
+        self.console.print("  ✅ Specification covers all requirements")
+        self.console.print("  ✅ Implementation plan is solid")
+        self.console.print("  ✅ Task list is actionable")
+
+        if Confirm.ask("\nReady to validate?", default=True):
+            self.state["current_step"] = "build"
+            self._mark_complete("tasks")
+            self._save_state()
+            return self._build_context("validate")
+
+        self._save_state()
+        return None
+
+    def _checkpoint_build(self) -> Optional[Dict]:
+        """Step 6: Final confirmation before build"""
+        display_art("celebrating", "Step 6: Ready to Build!", "green")
+
+        self.console.print("\n[bold green]Everything is ready![/bold green]\n")
+
+        # Show summary
+        self.console.print("[bold]Summary:[/bold]")
+        self.console.print(f"  Project: {self.state['project_name']}")
+        self.console.print(f"  Description: {self.state['answers'].get('big_picture', 'N/A')}")
+        self.console.print(f"  Quality: {self.state['answers'].get('quality_level', 'production')}")
+        completed = len(self.state["completed_steps"])
+        self.console.print(f"  Steps completed: {completed}/5")
+
+        self.console.print(
+            "\n[yellow]⚠️  The AI will now implement everything. This may take several minutes.[/yellow]"
+        )
+
+        if Confirm.ask("\nReady to start building?", default=True):
+            self._mark_complete("validate")
+            self._save_state()
+            return self._build_context("build")
+
+        self._save_state()
+        return None
+
+    def _mark_complete(self, step: str):
+        """Mark a step as completed"""
+        if step not in self.state["completed_steps"]:
+            self.state["completed_steps"].append(step)
+
+    def _build_context(self, step: str) -> Dict:
+        """Build context for AI agent at this step"""
+        return {
+            "project_name": self.state["project_name"],
+            "step": step,
+            "answers": self.state["answers"],
+            "completed_steps": self.state["completed_steps"],
+            "next_command": self._get_command(step),
+        }
+
+    def _get_command(self, step: str) -> str:
+        """Get the spec kit command for this step"""
+        commands = {
+            "constitution": "/speckit.constitution",
+            "spec": "/speckit.specify",
+            "plan": "/speckit.plan",
+            "tasks": "/speckit.tasks",
+            "validate": "/speckit.checklist",
+            "build": "/speckit.implement",
+        }
+        return commands.get(step, "/speckit.help")
+
+    def get_next_step(self) -> str:
+        """Get the next step that needs to be done"""
+        return self.state.get("current_step", "constitution")
+
+    def get_progress(self) -> Dict:
+        """Get current progress for status display"""
+        return {
+            "project_name": self.state["project_name"],
+            "current_step": self.state["current_step"],
+            "completed_steps": self.state["completed_steps"],
+            "answers": self.state["answers"],
+        }

@@ -1,23 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "specify-cli"
-version = "0.0.17"
-description = "Specify CLI, part of GitHub Spec Kit. A tool to bootstrap your projects for Spec-Driven Development (SDD)."
-requires-python = ">=3.11"
+name = "here-spec"
+version = "0.1.0"
+description = "🐕 Spec Kit Assistant - Your friendly guide to Spec-Driven Development"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Spec Kit Assistant Team"}
+]
+keywords = ["spec", "development", "ai", "claude", "spec-driven"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
-    "typer",
-    "rich",
-    "httpx[socks]",
-    "platformdirs",
-    "readchar",
-    "truststore>=0.10.4",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "inquirer>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
 ]
 
 [project.scripts]
-specify = "specify_cli:main"
+here-spec = "here_spec.cli.main:main"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.urls]
+Homepage = "https://github.com/M0nkeyFl0wer/spec-kit-assistant"
+Documentation = "https://github.com/M0nkeyFl0wer/spec-kit-assistant#readme"
+Repository = "https://github.com/M0nkeyFl0wer/spec-kit-assistant"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/specify_cli"]
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
