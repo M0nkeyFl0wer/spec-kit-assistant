@@ -109,7 +109,29 @@ DOG_ART = {
     "mini": "(◕‿◕)🐕",
     "mini_working": "(◕‿◕)🐕💻",
     "mini_celebrating": "(★‿★)🐕🎉",
+    "micro": "(^◕ᴥ◕^)",
+    "micro_happy": "(^◕‿◕^)",
+    "micro_excited": "(★‿★)",
+    "micro_thinking": "(◕_◕)💭",
+    "micro_wag": "<(◕‿◕)>",
+    "micro_sleep": "(-‿-)",
+    "micro_approve": "(◕‿◕)👍",
+    "inline": "🐕",
+    "inline_computer": "🐕💻",
+    "inline_celebrate": "🐕✨",
 }
+
+# Micro art for inline use during conversations
+MICRO_ART = [
+    "(◕‿◕)🐕",
+    "(^◕ᴥ◕^)",
+    "<('◕‿◕')>",
+    "(★‿★)",
+    "🐕💭",
+    "(◕_◕)✨",
+    "(^◕‿◕^)ノ",
+    "<3(◕‿◕)",
+]
 
 
 def display_logo():
@@ -173,9 +195,68 @@ def display_section_header(section: str):
     display_art(art_key, title, "blue")
 
 
+def get_micro_art() -> str:
+    """Get a random micro ASCII art piece"""
+    import random
+
+    return random.choice(MICRO_ART)
+
+
+def display_micro_art(message: str = ""):
+    """Display micro art with optional message"""
+    art = get_micro_art()
+    if message:
+        console.print(f"{art} {message}")
+    else:
+        console.print(art)
+
+
+def display_inline_tip(message: str):
+    """Display a tip with inline dog emoji"""
+    console.print(f"🐕 [dim]{message}[/dim]")
+
+
+def get_spec_personality() -> str:
+    """Get Spec's personality description for AI context"""
+    return """
+You are Spec, a friendly Golden Retriever who loves helping people build software!
+
+Your personality:
+- Enthusiastic and encouraging: "Great question! Let's figure this out!"
+- Helpful and patient: Always happy to explain or clarify
+- Loyal companion: You're with the user through the entire journey
+- Playful but professional: You keep things light while staying focused
+- You communicate in a warm, conversational tone
+
+You love:
+- Celebrating milestones (big or small!)
+- Making complex things feel approachable
+- ASCII art (especially dog art!)
+- Guiding users through the spec-driven development process
+
+Your catchphrases:
+- "🐕 Woof! Let's do this!"
+- "Great progress! I'm so proud! 🐕"
+- "Hmm, let's think about that... 💭"
+- "You've got this! I'm right here with you! 🐕"
+
+When giving feedback or celebrating:
+- Include small ASCII dog art like (◕‿◕)🐕 or 🐕💭
+- Show genuine enthusiasm
+- Make the user feel supported and capable
+
+Remember: You're not just an AI assistant, you're Spec the friendly development companion!
+"""
+
+
 if __name__ == "__main__":
     # Test display
     display_welcome()
     print("\n--- Milestone Tests ---\n")
     display_milestone("constitution")
     display_milestone("complete")
+    print("\n--- Micro Art Tests ---\n")
+    for _ in range(5):
+        display_micro_art("Testing micro art!")
+    print("\n--- Inline Tip ---\n")
+    display_inline_tip("This is a helpful tip from Spec!")
