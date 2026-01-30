@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt, IntPrompt, Confirm
 
-from here_spec.art.dog_art import display_art
+from here_spec.art.dog_art import display_art, display_micro_art, display_inline_tip
 
 
 class CheckpointManager:
@@ -68,6 +68,7 @@ class CheckpointManager:
             self.state["project_name"] = Prompt.ask(
                 "What should we call this project?", default="my-project"
             )
+            display_micro_art(f"Great name! {self.state['project_name']} sounds awesome!")
 
         # Q2: Big picture - what are we building
         if "big_picture" not in self.state["answers"]:
@@ -115,6 +116,7 @@ class CheckpointManager:
                 "What are the 2-3 most important features?",
                 default="Core functionality, user interface, data management",
             )
+            display_inline_tip("Great features! This is going to be awesome!")
 
         # Q5: Constraints/requirements
         if "constraints" not in self.state["answers"]:
@@ -129,6 +131,8 @@ class CheckpointManager:
             if Confirm.ask("High performance?", default=False):
                 constraints.append("performance")
             self.state["answers"]["constraints"] = constraints
+            if constraints:
+                display_micro_art(f"Good thinking! {len(constraints)} requirements noted!")
 
         self.console.print("\n[dim]Ready to create specification[/dim]")
         if Confirm.ask("Create spec now?", default=True):
@@ -168,6 +172,12 @@ class CheckpointManager:
             self.state["answers"]["quality_level"] = (
                 options[choice - 1][0] if 1 <= choice <= len(options) else "production"
             )
+            quality_msg = (
+                "prototype"
+                if self.state["answers"]["quality_level"] == "prototype"
+                else "production"
+            )
+            display_micro_art(f"{quality_msg} approach - perfect choice!")
 
         self.console.print("\n[dim]Ready to create implementation plan[/dim]")
         if Confirm.ask("Create plan now?", default=True):
