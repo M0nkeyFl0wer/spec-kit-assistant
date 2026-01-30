@@ -98,15 +98,35 @@ You can pause after any step; Spec stores answers + progress in `.speckit/checkp
 
 ### Claude Code (recommended)
 1. Install: `npm install -g @anthropic-ai/claude-code`
-2. Sign in / configure per Anthropic instructions.
+2. Run `claude login` (or `claude auth login`) and follow the browser prompt to store your API key locally.
 3. Spec will detect the CLI and launch it with per-step context.
 
 ### Opencode (free tier)
 1. Install: `npm install -g opencode-ai`
-2. Run `opencode auth login`.
+2. Run `opencode auth login` and paste the API key provided by Opencode.
 3. Select “Opencode” when Spec asks which helper to use.
 
 > **API Keys:** Spec does **not** write your API keys to disk. Configure each CLI using their official tools (Claude Code or Opencode). Future releases will add an optional encrypted keyring.
+
+### Automating setup via environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `HERE_SPEC_PROJECT_NAME` | Defaults the project/folder name when creating a new run |
+| `HERE_SPEC_AGENT` | Force a specific agent (`claude` or `opencode`) |
+| `HERE_SPEC_QUICK` | Set to `1/true` to skip interviews and run the quick flow |
+| `HERE_SPEC_AUTO_CONFIRM` | Set to `1/true` to auto-accept all confirmation prompts |
+| `HERE_SPEC_FREE` | Set to `1/true` to prefer the Opencode free tier |
+
+Example (headless) run:
+
+```bash
+HERE_SPEC_PROJECT_NAME=my-app \
+HERE_SPEC_AGENT=claude \
+HERE_SPEC_QUICK=1 \
+HERE_SPEC_AUTO_CONFIRM=1 \
+here-spec
+```
 
 ---
 
