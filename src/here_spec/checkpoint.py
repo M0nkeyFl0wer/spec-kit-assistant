@@ -21,9 +21,10 @@ class CheckpointManager:
     Each step has its own mini-interview before the AI agent runs.
     """
 
-    def __init__(self, console: Console, project_path: Path):
+    def __init__(self, console: Console, project_path: Path, auto_confirm: bool = False):
         self.console = console
         self.project_path = project_path
+        self.auto_confirm = auto_confirm
         self.state_file = project_path / ".speckit" / "checkpoints.json"
         self.state = self._load_state()
 
@@ -131,7 +132,7 @@ class CheckpointManager:
         self.console.print(
             f"\n[dim]Ready to create constitution for: {self.state['project_name']}[/dim]"
         )
-        if Confirm.ask("Create constitution now?", default=True):
+        if self._confirm("Create constitution now?", default=True):
             self.state["current_step"] = "spec"  # Next step
             self._save_state()
             return self._build_context("constitution")
@@ -157,20 +158,20 @@ class CheckpointManager:
         if "constraints" not in self.state["answers"]:
             self.console.print("\n[bold]Any specific requirements?[/bold]")
             constraints = []
-            if Confirm.ask("Must work offline?", default=False):
+            if self._confirm("Must work offline?", default=False):
                 constraints.append("offline")
-            if Confirm.ask("Mobile/tablet support needed?", default=False):
+            if self._confirm("Mobile/tablet support needed?", default=False):
                 constraints.append("mobile")
-            if Confirm.ask("Extra security?", default=False):
+            if self._confirm("Extra security?", default=False):
                 constraints.append("security")
-            if Confirm.ask("High performance?", default=False):
+            if self._confirm("High performance?", default=False):
                 constraints.append("performance")
             self.state["answers"]["constraints"] = constraints
             if constraints:
                 display_micro_art(f"Good thinking! {len(constraints)} requirements noted!")
 
         self.console.print("\n[dim]Ready to create specification[/dim]")
-        if Confirm.ask("Create spec now?", default=True):
+        if self._confirm("Create spec now?", default=True):
             self.state["current_step"] = "plan"
             self._mark_complete("constitution")
             self._save_state()
@@ -187,7 +188,7 @@ class CheckpointManager:
 
         # Q6: Tech stack preference
         if "tech_stack" not in self.state["answers"]:
-            if Confirm.ask("Do you have preferred technologies?", default=False):
+            if self._confirm("Do you have preferred technologies?", default=False):
                 self.state["answers"]["tech_stack"] = Prompt.ask(
                     "What technologies?", default="auto"
                 )
@@ -236,7 +237,7 @@ class CheckpointManager:
         )
         self.console.print("I'll create a detailed task breakdown.")
 
-        if Confirm.ask("\nReady to generate tasks?", default=True):
+        if self._confirm("\nReady to generate tasks?", default=True):
             self.state["current_step"] = "validate"
             self._mark_complete("plan")
             self._save_state()
@@ -257,7 +258,7 @@ class CheckpointManager:
         self.console.print("  ✅ Implementation plan is solid")
         self.console.print("  ✅ Task list is actionable")
 
-        if Confirm.ask("\nReady to validate?", default=True):
+        if self._confirm("\nReady to validate?", default=True):
             self.state["current_step"] = "build"
             self._mark_complete("tasks")
             self._save_state()
@@ -284,7 +285,7 @@ class CheckpointManager:
             "\n[yellow]⚠️  The AI will now implement everything. This may take several minutes.[/yellow]"
         )
 
-        if Confirm.ask("\nReady to start building?", default=True):
+        if self._confirm("\nReady to start building?", default=True):
             self._mark_complete("validate")
             self._save_state()
             return self._build_context("build")
@@ -318,6 +319,11 @@ class CheckpointManager:
             "build": "/speckit.implement",
         }
         return commands.get(step, "/speckit.help")
+
+    def _confirm(self, message: str, default: bool = True) -> bool:
+        if self.auto_confirm:
+            return True
+        return Confirm.ask(message, default=default)
 
     def get_next_step(self) -> str:
         """Get the next step that needs to be done"""
