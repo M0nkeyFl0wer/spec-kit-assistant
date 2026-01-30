@@ -1,12 +1,24 @@
-# 🐕 Spec Kit Assistant (here-spec)
+# Spec Kit Assistant (here-spec)
+
+```
+         /^-----^\
+        V  o o  V
+         |  Y  |
+          \ Q /
+          / - \
+          |    \
+          |     \
+          || (___\
+         (__||__||__)
+```
 
 Friendly, progressive onboarding for [GitHub Spec Kit](https://github.com/github/spec-kit). The `here-spec` CLI walks absolute beginners through every step of the Spec-Driven Development workflow, keeps track of progress, and launches your favorite AI coding agent with the right context.
 
-- ✅ **Progressive checkpoints** – asks you 2-3 questions before each Spec Kit step (constitution → spec → plan → tasks → validate → build)
-- 🐶 **Spec the dog** – supportive ASCII companion that keeps the vibe friendly and fun
-- 🤖 **Agent-aware** – works with Claude Code today, Opencode free tier as an alternative
-- 💾 **Crash-safe** – stores progress in `.speckit/checkpoints.json`, so you can pause/resume anytime
-- 🧠 **Context-rich** – generates per-step prompts so agents know exactly what to do without you remembering slash commands
+- **Progressive checkpoints** – asks you 2-3 questions before each Spec Kit step (constitution → spec → plan → tasks → validate → build)
+- **Spec the dog** – supportive ASCII companion that keeps the vibe friendly and fun
+- **Agent-aware** – works with Claude Code today, Opencode free tier as an alternative
+- **Crash-safe** – stores progress in `.speckit/checkpoints.json`, so you can pause/resume anytime
+- **Context-rich** – generates per-step prompts so agents know exactly what to do without you remembering slash commands
 
 > **Note:** This is an unofficial UX layer. The official Spec Kit CLI remains the authoritative source of functionality.
 
@@ -184,13 +196,13 @@ here-spec continue demo-project
 
 ## Roadmap
 
-- ✅ Progressive checkpoints per Spec Kit step
-- ✅ Non-interactive safety (detects aggressive CLI launches)
-- 🟡 Automated test suite (Typer CLI + unit tests)
-- 🟡 State schema versioning + recovery
-- 🟡 Improved multi-project chooser in `here-spec continue`
-- 🟡 Encrypted credential storage for API keys
-- 🟡 Official docs for agent setup + environment variables
+- Progressive checkpoints per Spec Kit step
+- Non-interactive safety (detects aggressive CLI launches)
+- Automated test suite (Typer CLI + unit tests)
+- State schema versioning + recovery
+- Improved multi-project chooser in `here-spec continue`
+- Encrypted credential storage for API keys
+- Official docs for agent setup + environment variables
 
 Contributions are welcome! Please open an issue or PR if you spot bugs or want to help with the roadmap.
 
@@ -200,4 +212,4 @@ Contributions are welcome! Please open an issue or PR if you spot bugs or want t
 
 MIT – see [LICENSE](LICENSE)
 
-Made with 🐕 + ❤️ by a developer who believes specs should feel welcoming.
+Made with ASCII dogs and a love of friendly specs.
