@@ -41,12 +41,15 @@ def _art(text: str) -> str:
 DOG_ART = {
     "welcome": _art(
         r"""
-            /^ ^\
-           / 0 0 \
-           V\ Y /V
-            / - \
-           /    |
-          V__) ||
+             /^-----^\
+            V  o o  V
+             |  Y  |
+              \ Q /
+              / - \
+              |    \
+              |     \
+              || (___\
+             (__||__||__)
         """
     ),
     "happy": _art(
@@ -99,6 +102,15 @@ DOG_ART = {
           <)      (>
            \    //
             \__//
+        """
+    ),
+    "celebration_big": _art(
+        r"""
+             / \__
+            (    @\___
+            /         O
+           /   (_____/
+          /_____/   U
         """
     ),
     "listening": _art(
@@ -199,7 +211,7 @@ def display_milestone(milestone: str):
         "spec": ("celebrating", "🎉 Specification Complete!", "green"),
         "plan": ("builder", "🎉 Plan Ready!", "blue"),
         "tasks": ("working", "🎉 Tasks Ready!", "blue"),
-        "complete": ("ultimate", "🏆 Project Complete!", "purple"),
+        "complete": ("celebration_big", "🏆 Project Complete!", "purple"),
     }
 
     art_key, title, style = milestones.get(milestone, ("happy", "Milestone!", "blue"))
