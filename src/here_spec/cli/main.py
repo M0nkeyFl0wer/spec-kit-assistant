@@ -4,6 +4,7 @@ here-spec - Spec Kit Assistant CLI
 Progressive checkpoints throughout Spec-Driven Development workflow
 """
 
+import os
 import typer
 from typer import Context
 from rich.console import Console
@@ -34,8 +35,10 @@ app = typer.Typer(
 
 @app.command()
 def init(
-    project_name: str = typer.Argument(None, help="Name of your project (optional)"),
-    agent: str = typer.Option(None, "--agent", "-a", help="AI agent (claude or opencode)"),
+    project_name: Optional[str] = typer.Argument(None, help="Name of your project (optional)"),
+    agent: Optional[str] = typer.Option(
+        None, "--agent", "-a", help="AI agent (claude or opencode)"
+    ),
     free: bool = typer.Option(False, "--free", help="Use free tier (opencode)"),
     quick: bool = typer.Option(False, "--quick", help="Skip interviews, use defaults"),
 ):
@@ -45,11 +48,25 @@ def init(
     """
     display_welcome()
 
-    # Get or prompt for project name
+    env_project = os.environ.get("HERE_SPEC_PROJECT_NAME")
+    if not project_name:
+        project_name = env_project
     if not project_name:
         project_name = Prompt.ask(
             "🐕 What would you like to name your project?", default="my-project"
         )
+    project_name = str(project_name)
+
+    if not quick and _env_flag(os.environ.get("HERE_SPEC_QUICK")):
+        quick = True
+    if not free and _env_flag(os.environ.get("HERE_SPEC_FREE")):
+        free = True
+
+    env_agent = os.environ.get("HERE_SPEC_AGENT")
+    if not agent and env_agent:
+        env_agent = env_agent.strip().lower()
+        if env_agent in ["claude", "opencode"]:
+            agent = env_agent
 
     # Setup project directory
     project_path = Path.cwd() / project_name
@@ -68,8 +85,10 @@ def init(
     if not agent:
         agent = select_agent(system_info, free)
 
+    auto_confirm_env = _env_flag(os.environ.get("HERE_SPEC_AUTO_CONFIRM"))
+
     # Initialize checkpoint manager
-    checkpoints = CheckpointManager(console, project_path)
+    checkpoints = CheckpointManager(console, project_path, auto_confirm=(auto_confirm_env or quick))
 
     # Check if this is a fresh init or continuing
     if checkpoints.state.get("current_step") != "init" and not checkpoints.state.get("answers"):
@@ -232,7 +251,8 @@ def continue_project(
             raise typer.Exit(1)
 
     # Load checkpoint state
-    checkpoints = CheckpointManager(console, project_path)
+    auto_confirm_env = _env_flag(os.environ.get("HERE_SPEC_AUTO_CONFIRM"))
+    checkpoints = CheckpointManager(console, project_path, auto_confirm=auto_confirm_env)
 
     # Get current progress
     progress = checkpoints.get_progress()
@@ -285,7 +305,8 @@ def step(
     Useful for jumping to a specific part of the workflow
     """
     project_path = Path(path).resolve()
-    checkpoints = CheckpointManager(console, project_path)
+    auto_confirm_env = _env_flag(os.environ.get("HERE_SPEC_AUTO_CONFIRM"))
+    checkpoints = CheckpointManager(console, project_path, auto_confirm=auto_confirm_env)
 
     # Set agent if provided
     if agent:
@@ -527,6 +548,12 @@ def _choose_project_from_directory(base_path: Path) -> Optional[Path]:
         return None
 
 
+def _env_flag(value: Optional[str]) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @app.callback(invoke_without_command=True)
 def main_callback(ctx: Context):
     """
@@ -543,41 +570,11 @@ def main_callback(ctx: Context):
     checkpoint_file = Path.cwd() / ".speckit" / "checkpoints.json"
 
     if checkpoint_file.exists():
-        # Already in a project - continue it
         console.print("[dim]🐕 Detected project in current directory![/dim]")
-        continue_project(".")
+        ctx.invoke(continue_project, path=".")
     else:
-        # Not in a project - start a new one
         console.print("[dim]🐕 Starting new project...[/dim]\n")
-        # Call init with no arguments
-        display_welcome()
-
-        # Setup project directory
-        project_name = Prompt.ask(
-            "🐕 What would you like to name your project?", default="my-project"
-        )
-        project_path = Path.cwd() / project_name
-        project_path.mkdir(exist_ok=True)
-
-        console.print(f"\n[green]✅ Created project: {project_name}[/green]")
-        console.print(f"[dim]Location: {project_path.absolute()}[/dim]\n")
-
-        # System detection
-        console.print("[dim]🔍 Checking your system...[/dim]")
-        detector = SystemDetector()
-        system_info = detector.detect()
-        display_system_check(system_info)
-
-        # Agent selection
-        agent = select_agent(system_info, False)
-
-        # Initialize checkpoint manager
-        checkpoints = CheckpointManager(console, project_path)
-        checkpoints.state["agent"] = agent
-        checkpoints._save_state()
-
-        # Run progressive flow
-        _run_progressive_flow(agent, checkpoints, project_path)
+        ctx.invoke(init, project_name=None, agent=None, free=False, quick=False)
 
 
 def main():
