@@ -1,474 +1,183 @@
-# 🌱 Spec Kit Assistant - includes support for Ralph, multi-agent swarms, Scaffold ETH and more.
+# 🐕 Spec Kit Assistant (here-spec)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Scaffold-ETH](https://img.shields.io/badge/Scaffold--ETH--2-Integrated-purple)](https://github.com/scaffold-eth/scaffold-eth-2)
-[![GitHub](https://img.shields.io/badge/GitHub-Spec_Kit-blue?logo=github)](https://github.com/github/spec-kit)
+Friendly, progressive onboarding for [GitHub Spec Kit](https://github.com/github/spec-kit). The `here-spec` CLI walks absolute beginners through every step of the Spec-Driven Development workflow, keeps track of progress, and launches your favorite AI coding agent with the right context.
 
-```
+- ✅ **Progressive checkpoints** – asks you 2-3 questions before each Spec Kit step (constitution → spec → plan → tasks → validate → build)
+- 🐶 **Spec the dog** – supportive ASCII companion that keeps the vibe friendly and fun
+- 🤖 **Agent-aware** – works with Claude Code today, Opencode free tier as an alternative
+- 💾 **Crash-safe** – stores progress in `.speckit/checkpoints.json`, so you can pause/resume anytime
+- 🧠 **Context-rich** – generates per-step prompts so agents know exactly what to do without you remembering slash commands
 
-                                         ██████          ██████
-                                       ██▓▓▓▓▓▓██████████▓▓▓▓▓▓██
-                                       ██▓▓▓▓██          ██▓▓▓▓██
-                                       ██▓▓████    ▓▓▓▓▓▓████▓▓██
-   ███████╗██████╗ ███████╗ ██████╗     ██  ██  ██▓▓██▓▓██  ██
-   ██╔════╝██╔══██╗██╔════╝██╔════╝         ██    ▓▓▓▓▓▓██
-   ███████╗██████╔╝█████╗  ██║            ██              ██
-   ╚════██║██╔═══╝ ██╔══╝  ██║            ██    ██████    ██
-   ███████║██║     ███████╗╚██████╗      ██    ██████    ██
-   ╚══════╝╚═╝     ╚══════╝ ╚═════╝      ██              ██
-                                            ██    ██    ██
-                                              ████░░████
-                                                ██░░██
-                                                ██░░██
-                                                 ████
-
-
-```
-
-> **AI-powered wrapper for [GitHub Spec Kit](https://github.com/github/spec-kit) with deep [Scaffold-ETH-2](https://github.com/scaffold-eth/scaffold-eth-2) integration**
->
-> Generate production-ready Ethereum dApps in minutes with AI agent swarms
+> **Note:** This is an unofficial UX layer. The official Spec Kit CLI remains the authoritative source of functionality.
 
 ---
 
-## Why This Exists
+## Requirements
 
-I've been using [GitHub Spec Kit](https://github.com/github/spec-kit) and really like it. While using it, I had some UX ideas I wanted to explore - mainly around making the onboarding less intimidating for beginners.
+| Dependency | Why |
+|------------|-----|
+| Python 3.9+ | Runs the `here-spec` CLI |
+| Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) | Primary AI agent (optional if using Opencode) |
+| Opencode CLI (`npm install -g opencode-ai`) | Free-tier alternative (optional) |
+| Git | Required by Spec Kit |
 
-This wrapper is:
-- **Experimental** - testing some UX improvements
-- **Unofficial** - not affiliated with the Spec Kit team
-- **For discussion** - sharing my experience and inviting feedback
+If you plan to run Spec Kit commands that use `uv` or `specify`, install those per the [official documentation](https://github.com/github/spec-kit).
 
-All core functionality comes from the official Spec Kit. I just added:
-- Friendly onboarding wizard
-- Claude Code defaults
-- Some dog ASCII art (because why not)
+---
 
-**Want the real thing?** Use https://github.com/github/spec-kit
+## Installation
+
+### pipx (recommended)
+```bash
+pipx install "git+https://github.com/M0nkeyFl0wer/spec-kit-assistant.git"
+```
+
+### pip / virtualenv
+```bash
+git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
+cd spec-kit-assistant
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+```
+
+### Manual (development mode)
+```bash
+git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
+cd spec-kit-assistant
+pip install -e .  # installs entry point `here-spec`
+```
+
+Verify the install:
+```bash
+here-spec --help
+```
 
 ---
 
 ## Quick Start
 
-### One-Liner Install & Launch
+Just run `here-spec` with no arguments. Spec will figure out what to do:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/M0nkeyFl0wer/spec-kit-assistant/main/install.sh | bash
+here-spec
 ```
 
-**That's it!** Installs, sets up, and launches automatically with your pixel dog logo.
+- If you are **not** inside a project folder, Spec will ask for a project name and start a new run.
+- If you **are** already inside a project (contains `.speckit/checkpoints.json`), Spec resumes from the last step.
 
-### Alternative: Manual Install
+### Common commands
+
+| Command | Description |
+|---------|-------------|
+| `here-spec` | Smart default: start or continue depending on location |
+| `here-spec init [name]` | Explicitly create a new project |
+| `here-spec continue [path]` | Resume a project from anywhere |
+| `here-spec status [path]` | Show progress and selected agent |
+| `here-spec check` | Verify system + agent requirements |
+| `here-spec config` | Toggle celebrations, default agent, default quality |
+| `here-spec step <name>` | Run a specific checkpoint manually (`constitution`, `spec`, `plan`, `tasks`, `validate`, `build`) |
+
+---
+
+## Progressive Workflow
+
+Each Spec Kit command gets its own mini-interview so you never have to remember slash commands or context order:
+
+1. **Constitution helper** – captures project name, description, target users, readiness to create the constitution.
+2. **Spec helper** – asks for core features + constraints, then runs `/speckit.constitution` and `/speckit.specify` with the right context.
+3. **Plan helper** – chooses tech approach & quality level, kicks off the planning phase.
+4. **Task helper** – confirms scope, then generates tasks.
+5. **Validate helper** – walks through the checklist.
+6. **Build helper** – final confirmation and implementation command.
+
+You can pause after any step; Spec stores answers + progress in `.speckit/checkpoints.json` and `.speckit/context-*.md` inside the project directory.
+
+---
+
+## Agent Support
+
+### Claude Code (recommended)
+1. Install: `npm install -g @anthropic-ai/claude-code`
+2. Sign in / configure per Anthropic instructions.
+3. Spec will detect the CLI and launch it with per-step context.
+
+### Opencode (free tier)
+1. Install: `npm install -g opencode-ai`
+2. Run `opencode auth login`.
+3. Select “Opencode” when Spec asks which helper to use.
+
+> **API Keys:** Spec does **not** write your API keys to disk. Configure each CLI using their official tools (Claude Code or Opencode). Future releases will add an optional encrypted keyring.
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────┐
+│ here-spec CLI                              │
+│                                             │
+│ 1. Checkpoint Manager                       │
+│    (saves answers/progress)                 │
+│                                             │
+│ 2. Context Builder                          │
+│    (creates .speckit/context-*.md)          │
+│                                             │
+│ 3. Agent Launchers                          │
+│    (Claude / Opencode wrappers)             │
+│                                             │
+│ 4. Spec the Dog                             │
+│    (ASCII art + personality)                │
+└─────────────────────────────────────────────┘
+```
+
+- `here_spec/checkpoint.py` – state machine + progressive interview logic.
+- `here_spec/agents/{claude,opencode}.py` – generate context files and launch CLIs.
+- `here_spec/art/dog_art.py` – Spec’s ASCII art + personality descriptors.
+
+Everything lives inside the project directory so you can safely commit the generated spec artifacts.
+
+---
+
+## Development
 
 ```bash
 git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
 cd spec-kit-assistant
-./run.sh
+pip install -e .
 ```
 
-The run script automatically:
-- Installs dependencies if needed (no prompts)
-- Launches the app
-- Shows you available commands
-
-### Optional: Setup Wizard
-
-Want to configure package manager preferences and AI models?
-
+### Run the CLI in dev mode
 ```bash
-npm run setup
+python -m here_spec.cli.main --help
+```
+
+### Testing
+Automated tests are being added (see TODO). For now you can verify basic flows manually:
+```bash
+here-spec --help
+here-spec check
+here-spec init demo-project
+here-spec continue demo-project
 ```
 
 ---
 
-## The Journey
+## Roadmap
 
-```
-    "Woof! Let me tell you how I came to be..."
+- ✅ Progressive checkpoints per Spec Kit step
+- ✅ Non-interactive safety (detects aggressive CLI launches)
+- 🟡 Automated test suite (Typer CLI + unit tests)
+- 🟡 State schema versioning + recovery
+- 🟡 Improved multi-project chooser in `here-spec continue`
+- 🟡 Encrypted credential storage for API keys
+- 🟡 Official docs for agent setup + environment variables
 
-         |\__/,|   (`\
-       _.|o o  |_   ) )
-     -(((---(((--------
-```
-
-### The Problem
-I was using GitHub Spec Kit and loved it, but thought:
-- **"This could be even MORE delightful!"**
-- **"What if it had AI swarm orchestration?"**
-- **"What if a friendly dog guided you through everything?"**
-
-### The Meta Solution
-Instead of building from scratch, I used **Spec Kit itself** to design and build this enhanced fork!
-
-```
-    Spec Kit → Spec Kit Constitution → Enhanced Spec Kit
-
-    🐕 "I helped build myself! How cool is that?"
-```
-
-### What Makes This Special
-
-1. **True Fork** - Wraps the real `specify` CLI, doesn't replace it
-2. **AI Swarms** - Deploy specialized agent swarms for implementation
-3. **Dog Personality** - Spec the loyal dog makes development fun
-4. **Official Colors** - Purple (#8B5CF6), Pink (#EC4899), Green (#10B981)
+Contributions are welcome! Please open an issue or PR if you spot bugs or want to help with the roadmap.
 
 ---
 
-## 🎮 Commands
+## License
 
-### Official Spec Kit Commands (Pass-through)
+MIT – see [LICENSE](LICENSE)
 
-```bash
-spec-assistant init        # Initialize new spec
-spec-assistant check       # Check spec validity
-spec-assistant constitution # Show constitution
-```
-
-```
-    "These commands go straight to the official Spec Kit!"
-
-         ___
-        /o o\
-       ( =^= )
-        )   (
-       /|   |\
-      (_) (_)
-```
-
-### Enhanced Swarm Commands
-
-```bash
-spec-assistant run "implement feature X"   # Deploy builder swarm
-spec-assistant test                        # Run test swarms
-spec-assistant deploy                      # Production deployment
-spec-assistant swarm                       # Swarm management
-```
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│  🐕 Spec Kit Assistant (Node.js Wrapper)   │
-│                                             │
-│  ┌─────────────┐      ┌─────────────────┐ │
-│  │   Friendly   │      │   AI Swarm      │ │
-│  │   Dog UX     │      │  Orchestration  │ │
-│  └─────────────┘      └─────────────────┘ │
-│                                             │
-│  ┌─────────────────────────────────────┐   │
-│  │  Official GitHub Spec Kit (Python)  │   │
-│  │  uv tool run specify <command>      │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-### How It Works
-
-1. **You run**: `spec-assistant init "My Cool App"`
-2. **Spec shows** the logo and friendly message
-3. **Wrapper routes** to official Spec Kit if it's a core command
-4. **OR deploys swarm** if it's an enhanced command
-5. **Official Spec Kit** does the heavy lifting
-6. **Spec celebrates** when done!
-
-```
-    "I'm just here to make everything friendlier!"
-
-       / \__
-      (    @\___
-      /         O
-     /   (_____/
-    /_____/   U
-```
-
----
-
-## 🔧 Development Setup
-
-### Prerequisites
-- Node.js 16+
-- Python 3.8+ (for official Spec Kit)
-- Git
-
-### Local Development
-
-```bash
-# Clone the repo
-git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant
-cd spec-kit-assistant
-
-# Install Node dependencies
-npm install
-
-# Run wrapper locally
-node spec-assistant.js init "Test Project"
-```
-
-### Remote Deployment
-
-```bash
-# Deploy to remote server (configure SSH in your local setup)
-ssh your-server
-cd spec-kit-assistant
-node spec-assistant.js deploy
-```
-
-```
-    "I can run on servers too! SSH is my friend!"
-
-         __
-    (___()'`;
-    /,    /`
-    \\"--\\
-
-    "Deploying remotely..."
-```
-
----
-
-## 🧪 Testing
-
-### Red-Team Security Audit
-
-```bash
-node spec-assistant.js run "Red-team security audit"
-```
-
-**Latest Results**: ✅ **SECURE** rating
-- Directory traversal prevention: PASS
-- Memory exhaustion protection: PASS
-- Command injection prevention: PASS
-- Race condition handling: PASS
-
-```
-    "I take security seriously!"
-
-      /^ ^\
-     / 0 0 \
-     V\ Y /V
-      / - \
-     /    |
-    V__) ||
-
-       |\      _,,,---,,_
- ZZZzz /,`.-'`'    -.  ;-;;,_
-      |,4-  ) )-,_. ,\ (  `'-'
-     '---''(_/--'  `-'\_)
-```
-
-### Unit Tests
-
-```bash
-npm test
-```
-
-All tests passing on:
-- Edge cases (empty/null/Unicode inputs)
-- Boundary testing (file system limits)
-- Stress testing (100 concurrent operations)
-- Security vulnerabilities
-
----
-
-## 🌟 Use Cases
-
-### 1. New Project Spec
-
-```bash
-spec-assistant init "E-commerce Platform"
-
-🐕 "Let's create a great spec together!"
-```
-
-### 2. Implement with Swarms
-
-```bash
-spec-assistant run "Build authentication system"
-
-🐕 "Calling in my builder swarm friends!"
-    🤖 Deploying 4 agents...
-    ✨ Implementation complete!
-```
-
-### 3. Security Audit
-
-```bash
-spec-assistant run "Security audit"
-
-🐕 "Time for red-team mode! 🛡️"
-    🔒 Testing vulnerabilities...
-    ✅ All secure!
-```
-
----
-
-## 🎯 Philosophy
-
-### Why a Dog Assistant?
-
-```
-    "Because development should be FUN!"
-
-       /\_/\
-      ( o.o )
-       > ^ <
-
-    Dogs are:
-    > Loyal - Always here to help
-    > Friendly - Make everything less scary
-    > Playful - Coding should be joyful
-    > Focused - But also keep YOU focused
-```
-
-### Why Wrap, Not Replace?
-
-The official GitHub Spec Kit is **amazing**. This project:
-- ✅ Preserves all original functionality
-- ✅ Adds delightful UX layer
-- ✅ Extends with AI swarms
-- ✅ Stays true to Spec Kit philosophy
-
-### Meta Development
-
-This project **used Spec Kit to build itself**:
-
-1. Created `CONSTITUTION.md` with Spec Kit
-2. Wrote `SPEC.md` following Spec Kit format
-3. Generated `TODO.md` with Spec Kit
-4. Built implementation guided by the spec
-5. Tested with AI swarms deployed via Spec Kit
-
-```
-    "I'm a spec-driven dog! Woof!"
-
-         __
-    (___()'`;
-    /,    /`
-    \\"--\\    [SPEC.md]
-```
-
----
-
-## 🤖 Ralph Integration
-
-Spec Kit Assistant integrates with [Ralph](https://github.com/anthropics/ralph) for autonomous code implementation. This bridges structured Spec Kit planning with autonomous execution.
-
-### Quick Start with Ralph
-
-```bash
-# Initialize Ralph project files from spec artifacts
-node src/ralph/init.js
-
-# Start Ralph execution
-node src/ralph/start.js
-
-# Check progress
-node src/ralph/status.js
-```
-
-### Generated Files
-
-| File | Purpose |
-|------|---------|
-| `@fix_plan.md` | Task checklist converted from tasks.md |
-| `PROMPT.md` | Combined context from spec artifacts |
-| `@AGENT.md` | Build/test commands for agent |
-
-### Remote Execution
-
-Deploy to remote servers for heavy compute tasks:
-
-```bash
-# Set environment variables (or use .env)
-export RALPH_REMOTE_HOST=your-server.example.com
-export RALPH_REMOTE_USER=deploy
-export RALPH_REMOTE_PATH=/home/deploy/project
-export RALPH_REMOTE_PORT=22  # optional
-
-# Deploy and run
-node src/ralph/remote.js run
-```
-
-Environment variables:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `RALPH_REMOTE_HOST` | Yes | SSH host |
-| `RALPH_REMOTE_USER` | Yes | SSH username |
-| `RALPH_REMOTE_PATH` | Yes | Remote directory |
-| `RALPH_REMOTE_PORT` | No | SSH port (default: 22) |
-| `RALPH_REMOTE_EXCLUDES` | No | Comma-separated exclude patterns |
-
-### Hooks
-
-Claude Code hooks for validation and progress tracking:
-
-```bash
-# Copy hooks to your project
-cp hooks/*.sh your-project/hooks/
-
-# Configure in .claude/settings.json
-{
-  "hooks": {
-    "PreToolUse": ["./hooks/validate-against-spec.sh"],
-    "PostToolUse": ["./hooks/update-progress.sh"]
-  }
-}
-```
-
----
-
-## 📚 Documentation
-
-- [📜 Constitution](CONSTITUTION.md) - Project principles
-- [📋 Spec](SPEC.md) - Technical specification
-- [✅ TODO](TODO.md) - Implementation checklist
-- [🎨 Branding](BRANDING.md) - Official colors & style
-
----
-
-## 🤝 Contributing
-
-```
-    "Want to help? I'd love that!"
-
-    Pull requests welcome!
-```
-
-1. Fork the repo
-2. Create feature branch: `git checkout -b feature/amazing-thing`
-3. Write spec using Spec Kit: `spec-assistant init "Amazing Thing"`
-4. Implement following spec
-5. Test thoroughly: `npm test`
-6. Submit PR with dog ASCII art in description 🐕
-
----
-
-## 📜 License
-
-MIT License - See [LICENSE](LICENSE)
-
----
-
-## 🙏 Acknowledgments
-
-- **GitHub Spec Kit Team** - For the amazing original tool
-- **The Swarm** - All the AI agents that helped build this
-- **Remote-Server Server** - For hosting our swarm deployments
-- **You** - For reading this far! Have a treat! 🦴
-
-    "Thanks for using Spec Kit Assistant!"
-    "Woof woof! Happy spec-driven development!"
-```
-
----
-
-<p align="center">
-  Made with ❤️ and 🦴 by a loyal dog who loves specs
-  <br>
-  <strong>Spec Kit Assistant - Because specs should be fun!</strong>
-</p>
+Made with 🐕 + ❤️ by a developer who believes specs should feel welcoming.
