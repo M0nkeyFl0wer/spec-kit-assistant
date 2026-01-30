@@ -12,6 +12,8 @@ from rich.prompt import Prompt, IntPrompt, Confirm
 
 from here_spec.art.dog_art import display_art, display_micro_art, display_inline_tip
 
+STATE_VERSION = 1
+
 
 class CheckpointManager:
     """
@@ -26,17 +28,50 @@ class CheckpointManager:
         self.state = self._load_state()
 
     def _load_state(self) -> Dict:
-        """Load checkpoint state"""
-        if self.state_file.exists():
+        """Load checkpoint state with versioning + validation"""
+        default_state = self._default_state()
+        if not self.state_file.exists():
+            return default_state
+
+        try:
             with open(self.state_file) as f:
-                return json.load(f)
-        return {"project_name": "", "current_step": "init", "completed_steps": [], "answers": {}}
+                data = json.load(f)
+        except Exception as exc:  # noqa: BLE001
+            self.console.print(
+                f"[yellow]⚠️  Could not read checkpoint file ({exc}). Resetting state.[/yellow]"
+            )
+            return default_state
+
+        if data.get("version") != STATE_VERSION:
+            self.console.print(
+                "[yellow]⚠️  Checkpoint format changed. Resetting state (old version detected).[/yellow]"
+            )
+            return default_state
+
+        state = self._default_state()
+        state["project_name"] = data.get("project_name", "")
+        state["current_step"] = data.get("current_step", "init")
+        state["completed_steps"] = data.get("completed_steps") or []
+        state["answers"] = data.get("answers") or {}
+        state["agent"] = data.get("agent", "claude")
+        return state
 
     def _save_state(self):
         """Save checkpoint state"""
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
+        self.state["version"] = STATE_VERSION
         with open(self.state_file, "w") as f:
             json.dump(self.state, f, indent=2)
+
+    def _default_state(self) -> Dict:
+        return {
+            "version": STATE_VERSION,
+            "project_name": "",
+            "current_step": "init",
+            "completed_steps": [],
+            "answers": {},
+            "agent": "claude",
+        }
 
     def run_checkpoint(self, step: str) -> Optional[Dict]:
         """
