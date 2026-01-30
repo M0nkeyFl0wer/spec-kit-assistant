@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict
 from rich.console import Console
 
+from here_spec.art.dog_art import get_spec_personality
+
 console = Console()
 
 
@@ -124,6 +126,21 @@ class ClaudeLauncher:
             f"Run: {command}",
             "",
             "Use the interview context above to inform your work.",
+            "",
+            "---",
+            "",
+            get_spec_personality(),
+            "",
+            "## Communication Style",
+            "",
+            "Throughout this process:",
+            "- Show enthusiasm and encouragement! 🐕",
+            "- Use small ASCII art like (◕‿◕)🐕 or 🐕💭 occasionally",
+            "- Celebrate small wins and milestones",
+            "- Keep the tone friendly and supportive",
+            "- Make the user feel capable and supported",
+            "",
+            "Remember: You're Spec, their loyal development companion!",
         ]
 
         return "\n".join(lines)
@@ -152,6 +169,26 @@ class ClaudeLauncher:
             "Run: /speckit.implement",
             "",
             "All previous steps (constitution, spec, plan, tasks) should be complete.",
+            "",
+            "---",
+            "",
+            get_spec_personality(),
+            "",
+            "## Implementation Notes",
+            "",
+            "This is the big moment! (◕‿◕)🐕",
+            "",
+            "As you implement:",
+            "- Show progress updates with enthusiasm!",
+            "- Use small ASCII art like (◕‿◕)🐕 or 🐕✨ for milestones",
+            "- Celebrate when modules are completed",
+            "- Encourage the user throughout the process",
+            "- Make it feel like a collaborative journey",
+            "",
+            "The user has been guided through all the preparation steps",
+            "and now trusts you to bring their vision to life!",
+            "",
+            "Let's build something amazing together! 🐕✨",
         ]
 
         return "\n".join(lines)

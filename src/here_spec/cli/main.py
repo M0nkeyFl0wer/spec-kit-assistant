@@ -60,6 +60,19 @@ def init(
     # Initialize checkpoint manager
     checkpoints = CheckpointManager(console, project_path)
 
+    # Check if this is a fresh init or continuing
+    if checkpoints.state.get("current_step") != "init" and not checkpoints.state.get("answers"):
+        console.print("[dim]Resuming existing project...[/dim]")
+    else:
+        # Fresh start - clear any old state
+        console.print("[dim]Starting fresh project...[/dim]")
+        checkpoints.state = {
+            "project_name": "",
+            "current_step": "init",
+            "completed_steps": [],
+            "answers": {},
+        }
+
     # Save agent choice in checkpoints
     checkpoints.state["agent"] = agent
     checkpoints._save_state()
