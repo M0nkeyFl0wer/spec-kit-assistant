@@ -10,6 +10,7 @@ from typing import Dict
 from rich.console import Console
 
 from here_spec.art.dog_art import get_spec_personality
+from here_spec.checkpoint import get_command_for_step
 
 console = Console()
 
@@ -21,6 +22,13 @@ class ClaudeLauncher:
         """Launch Claude for a specific step (constitution, spec, plan, tasks, validate)"""
         step = context.get("step", "unknown")
         command = context.get("next_command", "/speckit.help")
+
+        # Hard guard: refuse to launch if routing is inconsistent.
+        if not self._validate_context_contract(step, command):
+            console.print(
+                "[red]❌ Refusing to launch Claude due to invalid step/command contract.[/red]"
+            )
+            return
 
         # Build step-specific context
         step_context = self._build_step_context(context)
@@ -62,6 +70,13 @@ class ClaudeLauncher:
 
     def launch(self, context: Dict, project_path: Path):
         """Launch Claude for the final build step"""
+        step = context.get("step", "build")
+        command = context.get("next_command", "/speckit.help")
+
+        if not self._validate_context_contract(step, command):
+            console.print("[red]❌ Refusing to launch Claude due to invalid build contract.[/red]")
+            return
+
         # Build full context for build
         build_context = self._build_build_context(context)
 
@@ -213,3 +228,7 @@ Full context in .speckit/checkpoints.json
 """)
 
         console.print(f"[dim]Created agent command: {command_file}[/dim]")
+
+    def _validate_context_contract(self, step: str, command: str) -> bool:
+        """Validate that the launcher receives canonical step routing."""
+        return get_command_for_step(step) == command

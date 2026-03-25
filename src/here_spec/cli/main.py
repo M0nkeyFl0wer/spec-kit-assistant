@@ -21,7 +21,12 @@ from here_spec.art.dog_art import (
     display_milestone,
 )
 from here_spec.core.system_detector import SystemDetector
-from here_spec.checkpoint import CheckpointManager
+from here_spec.checkpoint import CheckpointManager, get_command_for_step
+from here_spec.core.startup_context import (
+    write_startup_context,
+    validate_startup_context,
+    consume_startup_context,
+)
 from here_spec.agents.claude import ClaudeLauncher
 from here_spec.agents.opencode import OpencodeLauncher
 
@@ -96,12 +101,7 @@ def init(
     else:
         # Fresh start - clear any old state
         console.print("[dim]Starting fresh project...[/dim]")
-        checkpoints.state = {
-            "project_name": "",
-            "current_step": "init",
-            "completed_steps": [],
-            "answers": {},
-        }
+        checkpoints.state = checkpoints._default_state()
 
     # Save agent choice in checkpoints
     checkpoints.state["agent"] = agent
@@ -182,6 +182,11 @@ def _run_step_agent(agent: str, context: dict, project_path: Path):
 
     console.print(f"\n[bold blue]🚀 Running {command}...[/bold blue]")
 
+    # Harness contract: ensure the step-to-command mapping is canonical before launch.
+    if not _validate_harness_contract(step, command, project_path):
+        console.print("[red]❌ Harness contract validation failed. Aborting agent launch.[/red]")
+        return
+
     if agent == "claude":
         launcher = ClaudeLauncher()
     elif agent == "opencode":
@@ -206,7 +211,7 @@ def _run_build_step(agent: str, checkpoints: CheckpointManager, project_path: Pa
         return
 
     # Mark build as in progress
-    checkpoints.state["current_step"] = "building"
+    checkpoints.transition_to("building")
     checkpoints._save_state()
 
     console.print("\n[bold green]🏗️  Starting Implementation[/bold green]\n")
@@ -217,6 +222,15 @@ def _run_build_step(agent: str, checkpoints: CheckpointManager, project_path: Pa
         launcher = OpencodeLauncher()
     else:
         console.print(f"[red]❌ Unknown agent: {agent}[/red]")
+        return
+
+    # Build step also goes through harness contract validation.
+    if not _validate_harness_contract(
+        context.get("step", "build"),
+        context.get("next_command", "/speckit.help"),
+        project_path,
+    ):
+        console.print("[red]❌ Harness contract validation failed. Aborting build launch.[/red]")
         return
 
     launcher.launch(context, project_path)
@@ -552,6 +566,51 @@ def _env_flag(value: Optional[str]) -> bool:
     if value is None:
         return False
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _validate_harness_contract(step: str, command: str, project_path: Path) -> bool:
+    """
+    Validate that the harness directs the agent using canonical stage routing.
+
+    The function writes a short-lived startup context contract file, verifies it,
+    and consumes it once validated to avoid stale directives.
+    """
+    expected_command = get_command_for_step(step)
+    if expected_command != command:
+        console.print(
+            f"[red]Step/command mismatch:[/red] step={step}, command={command}, expected={expected_command}"
+        )
+        return False
+
+    checkpoint_path = project_path / ".speckit" / "checkpoints.json"
+    state_version = 1
+    if checkpoint_path.exists():
+        try:
+            with open(checkpoint_path) as handle:
+                checkpoint_data = json.load(handle)
+            state_version = int(checkpoint_data.get("version", 1))
+            current_step = checkpoint_data.get("current_step", step)
+            if current_step not in [step, "building"]:
+                console.print(
+                    f"[red]Checkpoint mismatch:[/red] context step={step}, checkpoint step={current_step}"
+                )
+                return False
+        except Exception:  # noqa: BLE001
+            console.print("[red]Failed to read checkpoint state for harness validation.[/red]")
+            return False
+
+    _, payload = write_startup_context(
+        project_path=project_path,
+        current_step=step,
+        next_command=command,
+        state_version=state_version,
+    )
+
+    is_valid = validate_startup_context(payload, expected_step=step, expected_command=command)
+    if is_valid:
+        consume_startup_context(project_path)
+
+    return is_valid
 
 
 @app.callback(invoke_without_command=True)

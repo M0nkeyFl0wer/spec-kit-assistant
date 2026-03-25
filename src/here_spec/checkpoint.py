@@ -14,6 +14,39 @@ from here_spec.art.dog_art import display_art, display_micro_art, display_inline
 
 STATE_VERSION = 1
 
+# Canonical step order used across the harness.
+STAGE_SEQUENCE = ["constitution", "spec", "plan", "tasks", "validate", "build"]
+
+# Canonical command routing for each stage.
+COMMAND_MAP = {
+    "constitution": "/speckit.constitution",
+    "spec": "/speckit.specify",
+    "plan": "/speckit.plan",
+    "tasks": "/speckit.tasks",
+    "validate": "/speckit.checklist",
+    "build": "/speckit.implement",
+}
+
+# Explicit finite-state transitions for deterministic resume behavior.
+ALLOWED_TRANSITIONS = {
+    "init": {"constitution", "build", "paused", "error"},
+    "constitution": {"spec", "paused", "error"},
+    "spec": {"plan", "paused", "error"},
+    "plan": {"tasks", "paused", "error"},
+    "tasks": {"validate", "paused", "error"},
+    "validate": {"build", "paused", "error"},
+    "build": {"building", "paused", "error"},
+    "building": {"completed", "build", "paused", "error"},
+    "paused": set(STAGE_SEQUENCE + ["build", "completed", "error"]),
+    "completed": set(),
+    "error": set(STAGE_SEQUENCE + ["build", "paused", "completed"]),
+}
+
+
+def get_command_for_step(step: str) -> str:
+    """Return the canonical spec command for a stage."""
+    return COMMAND_MAP.get(step, "/speckit.help")
+
 
 class CheckpointManager:
     """
@@ -51,8 +84,17 @@ class CheckpointManager:
 
         state = self._default_state()
         state["project_name"] = data.get("project_name", "")
-        state["current_step"] = data.get("current_step", "init")
-        state["completed_steps"] = data.get("completed_steps") or []
+        loaded_step = data.get("current_step", "init")
+        if loaded_step not in ALLOWED_TRANSITIONS:
+            self.console.print(
+                f"[yellow]⚠️  Unknown checkpoint step '{loaded_step}'. Resetting to init.[/yellow]"
+            )
+            loaded_step = "init"
+        state["current_step"] = loaded_step
+
+        # Keep only known completed steps to avoid corrupted state drift.
+        loaded_completed = data.get("completed_steps") or []
+        state["completed_steps"] = [step for step in loaded_completed if step in STAGE_SEQUENCE]
         state["answers"] = data.get("answers") or {}
         state["agent"] = data.get("agent", "claude")
         return state
@@ -92,6 +134,27 @@ class CheckpointManager:
         elif step == "build":
             return self._checkpoint_build()
         return None
+
+    def can_transition(self, next_step: str) -> bool:
+        """Return True when the state machine allows the transition."""
+        current = self.state.get("current_step", "init")
+        if current == next_step:
+            return True
+        return next_step in ALLOWED_TRANSITIONS.get(current, set())
+
+    def transition_to(self, next_step: str):
+        """Advance to another state while enforcing transition rules."""
+        current = self.state.get("current_step", "init")
+        if current == next_step:
+            return
+
+        if not self.can_transition(next_step):
+            raise ValueError(
+                f"Invalid checkpoint transition: {current} -> {next_step}. "
+                f"Allowed: {sorted(ALLOWED_TRANSITIONS.get(current, set()))}"
+            )
+
+        self.state["current_step"] = next_step
 
     def _checkpoint_constitution(self) -> Optional[Dict]:
         """Step 1: Questions before creating constitution"""
@@ -133,7 +196,7 @@ class CheckpointManager:
             f"\n[dim]Ready to create constitution for: {self.state['project_name']}[/dim]"
         )
         if self._confirm("Create constitution now?", default=True):
-            self.state["current_step"] = "spec"  # Next step
+            self.transition_to("spec")
             self._save_state()
             return self._build_context("constitution")
 
@@ -172,7 +235,7 @@ class CheckpointManager:
 
         self.console.print("\n[dim]Ready to create specification[/dim]")
         if self._confirm("Create spec now?", default=True):
-            self.state["current_step"] = "plan"
+            self.transition_to("plan")
             self._mark_complete("constitution")
             self._save_state()
             return self._build_context("spec")
@@ -217,7 +280,7 @@ class CheckpointManager:
 
         self.console.print("\n[dim]Ready to create implementation plan[/dim]")
         if Confirm.ask("Create plan now?", default=True):
-            self.state["current_step"] = "tasks"
+            self.transition_to("tasks")
             self._mark_complete("spec")
             self._save_state()
             return self._build_context("plan")
@@ -238,7 +301,7 @@ class CheckpointManager:
         self.console.print("I'll create a detailed task breakdown.")
 
         if self._confirm("\nReady to generate tasks?", default=True):
-            self.state["current_step"] = "validate"
+            self.transition_to("validate")
             self._mark_complete("plan")
             self._save_state()
             return self._build_context("tasks")
@@ -259,7 +322,7 @@ class CheckpointManager:
         self.console.print("  ✅ Task list is actionable")
 
         if self._confirm("\nReady to validate?", default=True):
-            self.state["current_step"] = "build"
+            self.transition_to("build")
             self._mark_complete("tasks")
             self._save_state()
             return self._build_context("validate")
@@ -310,15 +373,7 @@ class CheckpointManager:
 
     def _get_command(self, step: str) -> str:
         """Get the spec kit command for this step"""
-        commands = {
-            "constitution": "/speckit.constitution",
-            "spec": "/speckit.specify",
-            "plan": "/speckit.plan",
-            "tasks": "/speckit.tasks",
-            "validate": "/speckit.checklist",
-            "build": "/speckit.implement",
-        }
-        return commands.get(step, "/speckit.help")
+        return get_command_for_step(step)
 
     def _confirm(self, message: str, default: bool = True) -> bool:
         if self.auto_confirm:
