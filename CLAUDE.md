@@ -26,6 +26,9 @@ A community extension for [GitHub Spec Kit](https://github.com/github/spec-kit),
 - **Standard library only** in `guide.py`. It runs under whatever Python launched Spec Kit's dispatcher. That is why the config file is flat and parsed by hand.
 - **Fail open, but leave a trace.** An error allows the action and is written to `.specify/guide/errors.log`; `status` reports the count.
 - **Event contract:** exit 0 and stdout adds context; exit 2 and stderr blocks.
+- **User-only state changes come from the typed prompt.** Unlock, pause and starting a run are recognised in the user's message by the prompt event. Nothing the agent runs or says can unlock the gate.
+- **The reader is a first-timer.** Command prompts use plain words, offer one next step, and never list commands to choose from.
+- **Stop nudges must stay bounded.** Honour `stop_hook_active` and the no-progress cap.
 - Keep comments. They explain why, for a reader learning the code.
 
 ## Testing
