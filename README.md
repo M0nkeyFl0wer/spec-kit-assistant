@@ -1,222 +1,96 @@
-# Spec Kit Assistant (here-spec)
+# Spec Kit Guide
+
+> **Draft.** This README was rewritten for the extension and has not been reviewed yet.
 
 ```
-        /^-----^\
-       V  o o  V
-        |  Y  |
-         \ Q /
-         / - \
-         |    \
-         |     \
-         || (___\
-        (__||__||__)
+  /^-----^\
+ V  o o  V
+  |  Y  |     Spec: "One step at a time. I'll hold the plan."
+   \ Q /
+```
 
-## TL;DR Quickstart
+An extension for [GitHub Spec Kit](https://github.com/github/spec-kit) that does two things:
+
+1. **Guides.** `/speckit-guide-next` works out where your project is, asks the two or three questions the next step needs, confirms, and runs it. You never have to remember which command comes next.
+2. **Holds the agent to the plan.** A small script is wired into your coding agent's own hooks, so the order is enforced by the tool and not by the agent's memory.
+
+## Why
+
+Spec Kit's commands are prompts, and a coding agent can ignore a prompt. The usual failures:
+
+- It writes code before there is a plan.
+- You ask a question halfway through implementation and it drops the task list.
+- It stops after three tasks and reports that it is finished.
+
+Guide reads the stage from the files on disk (`spec.md`, `plan.md`, `tasks.md`) every time, so there is no state for the agent to get wrong.
+
+## What the harness does
+
+| When | What happens |
+| --- | --- |
+| A session starts | The agent is told the current stage and the next step. |
+| You send any message | The stage is pinned again. During an implementation run, the next unchecked task is pinned too, so a side question gets answered and the work carries on. |
+| The agent edits a file | Code edits are refused until `tasks.md` exists. Specs, plans and docs stay open. |
+| The agent tries to stop | During an implementation run with tasks left, it is sent back once. If it needs something from you it says so and stops. |
+
+## Install
+
+Needs Spec Kit 1.4 or later and Python 3.
 
 ```bash
-pipx install "git+https://github.com/M0nkeyFl0wer/spec-kit-assistant.git"
-here-spec        # starts new project or resumes current one
-```
+specify extension add guide --from https://github.com/M0nkeyFl0wer/spec-kit-assistant/archive/refs/tags/v0.1.0.zip
 ```
 
-Friendly, progressive onboarding for [GitHub Spec Kit](https://github.com/github/spec-kit). The `here-spec` CLI walks absolute beginners through every step of the Spec-Driven Development workflow, keeps track of progress, and launches your favorite AI coding agent with the right context.
-
-- **Progressive checkpoints** – asks you 2-3 questions before each Spec Kit step (constitution → spec → plan → tasks → validate → build)
-- **Spec the dog** – supportive ASCII companion that keeps the vibe friendly and fun
-- **Agent-aware** – works with Claude Code today, Opencode free tier as an alternative
-- **Crash-safe** – stores progress in `.speckit/checkpoints.json`, so you can pause/resume anytime
-- **Context-rich** – generates per-step prompts so agents know exactly what to do without you remembering slash commands
-
-> **Note:** This is an unofficial UX layer. The official Spec Kit CLI remains the authoritative source of functionality.
-
----
-
-## Requirements
-
-| Dependency | Why |
-|------------|-----|
-| Python 3.9+ | Runs the `here-spec` CLI |
-| Claude Code CLI (`npm install -g @anthropic-ai/claude-code`) | Primary AI agent (optional if using Opencode) |
-| Opencode CLI (`npm install -g opencode-ai`) | Free-tier alternative (optional) |
-| Git | Required by Spec Kit |
-
-If you plan to run Spec Kit commands that use `uv` or `specify`, install those per the [official documentation](https://github.com/github/spec-kit).
-
----
-
-## Installation
-
-### pipx (recommended)
-```bash
-pipx install "git+https://github.com/M0nkeyFl0wer/spec-kit-assistant.git"
-```
-
-### pip / virtualenv
-```bash
-git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-cd spec-kit-assistant
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e .
-```
-
-### Manual (development mode)
-```bash
-git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-cd spec-kit-assistant
-pip install -e .  # installs entry point `here-spec`
-```
-
-Verify the install:
-```bash
-here-spec --help
-```
-
----
-
-## Quick Start
-
-Just run `here-spec` with no arguments. Spec will figure out what to do:
+To try a local checkout:
 
 ```bash
-here-spec
+specify extension add --dev /path/to/spec-kit-assistant
 ```
 
-- If you are **not** inside a project folder, Spec will ask for a project name and start a new run.
-- If you **are** already inside a project (contains `.speckit/checkpoints.json`), Spec resumes from the last step.
+## Commands
 
-### Common commands
+Claude Code spells these with hyphens. Agents that use dotted commands spell them `/speckit.guide.next` and so on.
 
-| Command | Description |
-|---------|-------------|
-| `here-spec` | Smart default: start or continue depending on location |
-| `here-spec init [name]` | Explicitly create a new project |
-| `here-spec continue [path]` | Resume a project from anywhere |
-| `here-spec status [path]` | Show progress and selected agent |
-| `here-spec check` | Verify system + agent requirements |
-| `here-spec config` | Toggle celebrations, default agent, default quality |
-| `here-spec step <name>` | Run a specific checkpoint manually (`constitution`, `spec`, `plan`, `tasks`, `validate`, `build`) |
+| Command | What it does |
+| --- | --- |
+| `/speckit-guide-next` (or `-start`) | Ask what this step needs, then run it |
+| `/speckit-guide-status` | Show the stage, the next step and whether code edits are locked |
+| `/speckit-guide-pause` | End an implementation run so the agent may stop |
 
----
+`/speckit-guide-harness` is also listed. It is the script behind the hooks and is not meant to be run by hand.
 
-## Progressive Workflow
+## Settings
 
-Each Spec Kit command gets its own mini-interview so you never have to remember slash commands or context order:
+`.specify/extensions/guide/guide-config.yml`:
 
-1. **Constitution helper** – captures project name, description, target users, readiness to create the constitution.
-2. **Spec helper** – asks for core features + constraints, then runs `/speckit.constitution` and `/speckit.specify` with the right context.
-3. **Plan helper** – chooses tech approach & quality level, kicks off the planning phase.
-4. **Task helper** – confirms scope, then generates tasks.
-5. **Validate helper** – walks through the checklist.
-6. **Build helper** – final confirmation and implementation command.
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `persona` | `spec` | `spec` for Spec the dog, `plain` for no persona |
+| `gate` | `block` | `block` refuses out-of-order code edits, `warn` only reminds, `off` does neither |
+| `require_spec` | `true` | Lock code edits before any spec exists. `false` starts gating once a feature has been started |
+| `keep_going` | `true` | Send the agent back to the task list when it stops mid-run |
+| `free_paths` | `docs/` | Extra folders the agent may always edit |
 
-You can pause after any step; Spec stores answers + progress in `.speckit/checkpoints.json` and `.speckit/context-*.md` inside the project directory.
+Put a setting in `local-config.yml` beside it for your machine only, or set an environment variable such as `SPECKIT_GUIDE_GATE=off`.
 
----
+## What it does not do
 
-## Agent Support
-
-### Claude Code (recommended)
-1. Install: `npm install -g @anthropic-ai/claude-code`
-2. Run `claude login` (or `claude auth login`) and follow the browser prompt to store your API key locally.
-3. Spec will detect the CLI and launch it with per-step context.
-
-### Opencode (free tier)
-1. Install: `npm install -g opencode-ai`
-2. Run `opencode auth login` and paste the API key provided by Opencode.
-3. Select “Opencode” when Spec asks which helper to use.
-
-> **API Keys:** Spec does **not** write your API keys to disk. Configure each CLI using their official tools (Claude Code or Opencode). Future releases will add an optional encrypted keyring.
-
-### Automating setup via environment variables
-
-| Variable | Description |
-|----------|-------------|
-| `HERE_SPEC_PROJECT_NAME` | Defaults the project/folder name when creating a new run |
-| `HERE_SPEC_AGENT` | Force a specific agent (`claude` or `opencode`) |
-| `HERE_SPEC_QUICK` | Set to `1/true` to skip interviews and run the quick flow |
-| `HERE_SPEC_AUTO_CONFIRM` | Set to `1/true` to auto-accept all confirmation prompts |
-| `HERE_SPEC_FREE` | Set to `1/true` to prefer the Opencode free tier |
-
-Example (headless) run:
-
-```bash
-HERE_SPEC_PROJECT_NAME=my-app \
-HERE_SPEC_AGENT=claude \
-HERE_SPEC_QUICK=1 \
-HERE_SPEC_AUTO_CONFIRM=1 \
-here-spec
-```
-
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────┐
-│ here-spec CLI                              │
-│                                             │
-│ 1. Checkpoint Manager                       │
-│    (saves answers/progress)                 │
-│                                             │
-│ 2. Context Builder                          │
-│    (creates .speckit/context-*.md)          │
-│                                             │
-│ 3. Agent Launchers                          │
-│    (Claude / Opencode wrappers)             │
-│                                             │
-│ 4. Spec the Dog                             │
-│    (ASCII art + personality)                │
-└─────────────────────────────────────────────┘
-```
-
-- `here_spec/checkpoint.py` – state machine + progressive interview logic.
-- `here_spec/agents/{claude,opencode}.py` – generate context files and launch CLIs.
-- `here_spec/art/dog_art.py` – Spec’s ASCII art + personality descriptors.
-
-Everything lives inside the project directory so you can safely commit the generated spec artifacts.
-
----
+- **Shell commands are not gated.** The gate covers the agent's file-editing tools. An agent that writes a file with a shell command gets past it.
+- **Tested with Claude Code only.** Spec Kit translates the events for other agents, but nothing else has been tried.
+- **It fails open.** If the script hits an error it allows the action and records it; `/speckit-guide-status` shows the count.
 
 ## Development
 
 ```bash
-git clone https://github.com/M0nkeyFl0wer/spec-kit-assistant.git
-cd spec-kit-assistant
-pip install -e .
+python -m pytest tests -q
 ```
 
-### Run the CLI in dev mode
-```bash
-python -m here_spec.cli.main --help
-```
+Everything lives in `scripts/python/guide.py`, which uses the standard library only.
 
-### Testing
-Automated tests are being added (see TODO). For now you can verify basic flows manually:
-```bash
-here-spec --help
-here-spec check
-here-spec init demo-project
-here-spec continue demo-project
-```
+## History
 
----
-
-## Roadmap
-
-- Progressive checkpoints per Spec Kit step
-- Non-interactive safety (detects aggressive CLI launches)
-- Automated test suite (Typer CLI + unit tests)
-- State schema versioning + recovery
-- Improved multi-project chooser in `here-spec continue`
-- Encrypted credential storage for API keys
-- Official docs for agent setup + environment variables
-
-Contributions are welcome! Please open an issue or PR if you spot bugs or want to help with the roadmap.
-
----
+This repository used to hold `here-spec`, a Python CLI that wrapped Spec Kit, and before that a Node wrapper. Both are in the git history on `main` before the `extension-guide` work.
 
 ## License
 
-MIT – see [LICENSE](LICENSE)
-
-Made with ASCII dogs and a love of friendly specs.
+MIT. See [LICENSE](LICENSE).
