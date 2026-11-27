@@ -405,7 +405,7 @@ def end_run(root: Path) -> dict:
     return update_run(root, implementing=False, nudges=0)
 
 
-def beat(root: Path, kind: str) -> None:
+def beat(root: Path, kind: str, detail: str = "") -> None:
     """Note that an event reached this script.
 
     `status` reads this back. "The hooks are in the settings file" and "the
@@ -414,7 +414,7 @@ def beat(root: Path, kind: str) -> None:
     """
     try:
         (ensure_state_dir(root) / "heartbeat.json").write_text(
-            json.dumps({"at": time.time(), "event": kind}), encoding="utf-8")
+            json.dumps({"at": time.time(), "event": kind, "detail": detail}), encoding="utf-8")
     except OSError:
         pass
 
@@ -783,7 +783,13 @@ def handle_event(root: Path) -> int:
         return 0
     try:
         kind = detect_event(payload)
-        beat(root, kind)
+        detail = ""
+        if kind == "edit":
+            # Remembered so the guided run can show "last wrote plan.md".
+            tool_input = payload.get("tool_input") or {}
+            if isinstance(tool_input, dict):
+                detail = os.path.basename(str(tool_input.get("file_path") or tool_input.get("path") or ""))
+        beat(root, kind, detail)
         return HANDLERS[kind](root, payload, read_status(root), load_config(root))
     except Exception as exc:  # noqa: BLE001 - fail open, but leave a trace
         log_error(root, "event handler failed (%s: %s); the action was allowed" % (type(exc).__name__, exc))
@@ -824,9 +830,37 @@ def save_flow(root: Path, flow: dict) -> None:
 
 PERMISSION_HINT = (
     "The assistant ran but did not write the file. The usual cause is that it was not allowed to "
-    "edit files or run Spec Kit's setup scripts when started by the workflow.\n"
-    "Start the run with the launcher, which allows exactly those two things for this run only:\n"
-    "  python3 .specify/extensions/guide/scripts/python/guide.py run\n")
+    "run one of Spec Kit's setup scripts when started by the workflow.\n"
+    "Running the guide again often gets past it. If it does not, allow commands for the run:\n"
+    "  python3 .specify/extensions/guide/scripts/python/guide.py run --allow-commands\n")
+
+
+# What the assistant is doing at each stage, in the words a newcomer would use.
+WORK_LABELS = {
+    "specify": "Writing down what you want to build",
+    "done": "Writing down what you want to build",
+    "plan": "Working out how to build it",
+    "tasks": "Breaking it into a to-do list",
+}
+
+
+def leave_note(flow: dict, text: str) -> None:
+    """Queue one line for the launcher to show, such as "Plan written".
+
+    The planning steps run with their output captured: what the assistant
+    prints after writing a spec is a screen of version numbers and "next run
+    /speckit-plan", which is noise to a newcomer and wrong inside a guided
+    run. These notes are what the person sees instead.
+    """
+    flow["note"] = {"text": text, "at": time.time()}
+
+
+def set_phase(flow: dict, label) -> None:
+    """Record what the assistant is working on now, or None when it is not."""
+    if label:
+        flow["phase"] = {"label": label, "started": time.time()}
+    else:
+        flow.pop("phase", None)
 
 
 def flow_stop(root: Path, flow: dict, message: str) -> int:
@@ -859,6 +893,9 @@ def flow_command(root: Path, argv: list) -> int:
         flow["active"] = True
         flow.pop("task", None)
         flow.pop("stopped_because", None)
+        needs_rules = not status["constitution"] and status["feature"] is None
+        label = "Writing the ground rules" if needs_rules else WORK_LABELS.get(status["stage"])
+        set_phase(flow, label)
         save_flow(root, flow)
         print(json.dumps({
             "stage": status["stage"], "feature": status["feature"] or "",
@@ -869,7 +906,17 @@ def flow_command(root: Path, argv: list) -> int:
         }))
         return 0
 
+    if action == "waiting":
+        # Called just before an approval gate that no check precedes, so the
+        # progress line knows the run is waiting on the person, not working.
+        set_phase(flow, None)
+        save_flow(root, flow)
+        print("{}")
+        return 0
+
     if action == "require":
+        set_phase(flow, None)
+        save_flow(root, flow)
         # Called after a stage. The agent saying it wrote a file is not
         # evidence; the file being there is.
         name = argv[1] if len(argv) > 1 else ""
@@ -884,6 +931,14 @@ def flow_command(root: Path, argv: list) -> int:
             return flow_stop(root, flow, "tasks.md exists but has no checkbox items, so there is nothing to build from.\n")
         if not ok:
             return flow_stop(root, flow, "The %s step finished, but %s was not written.\n%s" % (name, shown, PERMISSION_HINT))
+        done_words = {
+            "rules": "Ground rules written",
+            "spec": "Write-up done",
+            "plan": "Plan done",
+            "tasks": "To-do list ready: %d tasks" % status["tasks_total"],
+        }[name]
+        leave_note(flow, "%s  (%s)" % (done_words, shown))
+        save_flow(root, flow)
         print(json.dumps({"file": shown, "feature": status["feature"] or "", "tasks_total": status["tasks_total"]}))
         return 0
 
@@ -896,6 +951,8 @@ def flow_command(root: Path, argv: list) -> int:
             "done_before": status["tasks_done"],
             "tries": int(flow.get("tries") or 0) if same else 0,
         })
+        set_phase(flow, "Task %d of %d: %s" % (
+            status["tasks_done"] + 1, status["tasks_total"], (status["next_task"] or "")[:70]))
         save_flow(root, flow)
         print(json.dumps({
             "task": status["next_task"] or "", "feature": status["feature"] or "",
@@ -910,6 +967,11 @@ def flow_command(root: Path, argv: list) -> int:
         tries = 0 if progressed else int(flow.get("tries") or 0) + 1
         remaining = status["tasks_total"] - status["tasks_done"]
         flow["tries"] = tries
+        set_phase(flow, None)
+        if progressed:
+            leave_note(flow, "Task done: %d of %d" % (status["tasks_done"], status["tasks_total"]))
+        elif tries < MAX_TRIES_PER_TASK:
+            leave_note(flow, "That task was not ticked off. Trying it once more.")
         save_flow(root, flow)
         if tries >= MAX_TRIES_PER_TASK:
             return flow_stop(root, flow, (
@@ -934,31 +996,165 @@ def flow_command(root: Path, argv: list) -> int:
         }))
         return 0
 
-    sys.stderr.write("usage: guide.py flow [where | require <rules|spec|plan|tasks> | next-task | check-task | end]\n")
+    sys.stderr.write("usage: guide.py flow [where | waiting | require <rules|spec|plan|tasks> | next-task | check-task | end]\n")
     return 1
 
 
 def flow_pin(flow: dict) -> str:
     """What the hooks tell the agent while a guided run is in control."""
     lines = ["[Spec Kit Guide] A guided run is in control of this session. Do the one job this message asks for, "
-             "then stop. Do not start any other step, and do not ask the user what to do next."]
+             "then stop. Do not start any other step, and do not ask the user what to do next.",
+             "Nobody is watching this session, so a permission prompt cannot be answered. When a step tells you to "
+             "run a script under .specify/, run it exactly as written, starting with `.specify/`: no `bash` in front, "
+             "no `cd`, and not joined to other commands with `&&` or `;`. If a command is refused, do not retry it "
+             "another way; finish what you can and say what was refused."]
     if flow.get("task"):
         lines.append("The one task for this session: %s\nTick it in tasks.md only once its code exists. "
                      "Leave every other task alone." % flow["task"])
     return "\n".join(lines)
 
 
-SPEC_HELLO = r"""
-   /^-----^\
-  V  o o  V     Hi, I'm Spec. Let's build something.
-   |  Y  |
-    \ Q /
+# --------------------------------------------------------------------------
+# Terminal look: colour, Spec's art, and the small pieces the interview uses
+# --------------------------------------------------------------------------
+# Standard library only, so this is plain ANSI. Everything degrades: no colour
+# when output is not a terminal or NO_COLOR is set, and ASCII stand-ins when
+# the terminal cannot show box-drawing characters.
+
+# Spec Kit's own palette: purple, pink, green. (truecolor, 256-colour fallback)
+PALETTE = {
+    "purple": ("38;2;139;92;246", "38;5;141"),
+    "pink": ("38;2;236;72;153", "38;5;205"),
+    "green": ("38;2;16;185;129", "38;5;42"),
+    "dim": ("2", "2"),
+    "bold": ("1", "1"),
+}
+
+
+def use_colour() -> bool:
+    return sys.stdout.isatty() and "NO_COLOR" not in os.environ and os.environ.get("TERM") != "dumb"
+
+
+def use_unicode() -> bool:
+    return "utf" in (getattr(sys.stdout, "encoding", "") or "").lower()
+
+
+def paint(text: str, *styles: str) -> str:
+    """Wrap text in colour codes, or return it untouched when colour is off."""
+    if not use_colour():
+        return text
+    truecolor = os.environ.get("COLORTERM", "").lower() in {"truecolor", "24bit"}
+    codes = ";".join(PALETTE[style][0 if truecolor else 1] for style in styles)
+    return "\033[%sm%s\033[0m" % (codes, text)
+
+
+def glyph(fancy: str, plain: str) -> str:
+    return fancy if use_unicode() else plain
+
+
+# Spec, as he has looked since the first README.
+SPEC_SITTING = r"""
+     /^-----^\
+    V  o o  V
+     |  Y  |
+      \ Q /
+      / - \
+      |    \
+      |     \
+      || (___\
+     (__||__||__)
 """
 
-HOW_IT_WORKS = (
-    "Here is how this goes. First we write down what you want, then how to build it,\n"
-    "then a to-do list, and only then the code. Writing it down first stops the AI from guessing.\n"
-    "You will be shown each piece and asked to approve it before the next one starts.\n")
+SPEC_WAG = r"""
+    /)/)
+   ( . .)
+   C(")(")
+"""
+
+SPEC_PARTY = r"""
+     \  ^  ^  /
+      ( ^ w ^ )
+     <)       (>
+       \_____/
+"""
+
+
+def beside(art: str, lines: list, colour: str = "purple") -> str:
+    """Put a few lines of speech to the right of a piece of art."""
+    rows = art.strip("\n").split("\n")
+    width = max(len(row) for row in rows) + 4
+    top = max(0, (len(rows) - len(lines)) // 2 - 1)
+    out = []
+    for index, row in enumerate(rows):
+        said = lines[index - top] if 0 <= index - top < len(lines) else ""
+        out.append(paint(row.ljust(width), colour) + said)
+    return "\n".join(out)
+
+
+def card(title: str, rows: list) -> str:
+    """A bordered summary: [(label, value), ...] with long values wrapped."""
+    import shutil
+    import textwrap
+    total = max(48, min(shutil.get_terminal_size((80, 24)).columns - 4, 74))
+    label_width = max(len(label) for label, _ in rows) + 2
+    inner = total - 4
+    h, v = glyph("─", "-"), glyph("│", "|")
+    tl, tr, bl, br = (glyph(a, "+") for a in "╭╮╰╯")
+    edge = lambda text: paint(text, "purple")  # noqa: E731
+    head = h + " " + title + " "
+    out = ["  " + edge(tl + head + h * (total - 2 - len(head)) + tr)]
+    for label, value in rows:
+        wrapped = textwrap.wrap(str(value), inner - label_width) or [""]
+        for index, piece in enumerate(wrapped):
+            left = paint((label if index == 0 else "").ljust(label_width), "dim")
+            out.append("  " + edge(v) + " " + left + piece.ljust(inner - label_width) + " " + edge(v))
+    out.append("  " + edge(bl + h * (total - 2) + br))
+    return "\n".join(out)
+
+
+def heading(step: int, of: int, question: str, hint: str = "") -> None:
+    dot = glyph("●", "*")
+    print("")
+    print("  " + paint("%s Question %d of %d" % (dot, step, of), "pink"))
+    print("  " + paint(question, "bold"))
+    if hint:
+        print("  " + paint(hint, "dim"))
+
+
+def prompt_mark() -> str:
+    return "  " + paint(glyph("❯", ">"), "pink") + " "
+
+
+def spec_says(config: dict, text: str) -> None:
+    """A short aside from Spec between questions. Silent in plain mode."""
+    if config["persona"] == "spec":
+        print("  " + paint(glyph("🐾 ", "~ ") + text, "green"))
+
+
+def show_welcome(config: dict, first_time: bool) -> None:
+    print("")
+    if config["persona"] == "spec":
+        print(beside(SPEC_SITTING, [
+            paint("Woof! I'm Spec.", "bold"),
+            "",
+            "I help people build software one step at a time,",
+            "so the AI builds what you actually meant.",
+        ]))
+    else:
+        print("  " + paint("Spec Kit Guide", "bold", "purple"))
+    if first_time:
+        arrow = glyph("←", "<-")
+        steps = [
+            ("Write down what you want", paint("%s we start here" % arrow, "green")),
+            ("Decide how to build it", ""),
+            ("Break it into a to-do list", ""),
+            ("Build it, one task at a time", ""),
+        ]
+        print("")
+        print("  " + paint("How this works", "bold"))
+        for number, (label, note) in enumerate(steps, 1):
+            print("   %s  %s  %s" % (paint(str(number), "purple", "bold"), label.ljust(30), note))
+        print("  " + paint("You see each piece and approve it before the next one starts.", "dim"))
 
 
 def provided_inputs(argv: list) -> dict:
@@ -976,18 +1172,19 @@ def provided_inputs(argv: list) -> dict:
     return found
 
 
-def choose(ask, question: str, options: list) -> str:
-    """Ask a numbered question. Enter takes the first option."""
-    print(question)
-    for number, option in enumerate(options, 1):
-        print("  %d. %s" % (number, option))
+def choose(ask, options: list) -> str:
+    """Show numbered options and read a pick. Enter takes the first."""
+    width = max(len(label) for label, _ in options)
+    for number, (label, note) in enumerate(options, 1):
+        tail = paint("   " + note, "dim") if note else ""
+        print("   %s  %s%s" % (paint(str(number), "purple", "bold"), label.ljust(width), tail))
     while True:
-        answer = ask("Pick a number [1]: ").strip()
+        answer = ask(prompt_mark()).strip()
         if answer == "":
-            return options[0]
+            return options[0][0]
         if answer.isdigit() and 1 <= int(answer) <= len(options):
-            return options[int(answer) - 1]
-        print("Please type a number from 1 to %d." % len(options))
+            return options[int(answer) - 1][0]
+        print("  " + paint("Type a number from 1 to %d, or press Enter for 1." % len(options), "dim"))
 
 
 def interview(root: Path, status: dict, config: dict, given: dict, ask=input) -> dict:
@@ -995,6 +1192,9 @@ def interview(root: Path, status: dict, config: dict, given: dict, ask=input) ->
 
     The workflow engine does not ask for its inputs; it fails with "Required
     input 'idea' not provided". So the questions live here, in the launcher.
+    This is also the first thing a new person sees, so it is where Spec
+    introduces himself.
+
     Answers are kept in .specify/guide/brief.json: running the guide again to
     resume must not put the same questions to the person twice.
     """
@@ -1011,47 +1211,158 @@ def interview(root: Path, status: dict, config: dict, given: dict, ask=input) ->
     answers.update(given)
 
     if "idea" not in answers:
-        if config["persona"] == "spec":
-            print(SPEC_HELLO)
-        if not status["constitution"] and status["feature"] is None:
-            print(HOW_IT_WORKS)
-        idea = ""
+        show_welcome(config, first_time=not status["constitution"] and status["feature"] is None)
+        total = 5
+
+        heading(1, total, "What do you want to build?", "A sentence or two is plenty. Plain words are fine.")
+        idea = ask(prompt_mark()).strip()
         while len(idea.split()) < 3:
-            idea = ask("What do you want to build? A sentence or two is fine.\n> ").strip()
-            if len(idea.split()) < 3:
-                print("Tell me a little more than that, so I am not guessing. For example:\n"
-                      "  an app that reminds me when my houseplants need watering\n")
+            print("  " + paint("Give me a little more, so I'm not guessing. Something like:", "dim"))
+            print("  " + paint("  an app that reminds me when my houseplants need watering", "dim"))
+            idea = ask(prompt_mark()).strip()
         answers["idea"] = idea
+        spec_says(config, "Ooh, I like it.")
+
         if "audience" not in answers:
-            answers["audience"] = choose(ask, "\nWho is it for?", ["just me", "my team", "the public"])
+            heading(2, total, "Who is it for?")
+            answers["audience"] = choose(ask, [
+                ("just me", "simple, no accounts"),
+                ("my team", "a few people sharing it"),
+                ("the public", "strangers will use it")])
         if "quality" not in answers:
-            answers["quality"] = choose(ask, "\nWhat are we going for?", ["quick experiment", "built to last"])
+            heading(3, total, "What are we going for?")
+            answers["quality"] = choose(ask, [
+                ("quick experiment", "get something working fast"),
+                ("built to last", "tests, care, room to grow")])
         if "must_haves" not in answers:
-            answers["must_haves"] = ask(
-                "\nTwo or three things it must do. Press Enter to leave that to me.\n> ").strip()
+            heading(4, total, "What must it do?", "Two or three things. Press Enter and I'll work it out from your idea.")
+            answers["must_haves"] = ask(prompt_mark()).strip()
         if "tech" not in answers:
-            tech = ask("\nAny technology to use or avoid? Press Enter if you have no preference.\n> ").strip()
+            heading(5, total, "Any technology to use or avoid?",
+                    "Press Enter if you don't mind. I'll pick something simple and tell you what.")
+            tech = ask(prompt_mark()).strip()
             if tech:
                 answers["tech"] = tech
-        print("\nHere is what I understood:")
-        print("  Building: %s" % answers["idea"])
-        print("  For:      %s" % answers["audience"])
-        print("  Aim:      %s" % answers["quality"])
-        if answers.get("must_haves"):
-            print("  Must do:  %s" % answers["must_haves"])
-        if answers.get("tech"):
-            print("  Using:    %s" % answers["tech"])
-        if ask("\nIs that right? [Y/n] ").strip().lower() in {"n", "no"}:
-            print("No problem. Run this again and tell me afresh.")
+
+        print("")
+        print(card("Here's what I heard", [
+            ("Building", answers["idea"]),
+            ("For", answers["audience"]),
+            ("Aim", answers["quality"]),
+            ("Must do", answers.get("must_haves") or "I'll work it out"),
+            ("Using", answers.get("tech") or "my pick, kept simple"),
+        ]))
+        print("")
+        if ask("  " + paint("Did I get that right?", "bold") + paint(" [Y/n] ", "dim")).strip().lower() in {"n", "no"}:
+            spec_says(config, "No problem. Run me again and tell me afresh.")
             return {}
     elif not starting_new and "idea" in brief and "idea" not in given:
-        print("Picking up where we left off: %s" % brief["idea"])
+        print("")
+        if config["persona"] == "spec":
+            print(beside(SPEC_WAG, ["", paint("Welcome back! Picking up where we left off:", "bold"), brief["idea"]]))
+        else:
+            print("  Picking up where we left off: %s" % brief["idea"])
 
     # Drop empty optional answers so the workflow's own defaults apply.
     answers = {key: value for key, value in answers.items() if value != ""}
     ensure_state_dir(root)
     brief_path.write_text(json.dumps(answers, indent=2), encoding="utf-8")
     return answers
+
+
+def elapsed_words(seconds: float) -> str:
+    seconds = int(seconds)
+    return "%ds" % seconds if seconds < 60 else "%dm %02ds" % (seconds // 60, seconds % 60)
+
+
+def progress_reporter(root: Path, config: dict, stop_flag, every: float = 20.0, poll: float = 0.25) -> None:
+    """Say what is happening while the assistant works, so a run never looks frozen.
+
+    The workflow engine prints one line when a step starts and nothing more
+    until it ends, which for an assistant step is minutes. This runs beside
+    it in the launcher. It prints whole lines, never an in-place spinner: the
+    engine and the assistant write to the same terminal, and an in-place line
+    would be overwritten or garble theirs.
+
+    It knows the run is working, and on what, from the phase the flow steps
+    record. When the run is waiting at an approval gate there is no phase,
+    and this stays silent so it never interrupts a question.
+    """
+    paw = glyph("🐾", "~") if config["persona"] == "spec" else glyph("·", "-")
+    tick = glyph("✔", "ok")
+    seen_started = None
+    seen_note = time.time()
+    next_note = 0.0
+    while not stop_flag.is_set():
+        stop_flag.wait(poll)
+        try:
+            flow = json.loads((state_dir(root) / "flow.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            flow = {}
+        phase = flow.get("phase")
+        note = flow.get("note") or {}
+        if float(note.get("at", 0)) > seen_note:
+            seen_note = float(note["at"])
+            print("    %s %s" % (paint(tick, "green"), note.get("text", "")), flush=True)
+        if not phase:
+            seen_started = None
+            continue
+        now = time.time()
+        if phase.get("started") != seen_started:
+            # A new piece of work has begun: announce it once, straight away.
+            seen_started = phase.get("started")
+            next_note = now + every
+            print("    %s %s" % (paw, paint(str(phase.get("label")) + " ...", "green")), flush=True)
+            continue
+        if now < next_note:
+            continue
+        next_note = now + every
+        line = "still working, %s so far" % elapsed_words(now - float(seen_started or now))
+        info = last_beat(root) or {}
+        if info.get("event") == "edit" and info.get("detail") and now - float(info.get("at", 0)) < 600:
+            line += " (last wrote %s, %s ago)" % (info["detail"], elapsed_words(now - float(info["at"])))
+        print("      " + paint(line, "dim"), flush=True)
+
+
+def show_ending(root: Path, config: dict, code: int) -> None:
+    """Close the run in plain words: what exists now, and what to do next.
+
+    The engine's own last line is "Status: failed" with an exit code.
+    """
+    status = read_status(root)
+    try:
+        raw = json.loads((state_dir(root) / "flow.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        raw = {}
+    tick, todo = paint(glyph("✔", "x"), "green"), paint(glyph("○", "o"), "dim")
+    done_all = status["stage"] == "done"
+    print("")
+    if config["persona"] == "spec":
+        if done_all:
+            print(beside(SPEC_PARTY, [paint("We built it!", "bold", "green"),
+                                      "All %d tasks are done." % status["tasks_total"]], "green"))
+        else:
+            print(beside(SPEC_WAG, ["", paint("We're paused here.", "bold"), "Nothing is lost. Run me again to carry on."]))
+    else:
+        print("  " + paint("Finished." if done_all else "Paused.", "bold"))
+    print("")
+    pieces = [("Ground rules", status["constitution"]), ("Write-up", status["spec"]), ("Plan", status["plan"]),
+              ("To-do list", status["tasks"]), ("Built", done_all)]
+    print("   " + "   ".join("%s %s" % (tick if ok else todo, label) for label, ok in pieces))
+    if status["tasks_total"] and not done_all:
+        print("   " + paint("%d of %d tasks done" % (status["tasks_done"], status["tasks_total"]), "dim"))
+    if status["feature"]:
+        print("   " + paint("Files: %s/" % status["feature"], "dim"))
+    if raw.get("stopped_because"):
+        print("")
+        print("  " + paint("Why it stopped", "bold", "pink"))
+        for line in str(raw["stopped_because"]).rstrip().split("\n"):
+            print("  " + line)
+    if status["ticked_but_missing"]:
+        print("")
+        print("  " + paint("Worth a look: ", "pink") + "tasks marked done name files that are not there: "
+              + ", ".join(status["ticked_but_missing"][:5]))
+    print("")
 
 
 def run_guided(root: Path, argv: list) -> int:
@@ -1091,9 +1402,20 @@ def run_guided(root: Path, argv: list) -> int:
         if not answers:
             return 0
         if not allow_commands:
-            print("\nBuilding usually needs to run commands, such as tests or installing packages.")
-            allow_commands = input("Allow the assistant to run commands during this run? [y/N] ").strip().lower() in {"y", "yes"}
-        print("\nStarting. This takes a while; each step prints as it runs.\n")
+            print("")
+            print("  " + paint("One permission to ask about", "bold"))
+            print("  " + paint("Building usually means running commands: tests, installing a package.", "dim"))
+            print("  " + paint("I can edit files either way. Without this, I stop when a task needs a command.", "dim"))
+            allow_commands = input(
+                "  " + paint("Let me run commands during this run?", "bold") + paint(" [y/N] ", "dim")
+            ).strip().lower() in {"y", "yes"}
+        print("")
+        if config["persona"] == "spec":
+            print(beside(SPEC_WAG, ["", paint("Off we go!", "bold", "green"),
+                                    "This takes a while. Each step shows up below as it runs."], "green"))
+        else:
+            print("  Starting. Each step shows up below as it runs.")
+        print("")
     else:
         # No terminal to ask on: use what was passed, plus any saved answers.
         try:
@@ -1113,25 +1435,33 @@ def run_guided(root: Path, argv: list) -> int:
     if not (root / ".specify" / "workflows" / "guide").exists() and local.is_file():
         workflow = str(local)
 
-    allowed = '"Bash(.specify/scripts/*)" "Bash(.specify/extensions/*)"'
+    # Spec Kit's commands call their own scripts under .specify/. Assistants
+    # do not always type them the same way ("bash .specify/..." as well as
+    # ".specify/..."), and a pattern that misses means the step silently
+    # writes nothing. So the common spellings are all listed, and flow_pin()
+    # tells the assistant to use the plain one.
+    allowed = " ".join('"Bash(%s)"' % pattern for pattern in (
+        ".specify/scripts/*", ".specify/extensions/*",
+        "bash .specify/scripts/*", "bash .specify/extensions/*",
+        "sh .specify/scripts/*", "python3 .specify/*",
+    ))
     if allow_commands:
         allowed = '"Bash"'
     env = dict(os.environ)
     env.setdefault("SPECKIT_INTEGRATION_CLAUDE_EXTRA_ARGS", "--permission-mode acceptEdits --allowedTools " + allowed)
 
-    code = subprocess.call([specify, "workflow", "run", workflow, *argv], cwd=str(root), env=env)
-
-    # Always finish by saying, in plain words, where things stand. The
-    # engine's own last line is "Status: failed" with an exit code.
-    print("")
+    import threading
+    stop_flag = threading.Event()
+    reporter = threading.Thread(target=progress_reporter, args=(root, config, stop_flag), daemon=True)
+    reporter.start()
     try:
-        raw = json.loads((state_dir(root) / "flow.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        raw = {}
-    if raw.get("stopped_because"):
-        print("Why the run stopped:\n" + str(raw["stopped_because"]).rstrip())
-        print("")
-    print_status(root, False)
+        code = subprocess.call([specify, "workflow", "run", workflow, *argv], cwd=str(root), env=env)
+    finally:
+        time.sleep(0.6)  # one more poll, so the last "done" note is not lost
+        stop_flag.set()
+        reporter.join(timeout=3)
+
+    show_ending(root, config, code)
     return code
 
 

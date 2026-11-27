@@ -470,7 +470,7 @@ def test_require_fails_in_plain_words_when_the_file_is_missing(project):
     add_feature(project)
     code, data, err = flow(project, "require", "plan")
     assert code == 1 and data is None
-    assert "plan.md was not written" in err and "guide.py run" in err
+    assert "plan.md was not written" in err and "guide.py run --allow-commands" in err
     code, data, _ = flow(project, "require", "spec")
     assert code == 0 and data["file"] == "specs/001-demo/spec.md"
 
@@ -555,7 +555,7 @@ def test_workflow_file_calls_only_flow_steps_that_exist():
     root = SCRIPT.parents[2]
     text = (root / "workflows" / "guide" / "workflow.yml").read_text()
     calls = set(re.findall(r"guide\.py flow ([a-z-]+)", text))
-    assert calls == {"where", "require", "next-task", "check-task", "end"}
+    assert calls == {"where", "waiting", "require", "next-task", "check-task", "end"}
 
 
 def test_a_failed_check_leaves_its_reason_for_the_launcher(project):
@@ -601,8 +601,11 @@ def test_interview_asks_once_and_remembers(project, capsys):
     assert answers == {"idea": "an app that tracks plant watering", "audience": "just me",
                        "quality": "built to last", "must_haves": "remind me"}
     out = capsys.readouterr().out
-    assert "Tell me a little more" in out      # the one-word first answer was not accepted
-    assert "how this goes" in out              # a first-timer gets the explanation
+    assert "Give me a little more" in out      # the one-word first answer was not accepted
+    assert "How this works" in out             # a first-timer gets the explanation
+    assert "Woof! I'm Spec." in out            # and meets Spec
+    assert "Here's what I heard" in out
+    assert "\033[" not in out                 # no colour codes when not on a terminal
     # Resuming a later stage reuses the saved answers and asks nothing.
     add_feature(project)
     again = guide.interview(project, guide.read_status(project), config, {}, ask=scripted([]))
@@ -621,3 +624,89 @@ def test_inputs_on_the_command_line_skip_the_questions(project):
     assert given == {"idea": "a small todo list tool", "quality": "built to last"}
     answers = guide.interview(project, guide.read_status(project), guide.load_config(project), given, ask=scripted([]))
     assert answers["idea"] == "a small todo list tool"
+
+
+def test_plain_persona_has_no_dog(project, capsys):
+    guide = load_module()
+    config = dict(guide.load_config(project), persona="plain")
+    asked = scripted(["an app that tracks plant watering", "", "", "", "", "y"])
+    guide.interview(project, guide.read_status(project), config, {}, ask=asked)
+    out = capsys.readouterr().out
+    assert "Woof" not in out and "V  o o  V" not in out and "Spec Kit Guide" in out
+
+
+def test_ending_says_why_a_run_stopped(project, capsys):
+    guide = load_module()
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    for _attempt in range(2):
+        flow(project, "next-task")
+        flow(project, "check-task")
+    guide.show_ending(project, guide.load_config(project), 1)
+    out = capsys.readouterr().out
+    assert "We're paused here." in out and "Why it stopped" in out and "T002 Add the model" in out
+    assert "1 of 3 tasks done" in out
+
+
+def test_ending_celebrates_a_finished_build(project, capsys):
+    guide = load_module()
+    add_feature(project, plan=True, tasks=ALL_DONE)
+    guide.show_ending(project, guide.load_config(project), 0)
+    assert "We built it!" in capsys.readouterr().out
+
+
+# ---- the "it is not frozen" progress line ----------------------------------
+
+def phase_of(project):
+    return json.loads((project / ".specify" / "guide" / "flow.json").read_text()).get("phase")
+
+
+def test_flow_steps_record_what_the_assistant_is_doing(project):
+    flow(project, "where")
+    assert phase_of(project)["label"] == "Writing the ground rules"
+    add_feature(project)
+    flow(project, "where")
+    assert phase_of(project)["label"] == "Working out how to build it"
+    flow(project, "require", "spec")          # a gate follows: waiting on the person
+    assert phase_of(project) is None
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "where")                    # build stage: the gate comes before any work
+    assert phase_of(project) is None
+    flow(project, "next-task")
+    assert phase_of(project)["label"] == "Task 2 of 3: T002 Add the model"
+    flow(project, "check-task")
+    assert phase_of(project) is None
+
+
+def test_progress_reporter_speaks_while_working_and_is_quiet_at_a_gate(project, capsys):
+    import threading
+    import time as clock
+    guide = load_module()
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    edit(project, "src/model.py")             # leaves "last wrote model.py" in the heartbeat
+    stop_flag = threading.Event()
+    worker = threading.Thread(target=guide.progress_reporter,
+                              args=(project, guide.load_config(project), stop_flag, 0.3, 0.05))
+    worker.start()
+    clock.sleep(1.0)
+    flow(project, "waiting")
+    clock.sleep(0.3)
+    spoken = capsys.readouterr().out
+    clock.sleep(0.6)                          # waiting on the person: nothing may print
+    quiet = capsys.readouterr().out
+    stop_flag.set()
+    worker.join()
+    assert "Task 2 of 3: T002 Add the model ..." in spoken
+    assert "still working" in spoken and "last wrote model.py" in spoken
+    assert quiet == ""
+
+
+def test_checks_leave_a_plain_note_for_the_person(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "require", "tasks")
+    note = json.loads((project / ".specify" / "guide" / "flow.json").read_text())["note"]["text"]
+    assert note == "To-do list ready: 3 tasks  (specs/001-demo/tasks.md)"
+    flow(project, "next-task")
+    flow(project, "check-task")
+    note = json.loads((project / ".specify" / "guide" / "flow.json").read_text())["note"]["text"]
+    assert "not ticked off" in note

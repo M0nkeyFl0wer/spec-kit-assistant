@@ -32,6 +32,8 @@ What happens:
 4. The to-do list is written and checked.
 5. The build: the assistant is started once per task, with only that task. After each one a check confirms the box was ticked. If a task comes back unticked twice, the run stops and says which one.
 
+While the assistant is working, a line every twenty seconds says what it is doing, for how long, and the last file it wrote, so a long step never looks frozen.
+
 When the run ends, for any reason, it prints where things stand and why it stopped. Run the same command again to carry on; it reads the files on disk and picks up from there, without asking the questions again.
 
 **Permissions.** The workflow starts the assistant without a chat window, so it cannot stop to ask your permission. For that run only, the launcher allows it to edit files and to run Spec Kit's own scripts. Building usually also needs shell commands (tests, installs); the launcher asks you, or pass `--allow-commands`. It changes no settings file.

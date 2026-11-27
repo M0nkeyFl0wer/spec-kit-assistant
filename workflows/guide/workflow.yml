@@ -22,6 +22,11 @@ requires:
 # Every stage is wrapped in an `if` on what the files say, so running this
 # again on a half-finished project picks up where it left off.
 #
+# The planning steps run with `capture: true`. What the assistant prints after
+# writing a spec is a screen of version numbers and "next, run /speckit-plan",
+# which is noise to a newcomer and wrong here. The launcher shows a one-line
+# note from the check step instead, and the gate shows the file itself.
+#
 # Needs the `guide` extension installed (it provides guide.py).
 
 inputs:
@@ -75,6 +80,7 @@ steps:
     then:
       - id: rules
         command: speckit.constitution
+        capture: true
         integration: "{{ inputs.integration }}"
         input:
           args: "Write three to five short ground rules for this project. It is for: {{ inputs.audience }}. Ambition: {{ inputs.quality }}. The project: {{ inputs.idea }}. Keep each rule to one or two plain sentences. Do not ask questions; decide from this."
@@ -95,6 +101,7 @@ steps:
     then:
       - id: specify
         command: speckit.specify
+        capture: true
         integration: "{{ inputs.integration }}"
         input:
           args: "{{ inputs.idea }}. It is for: {{ inputs.audience }}. Ambition: {{ inputs.quality }}. It must: {{ inputs.must_haves | default('whatever the idea needs to be useful, and nothing more') }}."
@@ -122,6 +129,7 @@ steps:
     then:
       - id: plan
         command: speckit.plan
+        capture: true
         integration: "{{ inputs.integration }}"
         input:
           args: "Technology: {{ inputs.tech }}. Ambition: {{ inputs.quality }}. Where the write-up leaves a question open, choose the simplest reasonable answer and note it in the plan."
@@ -149,6 +157,7 @@ steps:
     then:
       - id: tasks
         command: speckit.tasks
+        capture: true
         integration: "{{ inputs.integration }}"
       - id: check-tasks
         type: shell
@@ -165,6 +174,12 @@ steps:
     type: if
     condition: "{{ steps.where-build.output.data.stage == 'implement' }}"
     then:
+      # Tells the launcher's progress line that the run is about to wait on
+      # the person, so it stays quiet while the question is on screen.
+      - id: before-build-review
+        type: shell
+        run: "python3 .specify/extensions/guide/scripts/python/guide.py flow waiting"
+        output_format: json
       - id: review-build
         type: gate
         verdict_input: guide_build_verdict
