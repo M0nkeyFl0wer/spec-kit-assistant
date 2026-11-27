@@ -147,7 +147,8 @@ def test_command_spelling_follows_the_integration(project):
 def test_code_edit_is_blocked_before_any_spec(project):
     code, _, err = edit(project, "src/app.py")
     assert code == 2
-    assert "src/app.py" in err and "/speckit-constitution" in err
+    assert "src/app.py" in err and "/speckit-guide-start" in err
+    assert "/speckit-guide-unlock" in err
 
 
 @pytest.mark.parametrize("plan, tasks", [(False, None), (True, None)])
@@ -304,6 +305,117 @@ def test_run_state_is_kept_out_of_git(project):
     assert (project / ".specify" / "guide" / ".gitignore").read_text() == "*\n"
 
 
+# ---- unlock: the user's way out, which the agent cannot take -------------
+
+def test_unlock_opens_code_edits_for_that_session_only(project):
+    add_feature(project)
+    prompt(project, "/speckit-guide-unlock", session="s1")
+    assert edit(project, "src/app.py")[0] == 0  # edit() uses session s1
+    code, _, _ = run(project, "event", payload={
+        "hook_event_name": "PreToolUse", "session_id": "s2",
+        "tool_name": "Write", "tool_input": {"file_path": "src/app.py"}})
+    assert code == 2
+
+
+def test_mentioning_unlock_in_a_question_does_not_unlock(project):
+    add_feature(project)
+    prompt(project, "what does /speckit-guide-unlock do?")
+    assert edit(project, "src/app.py")[0] == 2
+
+
+def test_pause_does_not_undo_an_unlock(project):
+    add_feature(project)
+    prompt(project, "/speckit-guide-unlock")
+    prompt(project, "/speckit-guide-pause")
+    assert edit(project, "src/app.py")[0] == 0
+
+
+# ---- the status block handed to the guide's own commands -----------------
+
+def test_guide_commands_get_the_status_without_running_anything(project):
+    _, out, _ = prompt(project, "/speckit-guide-start")
+    assert "[Spec Kit Guide status]" in out
+    block = json.loads(out.split("[Spec Kit Guide status]\n", 1)[1])
+    assert block["first_time"] is True
+    assert block["stage"] == "constitution"
+    assert block["code_edits_locked"] is True
+    assert "root" not in block  # no absolute paths into the conversation
+
+
+def test_ordinary_messages_do_not_carry_the_status_block(project):
+    _, out, _ = prompt(project, "hello")
+    assert "[Spec Kit Guide status]" not in out
+
+
+def test_first_step_is_idea_first(project):
+    assert "/speckit-guide-start" in status(project)["next"]
+
+
+# ---- runaway protection ----------------------------------------------------
+
+def test_nudges_stop_after_two_without_progress(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    prompt(project, "/speckit-implement")
+    assert [stop(project)[0] for _ in range(4)] == [2, 2, 0, 0]
+
+
+def test_progress_resets_the_nudge_count(project):
+    feature = add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    prompt(project, "/speckit-implement")
+    assert [stop(project)[0] for _ in range(3)] == [2, 2, 0]
+    (feature / "tasks.md").write_text("- [x] T001 Set up\n- [x] T002 Add the model\n- [ ] T003 Add the CLI\n")
+    assert stop(project)[0] == 2
+
+
+def test_compaction_repins_the_next_task(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    prompt(project, "/speckit-implement")
+    _, out, _ = run(project, "event", payload={
+        "hook_event_name": "SessionStart", "session_id": "s1", "source": "compact"})
+    assert "Carry on from the next unchecked task: T002 Add the model" in out
+    _, other, _ = run(project, "event", payload={"hook_event_name": "SessionStart", "session_id": "s9"})
+    assert "Ask the user whether to resume" in other
+
+
+# ---- ticked tasks whose files are missing ---------------------------------
+
+TICKED_WITH_PATHS = "- [x] T001 Create src/models/plant.py\n- [x] T002 Bump version to 1.2.0 in docs\n"
+
+
+def test_ticked_task_with_a_missing_file_is_reported(project):
+    add_feature(project, plan=True, tasks=TICKED_WITH_PATHS)
+    assert status(project)["ticked_but_missing"] == ["src/models/plant.py"]
+    (project / "src" / "models").mkdir(parents=True)
+    (project / "src" / "models" / "plant.py").write_text("")
+    assert status(project)["ticked_but_missing"] == []
+
+
+def test_finishing_with_missing_files_is_questioned_once(project):
+    feature = add_feature(project, plan=True, tasks="- [ ] T001 Create src/models/plant.py\n")
+    prompt(project, "/speckit-implement")
+    (feature / "tasks.md").write_text("- [x] T001 Create src/models/plant.py\n")
+    code, _, err = stop(project)
+    assert code == 2 and "src/models/plant.py" in err
+    assert stop(project)[0] == 0  # the run has ended; it is not asked again
+
+
+def test_numbered_and_emphasised_tasks_are_counted(project):
+    add_feature(project, plan=True, tasks="1. [x] **T001** Set up\n2. [ ] **T002** Build\n* [ ] T003 Ship\n")
+    result = status(project)
+    assert (result["tasks_done"], result["tasks_total"]) == (1, 3)
+
+
+# ---- is the harness actually running? -------------------------------------
+
+def test_status_says_when_no_event_has_ever_arrived(project):
+    assert status(project)["harness"].startswith("NOT RUNNING")
+    (project / ".claude").mkdir()
+    (project / ".claude" / "settings.json").write_text('{"hooks": "... speckit.guide.harness ..."}')
+    assert status(project)["harness"].startswith("wired")
+    prompt(project, "hello")
+    assert status(project)["harness"].startswith("running (last event: prompt")
+
+
 # ---- session start and event detection ------------------------------------
 
 def test_session_start_reports_stage_and_persona(project):
@@ -330,7 +442,7 @@ def test_manifest_command_files_exist():
     root = SCRIPT.parents[2]
     manifest = (root / "extension.yml").read_text()
     files = re.findall(r'file: "(commands/[^"]+)"', manifest)
-    assert len(files) == 4
+    assert len(files) == 6
     for name in files:
         assert (root / name).is_file(), name
     harness = (root / "commands" / "speckit.guide.harness.md").read_text()

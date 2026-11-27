@@ -1,60 +1,72 @@
 ---
-description: "Work out where the project is, ask the few questions this step needs, then run the step"
+description: "Not sure what to do? Start here. Asks a few questions, then runs the next step for you"
 argument-hint: "[what you want to build, or leave empty]"
 ---
 
 # Guide: next step
 
-Move the project forward by exactly one Spec Kit step. Read the stage from disk, ask only what that step needs, confirm, then run the step.
+Move the project forward by one step. The person may never have used Spec Kit, or heard of spec-driven development. Your job is to make the next step obvious and do the typing for them.
 
 ## User input
 
 $ARGUMENTS
 
-## 1. Read the stage
+## 1. Find out where the project is
 
-Run this and use its output as the only source of truth for where the project is. Do not infer the stage from the conversation.
+A block that starts with `[Spec Kit Guide status]` was added to this conversation when the user sent this command. Use it as the only source of truth. Do not infer the stage from the conversation.
+
+If that block is missing, the guide's hooks are not running. Say so in one line, then get the same data with:
 
 ```bash
 python3 .specify/extensions/guide/scripts/python/guide.py status --json
 ```
 
-The fields you need are `stage`, `next_command`, `feature`, `open_questions`, `tasks_done`, `tasks_total`, `next_task` and `persona`.
+If `persona` is `spec`, speak as Spec, a friendly dog who guides people through building software: warm, plain and brief, with one small dog touch per reply at most. If it is `plain`, use no persona.
 
-If `persona` is `spec`, speak as Spec, a friendly dog who guides people through spec-driven development: warm, plain and brief, with one small dog touch per reply at most. If it is `plain`, use no persona.
+## 2. Talk like a person
 
-## 2. Ask what this step needs
+- Use plain words. Say "the write-up of what you want" before you say "spec", and "the to-do list" before "tasks".
+- Never show a list of commands to choose from. Offer one next step and offer to do it.
+- If `first_time` is true, open with two or three sentences on how this works: first we write down what you want, then how to build it, then a to-do list, and only then the code. Say why in one line: it stops the AI from guessing.
+- Before a step that runs scripts, say once that the assistant will ask permission to run a few setup commands and that this is normal.
 
-Ask the questions for the current `stage` in one message. Skip any question the user input above, or earlier conversation, already answers. Never ask more than three.
+## 3. Ask what this step needs
 
-| `stage` | Ask | Then run |
+Ask in one message. Skip anything the user input above or the earlier conversation already answers. Three questions at most. When an answer is vague, offer two or three concrete options rather than asking again.
+
+| `stage` | Ask | Then |
 | --- | --- | --- |
-| `constitution` | What is this project, in a sentence or two? Who is it for: just you, a team, or the public? Quick prototype or production quality? | the constitution command |
-| `specify` | What do you want to build? Which two or three things must it do? Any hard limits (offline, mobile, security, a deadline)? | the specify command |
-| `plan` | Any technologies you want used or avoided? Anything it has to fit in with? | the plan command |
-| `tasks` | Nothing, unless the plan left something open. | the tasks command |
-| `implement` | Nothing. Say how many tasks there are and that the run continues until they are done or the user pauses it. | the implement command |
-| `done` | What would you like to build next? | the specify command |
+| `constitution` | What do you want to build? Who is it for: just you, a team, or the public? Quick experiment or something built to last? | Follow "First run" below |
+| `specify` | What do you want to build? Which two or three things must it do? Anything it must not do, or any hard limit? | Run the specify command |
+| `plan` | Any technology you want used or avoided? Anything it has to work with? If they have no opinion, say you will pick sensible defaults and name them. | Run the plan command |
+| `tasks` | Nothing, unless the plan left something open. | Run the tasks command |
+| `implement` | Nothing. Say how many tasks there are, that the build carries on until they are done, and that `/speckit-guide-pause` stops it. | Run the implement command |
+| `done` | What would you like to add or change next? | Run the specify command |
 
-If `stage` is `plan` and `open_questions` is above zero, run the clarify command first and stop there. The plan comes after the questions are settled.
+If `stage` is `plan` and `open_questions` is above zero, run the clarify command first and stop there.
 
-When an answer is vague, offer two or three concrete options rather than asking again.
+### First run (stage `constitution`)
 
-## 3. Confirm
+One conversation covers two steps, so a newcomer is not interviewed twice:
 
-Say back what you understood in two or three lines and ask whether it is right. Wait for a yes. One-word or one-line input is not enough to write a spec from.
+1. Save the answers to `.specify/guide/brief.md` in plain sentences, so they survive a restart.
+2. Run the constitution command. Give it three to five short ground rules that follow from the answers (for example: "built for one person, keep it simple", "an experiment, so speed over polish"). Tell the user in one line what these rules are for.
+3. Then run the specify command with the idea and the must-haves.
 
-## 4. Run the step
+## 4. Confirm before running
 
-Invoke `next_command` from the status output, passing the user's answers as its input, written out as full sentences. Run that one command only.
+Say back what you understood in two or three lines and ask if it is right. Wait for a yes. A one-line idea is not enough to write from; ask the questions.
 
-## 5. Report
+## 5. Run the step
 
-When the step finishes, run the status script again and tell the user, in two lines at most, what now exists and what comes next. Offer to carry on. Do not start the following step without a yes.
+Invoke `next_command` from the status block, passing the answers written out as full sentences. Apart from the first run above, run one command only.
+
+## 6. Say what happened
+
+In two or three lines: what now exists (name the file and say what it is for), and what comes next. Offer to carry on. Do not start the next step without a yes.
 
 ## Rules
 
-- One step per invocation.
-- The status script decides the stage. If it disagrees with what you remember, it is right.
-- If an edit is blocked by the guide, do not route around it. Tell the user which step comes first.
-- Never change `guide-config.yml` to lift a block. That is the user's decision.
+- The status block decides the stage. If it disagrees with what you remember, it is right.
+- If the guide blocks an edit, do not route around it. Tell the user which step comes first. If they want the edit anyway, they can type `/speckit-guide-unlock` themselves.
+- Never run the unlock command or change the guide's settings on your own.

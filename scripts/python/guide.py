@@ -17,6 +17,10 @@ Modes
                                the payload (see detect_event).
     guide.py pause             End an implementation run so the agent may stop.
 
+The guide's own slash commands (pause, unlock, next) are recognised in the
+text of the user's message by the prompt event, so they work without the
+agent running anything.
+
 Event contract (the same one Claude Code hooks use)
 ---------------------------------------------------
     exit 0 + stdout   allow; stdout is added to the agent's context
@@ -72,7 +76,11 @@ DEFAULTS = {
 # gate that guesses is worse than one with a documented gap.
 EDIT_TOOLS = {"write", "edit", "multiedit", "notebookedit", "create", "str_replace_editor"}
 
-CHECKBOX = re.compile(r"^\s*[-*]\s+\[( |x|X)\]\s+(.*\S)\s*$")
+CHECKBOX = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+\[( |x|X)\]\s+(.*\S)\s*$")
+
+# A file path inside a task line, such as "src/models/user.py". Needs a folder
+# and an extension so ordinary words and version numbers are not mistaken for one.
+TASK_PATH = re.compile(r"(?<![\w/.-])((?:[\w.-]+/)+[\w.-]+\.[A-Za-z0-9]{1,8})(?![\w/])")
 
 
 # --------------------------------------------------------------------------
@@ -255,6 +263,31 @@ def read_tasks(path: Path):
     return done, total, next_task
 
 
+def ticked_but_missing(root: Path, tasks_path: Path) -> list:
+    """List files that ticked tasks name but that are not on disk.
+
+    Agents sometimes tick a task without doing it (github/spec-kit#1865).
+    This cannot judge whether the work is right. It catches the cheapest
+    case only: the task says it creates a file and the file is not there.
+    A task that deletes or renames a file will show up here too, which is
+    why the result is worded as "check these" and never as proof.
+    """
+    missing = []
+    try:
+        lines = tasks_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return missing
+    for line in lines:
+        match = CHECKBOX.match(line)
+        if not match or match.group(1).lower() != "x":
+            continue
+        for found in TASK_PATH.findall(match.group(2)):
+            candidate = root / found
+            if inside(root, candidate) and not candidate.exists() and found not in missing:
+                missing.append(found)
+    return missing
+
+
 def read_status(root: Path) -> dict:
     """Work out where the project is. Everything else builds on this."""
     feature = find_feature_dir(root)
@@ -298,12 +331,19 @@ def read_status(root: Path) -> dict:
         "tasks_total": total,
         "next_task": next_task,
         "open_questions": open_questions,
+        "ticked_but_missing": ticked_but_missing(root, feature / "tasks.md") if has_tasks else [],
     }
 
 
 def next_step(root: Path, status: dict) -> str:
     """One sentence saying what should happen next."""
     stage = status["stage"]
+    if stage == "constitution":
+        # Idea first. A newcomer asked for "ground rules" before they have
+        # said what they want to build has nothing to base them on, so the
+        # guide takes the idea and writes the rules and the spec from it.
+        return ("Start with %s and say what you want to build. It writes the project's ground rules "
+                "and then the spec from one conversation." % command_name(root, "guide.start"))
     if stage == "done":
         return "Every task is checked off. Start the next feature with %s." % command_name(root, "specify")
     if stage == "specify" and status["open_questions"] == 0:
@@ -336,14 +376,47 @@ def load_run(root: Path) -> dict:
         return {}
 
 
-def save_run(root: Path, run: dict) -> None:
+def ensure_state_dir(root: Path) -> Path:
     directory = state_dir(root)
     directory.mkdir(parents=True, exist_ok=True)
     # Per-checkout state, like Spec Kit's own feature.json: keep it out of git.
     ignore = directory / ".gitignore"
     if not ignore.exists():
         ignore.write_text("*\n", encoding="utf-8")
-    (directory / "run.json").write_text(json.dumps(run, indent=2), encoding="utf-8")
+    return directory
+
+
+def update_run(root: Path, **changes) -> dict:
+    """Change some fields of the run state and return the result."""
+    run = load_run(root)
+    run.update(changes)
+    (ensure_state_dir(root) / "run.json").write_text(json.dumps(run, indent=2), encoding="utf-8")
+    return run
+
+
+def end_run(root: Path) -> dict:
+    return update_run(root, implementing=False, nudges=0)
+
+
+def beat(root: Path, kind: str) -> None:
+    """Note that an event reached this script.
+
+    `status` reads this back. "The hooks are in the settings file" and "the
+    hooks actually fire" are different facts, and only the second one means
+    the project is guarded.
+    """
+    try:
+        (ensure_state_dir(root) / "heartbeat.json").write_text(
+            json.dumps({"at": time.time(), "event": kind}), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def last_beat(root: Path):
+    try:
+        return json.loads((state_dir(root) / "heartbeat.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def log_error(root: Path, message: str) -> None:
@@ -399,9 +472,9 @@ def is_free_path(root: Path, target: Path, config: dict) -> bool:
     return False
 
 
-def gate_reason(root: Path, status: dict, config: dict, target: Path):
+def gate_reason(root: Path, status: dict, config: dict, target: Path, unlocked: bool = False):
     """Return why an edit is out of order, or None when it is allowed."""
-    if config["gate"] != "block":
+    if config["gate"] != "block" or unlocked:
         return None
     if status["stage"] in {"implement", "done"}:
         return None
@@ -419,9 +492,11 @@ def gate_reason(root: Path, status: dict, config: dict, target: Path):
         "Spec Kit Guide blocked this edit to %s.\n"
         "This project is at the '%s' stage and has no %s yet, so code edits are locked.\n"
         "%s\n"
-        "Do not look for another way to write this file. Tell the user which step is next and offer to run it.\n"
-        "Only the user can lift the lock (gate: warn in .specify/extensions/guide/guide-config.yml). Do not change that setting yourself."
-        % (shown, status["stage"], " or ".join(m + ".md" for m in missing), next_step(root, status))
+        "Do not look for another way to write this file. Tell the user, in plain words, which step comes first and offer to run it.\n"
+        "If the user wants this edit anyway, they can type %s to open code edits for this session. "
+        "Only the user can do that; do not run it or change the guide's settings yourself."
+        % (shown, status["stage"], " or ".join(m + ".md" for m in missing), next_step(root, status),
+           command_name(root, "guide.unlock"))
     )
 
 
@@ -470,19 +545,67 @@ def run_is_active(run: dict, payload: dict, status: dict) -> bool:
     )
 
 
+def is_unlocked(run: dict, payload: dict) -> bool:
+    """True when the user opened code edits for this session."""
+    session = payload.get("session_id")
+    return bool(session) and run.get("unlocked_session") == session
+
+
+def status_block(root: Path, status: dict, config: dict, run: dict, payload: dict) -> str:
+    """The full status as JSON, for the guide's own commands.
+
+    The commands used to tell the agent to run this script through the
+    shell. For a first-time user that meant a permission prompt for a Python
+    command before anything had happened. The prompt event already runs
+    here, so the answer is handed over directly instead.
+    """
+    data = dict(status)
+    data.pop("root", None)
+    data["next"] = next_step(root, status)
+    data["next_command"] = command_name(root, STAGE_COMMAND.get(status["stage"], "specify"))
+    data["persona"] = config["persona"]
+    data["gate"] = config["gate"]
+    data["code_edits_unlocked_this_session"] = is_unlocked(run, payload)
+    data["implementation_run_active"] = run_is_active(run, payload, status)
+    data["first_time"] = not status["constitution"] and status["feature"] is None
+    data["harness"] = harness_state(root)
+    data["code_edits_locked"] = bool(
+        config["gate"] == "block" and not data["code_edits_unlocked_this_session"]
+        and status["stage"] not in {"implement", "done"}
+        and (status["feature"] is not None or config["require_spec"]))
+    return "[Spec Kit Guide status]\n" + json.dumps(data, indent=2)
+
+
 def on_session(root: Path, payload: dict, status: dict, config: dict) -> int:
-    """Session start: tell the agent where things stand, once."""
+    """Session start: tell the agent where things stand.
+
+    This also fires when the agent compacts its context (Claude Code sends
+    source "compact"). That is the moment agents most often lose the plan
+    (github/spec-kit discussions 2914 and 1273), so an active run is
+    re-pinned here with its next task rather than merely mentioned.
+    """
+    run = load_run(root)
     lines = [stage_line(root, status)]
+    if run_is_active(run, payload, status):
+        lines.append(
+            "An implementation run is in progress in this session: %d of %d tasks done. "
+            "Carry on from the next unchecked task: %s"
+            % (status["tasks_done"], status["tasks_total"], status["next_task"] or "(none found)"))
+    elif run.get("implementing") and status["stage"] == "implement":
+        lines.append(
+            "An implementation run was left unfinished (%d of %d tasks done). Ask the user whether to resume with %s."
+            % (status["tasks_done"], status["tasks_total"], command_name(root, "implement")))
     if config["gate"] == "block" and status["stage"] not in {"implement", "done"}:
         lines.append("Code edits are locked until tasks.md exists. Planning files (specs/, .specify/, docs/) stay open.")
-    run = load_run(root)
-    if run.get("implementing") and status["stage"] == "implement":
+    if not status["constitution"] and status["feature"] is None:
         lines.append(
-            "An implementation run was in progress (%d of %d tasks done). Ask the user whether to resume with %s."
-            % (status["tasks_done"], status["tasks_total"], command_name(root, "implement")))
-    lines.append(
-        "Follow the Spec Kit order: constitution, specify, plan, tasks, implement. "
-        "When the user is unsure what to do, run %s rather than listing commands." % command_name(root, "guide.next"))
+            "Nothing has been written here yet, so the user may be new to Spec Kit. If they say what they want to "
+            "build, explain in two or three plain sentences that the idea gets written down first and built after, "
+            "then offer %s. Do not list commands at them." % command_name(root, "guide.start"))
+    else:
+        lines.append(
+            "Follow the Spec Kit order: specify, plan, tasks, implement. "
+            "When the user is unsure what to do, offer %s rather than listing commands." % command_name(root, "guide.next"))
     if config["persona"] == "spec":
         lines.append(
             "Voice: you are Spec, a friendly dog who guides people through spec-driven development. "
@@ -501,20 +624,20 @@ def on_prompt(root: Path, payload: dict, status: dict, config: dict) -> int:
     prompt = str(payload.get("prompt") or "")
     run = load_run(root)
 
-    # Starting or pausing a run is detected from the command the user typed,
-    # not from anything the agent says about itself.
+    # Starting, pausing and unlocking are detected from the command the user
+    # typed. Nothing the agent says about itself can change this state, which
+    # is the point: the agent cannot talk its way past the gate.
     if re.search(r"speckit[-.]guide[-.]pause", prompt):
-        if run.get("implementing"):
-            save_run(root, {"implementing": False})
-        run = {}
+        run = end_run(root)
+    elif re.match(r"\s*/speckit[-.]guide[-.]unlock\b", prompt):
+        # Anchored to the start of the message: asking "what does
+        # /speckit-guide-unlock do?" must not unlock anything.
+        run = update_run(root, unlocked_session=payload.get("session_id"))
     elif status["stage"] == "implement" and re.search(r"speckit[-.](implement|guide[-.](next|start))", prompt):
-        run = {
-            "implementing": True,
-            "session_id": payload.get("session_id"),
-            "feature": status["feature"],
-            "since": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        }
-        save_run(root, run)
+        run = update_run(
+            root, implementing=True, session_id=payload.get("session_id"),
+            feature=status["feature"], since=time.strftime("%Y-%m-%dT%H:%M:%S"),
+            nudges=0, nudge_done=status["tasks_done"])
 
     if run_is_active(run, payload, status):
         lines = [
@@ -524,13 +647,17 @@ def on_prompt(root: Path, payload: dict, status: dict, config: dict) -> int:
             "Next unchecked task: %s\n"
             "If this message is a question or a small request, deal with it briefly, then carry on from that task. "
             "Do not re-plan, reorder or drop tasks unless the user asks in so many words. "
-            "Check each task off in tasks.md as you finish it."
+            "Check each task off in tasks.md as you finish it, and only once its files exist."
             % (status["next_task"] or "(none found)"))
     else:
         lines = [stage_line(root, status)]
-        if status["stage"] not in {"implement", "done"} and config["gate"] != "off":
+        if is_unlocked(run, payload):
+            lines.append("The user has opened code edits for this session. The steps above are still the recommended order.")
+        elif status["stage"] not in {"implement", "done"} and config["gate"] != "off":
             lines.append(
                 "If the user asks for code now, say which step comes first and offer to run it. Do not write code yet.")
+    if re.search(r"speckit[-.]guide", prompt):
+        lines.append(status_block(root, status, config, run, payload))
     print("\n".join(lines))
     return 0
 
@@ -550,32 +677,59 @@ def on_edit(root: Path, payload: dict, status: dict, config: dict) -> int:
     if not target.is_absolute():
         target = root / target
 
-    reason = gate_reason(root, status, config, target)
+    reason = gate_reason(root, status, config, target, unlocked=is_unlocked(load_run(root), payload))
     if reason:
         sys.stderr.write(reason + "\n")
         return 2
     return 0
 
 
+# How many times in a row the agent may be sent back without ticking a single
+# new task. After that it is let go. A stop hook with no limit has burned a
+# whole usage quota in under an hour (anthropics/claude-code#55754).
+MAX_NUDGES_WITHOUT_PROGRESS = 2
+
+
 def on_stop(root: Path, payload: dict, status: dict, config: dict) -> int:
     """When the agent tries to stop: send it back if tasks remain.
 
-    It nudges once per stop. `stop_hook_active` is true when the agent is
-    already continuing because of a stop hook, and in that case it is let
-    go. The agent may have a real reason to stop (it needs an answer, or it
-    is blocked), and a hook that never yields is a runaway loop.
+    Three limits keep this from becoming a runaway loop:
+      1. `stop_hook_active` is true when the agent is already continuing
+         because of a stop hook. It is then let go, so one stop gets at most
+         one nudge.
+      2. Nudges that produce no newly ticked task are counted, and after
+         MAX_NUDGES_WITHOUT_PROGRESS the agent is let go until progress resumes.
+      3. It applies only to the session in which the user started the run.
     """
     run = load_run(root)
-    if run.get("implementing") and status["stage"] == "done":
-        save_run(root, {"implementing": False})
+    if payload.get("stop_hook_active") or not run.get("implementing"):
         return 0
-    if not config["keep_going"] or payload.get("stop_hook_active"):
+    if run.get("session_id") != payload.get("session_id"):
         return 0
-    if not run_is_active(run, payload, status):
+
+    if status["stage"] == "done":
+        end_run(root)
+        # Last check before the agent reports that everything is finished.
+        missing = status["ticked_but_missing"]
+        if missing and config["keep_going"]:
+            sys.stderr.write(
+                "Spec Kit Guide: every task is ticked, but these files named by ticked tasks do not exist:\n  %s\n"
+                "Check each one. If the task was not really done, untick it and do it. "
+                "If the file was meant to be removed or renamed, tell the user so.\n" % "\n  ".join(missing[:10]))
+            return 2
+        return 0
+
+    if not config["keep_going"] or not run_is_active(run, payload, status):
         return 0
     remaining = status["tasks_total"] - status["tasks_done"]
     if remaining <= 0:
         return 0
+
+    progressed = status["tasks_done"] > int(run.get("nudge_done") or 0)
+    nudges = 1 if progressed else int(run.get("nudges") or 0) + 1
+    if nudges > MAX_NUDGES_WITHOUT_PROGRESS:
+        return 0
+    update_run(root, nudges=nudges, nudge_done=status["tasks_done"])
     sys.stderr.write(
         "Spec Kit Guide: the implementation run is not finished. %d of %d tasks remain.\n"
         "Next unchecked task: %s\n"
@@ -598,7 +752,9 @@ def handle_event(root: Path) -> int:
         log_error(root, "event payload was not JSON; the action was allowed")
         return 0
     try:
-        return HANDLERS[detect_event(payload)](root, payload, read_status(root), load_config(root))
+        kind = detect_event(payload)
+        beat(root, kind)
+        return HANDLERS[kind](root, payload, read_status(root), load_config(root))
     except Exception as exc:  # noqa: BLE001 - fail open, but leave a trace
         log_error(root, "event handler failed (%s: %s); the action was allowed" % (type(exc).__name__, exc))
         return 0
@@ -608,22 +764,44 @@ def handle_event(root: Path) -> int:
 # Commands for people
 # --------------------------------------------------------------------------
 
+def harness_state(root: Path) -> str:
+    """Say whether the hooks are in place and whether they have ever fired.
+
+    Presets and integration upgrades can drop an extension's wiring without
+    any error (github/spec-kit#5532), and a guide that is installed but not
+    running looks exactly like one that is. So this reports what it can see.
+    """
+    beat_info = last_beat(root)
+    if beat_info:
+        minutes = int((time.time() - float(beat_info.get("at", 0))) // 60)
+        ago = "just now" if minutes < 1 else ("%d min ago" % minutes if minutes < 120 else "%d h ago" % (minutes // 60))
+        return "running (last event: %s, %s)" % (beat_info.get("event", "?"), ago)
+    settings = root / ".claude" / "settings.json"
+    try:
+        wired = "speckit.guide.harness" in settings.read_text(encoding="utf-8")
+    except OSError:
+        wired = False
+    if wired:
+        return "wired for Claude Code, but no event has arrived yet. Start a new session."
+    return "NOT RUNNING: no event has ever arrived. The agent is not being held to the plan. Try: specify integration upgrade"
+
+
 def print_status(root: Path, as_json: bool) -> int:
     status = read_status(root)
     config = load_config(root)
     run = load_run(root)
     status["next"] = next_step(root, status)
-    status["next_command"] = (
-        command_name(root, STAGE_COMMAND[status["stage"]]) if status["stage"] in STAGE_COMMAND
-        else command_name(root, "specify"))
+    status["next_command"] = command_name(root, STAGE_COMMAND.get(status["stage"], "specify"))
     status["gate"] = config["gate"]
     status["code_edits_locked"] = bool(
         config["gate"] == "block"
         and status["stage"] not in {"implement", "done"}
         and (status["feature"] is not None or config["require_spec"]))
     status["implementing"] = bool(run.get("implementing"))
+    status["unlocked_session"] = run.get("unlocked_session")
     status["persona"] = config["persona"]
     status["gate_errors"] = error_count(root)
+    status["harness"] = harness_state(root)
 
     if as_json:
         print(json.dumps(status, indent=2))
@@ -634,17 +812,21 @@ def print_status(root: Path, as_json: bool) -> int:
 
     print("Spec Kit Guide")
     print("  Feature: %s" % (status["feature"] or "none yet"))
-    print("  %s constitution   %s spec   %s plan   %s tasks   %s implement" % (
+    print("  %s rules   %s spec   %s plan   %s tasks   %s built" % (
         mark(status["constitution"]), mark(status["spec"]), mark(status["plan"]),
         mark(status["tasks"]), mark(status["stage"] == "done")))
     if status["tasks_total"]:
         print("  Tasks: %d of %d done" % (status["tasks_done"], status["tasks_total"]))
-    print("  Stage: %s" % status["stage"])
     print("  Next:  %s" % status["next"])
     lock = "locked" if status["code_edits_locked"] else "open"
+    if status["code_edits_locked"] and status["unlocked_session"]:
+        lock = "locked, opened by you for one session"
     print("  Gate:  %s (code edits %s)" % (status["gate"], lock))
     if status["implementing"]:
         print("  Run:   implementation in progress; %s ends it" % command_name(root, "guide.pause"))
+    print("  Harness: %s" % status["harness"])
+    if status["ticked_but_missing"]:
+        print("  Check: ticked tasks name files that do not exist: %s" % ", ".join(status["ticked_but_missing"][:5]))
     if status["gate_errors"]:
         print("  Warning: the gate failed open %d time(s). See .specify/guide/errors.log" % status["gate_errors"])
     return 0
@@ -658,7 +840,7 @@ def main(argv: list) -> int:
     if mode == "event":
         return handle_event(root)
     if mode == "pause":
-        save_run(root, {"implementing": False})
+        end_run(root)
         print("Implementation run paused. The agent may stop; run %s to resume." % command_name(root, "implement"))
         return 0
     sys.stderr.write("usage: guide.py [status [--json] | event | pause]\n")

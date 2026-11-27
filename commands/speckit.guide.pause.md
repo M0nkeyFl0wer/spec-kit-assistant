@@ -1,17 +1,11 @@
 ---
-description: "End an implementation run so the agent is free to stop"
+description: "Stop a build that is in progress. You can pick it up again later"
 scripts:
   py: scripts/python/guide.py pause
 ---
 
 # Guide: pause
 
-The user wants the implementation run to stop.
+The user wants the build to stop. Typing this command has already released the run, so nothing needs to be executed.
 
-Run:
-
-```bash
-python3 .specify/extensions/guide/scripts/python/guide.py pause
-```
-
-Then stop working. Tell the user how many tasks are done, which task is next, and that the implement command resumes the run. Do not start another task.
+Stop working now. Do not start another task. Tell the user how many to-do items are done, which one is next, and that the implement command picks it up again.
