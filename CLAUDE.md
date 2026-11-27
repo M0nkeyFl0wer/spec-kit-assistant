@@ -15,6 +15,7 @@ A community extension for [GitHub Spec Kit](https://github.com/github/spec-kit),
 | `extension.yml` | The manifest: commands, runtime events, hooks, defaults |
 | `commands/*.md` | Prompts the agent follows. `speckit.guide.harness.md` only exists to attach the script to events |
 | `scripts/python/guide.py` | The harness. Standard library only. Reads the stage from disk, gates edits, handles events |
+| `workflows/guide/workflow.yml` | The guided run, the main path. The workflow engine owns the order; `guide.py flow ...` steps check the disk between assistant runs |
 | `config-template.yml` | Becomes `.specify/extensions/guide/guide-config.yml` in a user's project |
 | `tests/test_guide.py` | Runs the script as a subprocess in throwaway projects |
 | `.extensionignore` | Keeps dev files out of installed copies |

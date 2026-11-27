@@ -16,6 +16,28 @@ You say what you want to build. Spec asks a few questions, runs each step for yo
 1. **It guides.** `/speckit-guide-start` explains how this works in three sentences, asks what the next step needs, confirms, and runs it. You do not need to learn the commands.
 2. **It holds the assistant to the plan.** A small script is wired into your coding agent's own hooks, so the order is enforced by the tool and not by the assistant's memory.
 
+## Two ways to use it
+
+**The guided run (the main way).** A Spec Kit workflow is in charge, not the assistant. In your project folder, in a terminal:
+
+```bash
+python3 .specify/extensions/guide/scripts/python/guide.py run
+```
+
+What happens:
+
+1. Spec asks what you want to build, who it is for and what you are aiming for, then reads it back.
+2. The run starts the assistant for one job: writing short ground rules. A check confirms the file exists.
+3. The same for the write-up of what to build, then the plan. You are shown each one and asked to approve it.
+4. The to-do list is written and checked.
+5. The build: the assistant is started once per task, with only that task. After each one a check confirms the box was ticked. If a task comes back unticked twice, the run stops and says which one.
+
+When the run ends, for any reason, it prints where things stand and why it stopped. Run the same command again to carry on; it reads the files on disk and picks up from there, without asking the questions again.
+
+**Permissions.** The workflow starts the assistant without a chat window, so it cannot stop to ask your permission. For that run only, the launcher allows it to edit files and to run Spec Kit's own scripts. Building usually also needs shell commands (tests, installs); the launcher asks you, or pass `--allow-commands`. It changes no settings file.
+
+**In a chat session.** The `/speckit-guide-*` commands below, inside your assistant. Lighter and more conversational, but the assistant is driving and the hooks can only block and remind.
+
 ## Why
 
 Spec Kit's commands are prompts, and a coding agent can ignore a prompt. The usual failures:

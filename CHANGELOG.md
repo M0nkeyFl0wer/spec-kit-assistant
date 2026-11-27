@@ -6,6 +6,8 @@ First version as a Spec Kit extension. The `here-spec` CLI and the earlier Node 
 
 ### Added
 
+- **Guided run**: `workflows/guide/workflow.yml` plus `guide.py run`. The workflow engine owns the order, checks each file on disk, gates on your approval, and builds one task per assistant run.
+
 - `speckit.guide.next` (alias `speckit.guide.start`): guided next step with a short interview.
 - `speckit.guide.status`: stage, next step and gate state, read from the spec artifacts.
 - `speckit.guide.tour`: plain-language tour of the steps and what is available.
