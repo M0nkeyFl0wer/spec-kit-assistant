@@ -109,3 +109,6 @@ PROMPT.md
 # Test fixtures
 test-project/
 testest/
+
+# Test caches
+.pytest_cache/

@@ -1,0 +1,9 @@
+# Development files that should not be copied into a user's project.
+tests/
+assets/
+.github/
+.claude/
+CLAUDE.md
+docs/
+.pytest_cache/
+__pycache__/

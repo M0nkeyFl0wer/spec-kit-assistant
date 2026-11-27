@@ -1,0 +1,33 @@
+# Spec Kit Guide settings.
+#
+# Keep this file flat: one `key: value` per line, or a key followed by
+# `- item` lines. The harness reads it without a YAML library.
+#
+# To change a setting on your machine only, put the same key in
+# local-config.yml beside this file (Spec Kit gitignores it).
+# Environment variables win over both: SPECKIT_GUIDE_GATE=off
+
+# Voice the agent uses.
+#   spec   Spec the dog: warm, brief, the occasional woof
+#   plain  no persona
+persona: spec
+
+# What happens when the agent tries to edit code out of order.
+#   block  refuse the edit and tell the agent which step comes first
+#   warn   allow the edit; the agent is still reminded of the stage
+#   off    no gate and no reminders about writing code early
+gate: block
+
+# true:  code edits are locked from the start, before any spec exists
+# false: the gate only applies once a feature has been started
+require_spec: true
+
+# true:  during an implementation run, send the agent back to the task list
+#        once each time it tries to stop while tasks remain
+# false: let it stop whenever it likes
+keep_going: true
+
+# Extra folders the agent may always edit, whatever the stage.
+# specs/, dot-folders and top-level .md files are always open.
+free_paths:
+  - docs/
