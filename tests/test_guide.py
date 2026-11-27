@@ -449,3 +449,175 @@ def test_manifest_command_files_exist():
     assert "py: scripts/python/guide.py event" in harness
     version = re.search(r'version: "(\d+\.\d+\.\d+)"', manifest)
     assert version, "community catalog needs a plain X.Y.Z version"
+
+
+# ---- the guided run: checks the workflow calls between agent runs ----------
+
+def flow(project, *args):
+    code, out, err = run(project, "flow", *args)
+    return code, (json.loads(out) if out.strip() else None), err
+
+
+def test_where_reports_the_stage_from_disk(project):
+    code, data, _ = flow(project, "where")
+    assert code == 0 and data["stage"] == "constitution" and data["needs_rules"] is True
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    _, data, _ = flow(project, "where")
+    assert (data["stage"], data["remaining"], data["needs_rules"]) == ("implement", 2, False)
+
+
+def test_require_fails_in_plain_words_when_the_file_is_missing(project):
+    add_feature(project)
+    code, data, err = flow(project, "require", "plan")
+    assert code == 1 and data is None
+    assert "plan.md was not written" in err and "guide.py run" in err
+    code, data, _ = flow(project, "require", "spec")
+    assert code == 0 and data["file"] == "specs/001-demo/spec.md"
+
+
+def test_require_rules_rejects_the_untouched_template(project):
+    assert flow(project, "require", "rules")[0] == 1
+    (project / ".specify" / "memory" / "constitution.md").write_text(FILLED_CONSTITUTION)
+    assert flow(project, "require", "rules")[0] == 0
+
+
+def test_require_tasks_rejects_a_list_with_nothing_to_tick(project):
+    add_feature(project, plan=True, tasks="# Tasks\n\nNone yet.\n")
+    code, _, err = flow(project, "require", "tasks")
+    assert code == 1 and "no checkbox items" in err
+
+
+def test_build_loop_advances_one_ticked_task_at_a_time(project):
+    feature = add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    _, picked, _ = flow(project, "next-task")
+    assert (picked["task"], picked["number"], picked["total"]) == ("T002 Add the model", 2, 3)
+    (feature / "tasks.md").write_text("- [x] T001 Set up\n- [x] T002 Add the model\n- [ ] T003 Add the CLI\n")
+    code, checked, _ = flow(project, "check-task")
+    assert code == 0 and checked == {"progressed": True, "remaining": 1, "done": 2, "total": 3}
+    assert flow(project, "next-task")[1]["task"] == "T003 Add the CLI"
+
+
+def test_build_loop_stops_when_a_task_comes_back_unticked_twice(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    assert flow(project, "check-task")[0] == 0   # first miss: try once more
+    flow(project, "next-task")
+    code, _, err = flow(project, "check-task")
+    assert code == 1 and "T002 Add the model" in err and "did not tick" in err
+
+
+def test_hooks_hand_control_to_a_guided_run(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    _, out, _ = prompt(project, "anything")
+    assert "A guided run is in control" in out and "T002 Add the model" in out
+    assert "/speckit-implement" not in out   # nothing that invites the full build
+    _, session_out, _ = run(project, "event", payload={"hook_event_name": "SessionStart"})
+    assert "A guided run is in control" in session_out
+
+
+def test_guided_task_left_unticked_gets_one_nudge(project):
+    feature = add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    code, _, err = stop(project)
+    assert code == 2 and "T002 Add the model" in err
+    assert stop(project, active=True)[0] == 0
+    (feature / "tasks.md").write_text("- [x] T001 Set up\n- [x] T002 Add the model\n- [ ] T003 Add the CLI\n")
+    assert stop(project)[0] == 0   # ticked: free to stop even though T003 remains
+
+
+def test_end_returns_the_hooks_to_chat_mode(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    code, data, _ = flow(project, "end")
+    assert code == 0 and data["remaining"] == 2
+    assert "A guided run is in control" not in prompt(project, "hello")[1]
+
+
+def test_a_stale_guided_run_does_not_hold_the_hooks(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    flow(project, "next-task")
+    state = project / ".specify" / "guide" / "flow.json"
+    data = json.loads(state.read_text())
+    data["touched"] -= 7 * 3600
+    state.write_text(json.dumps(data))
+    assert "A guided run is in control" not in prompt(project, "hello")[1]
+
+
+def test_edit_gate_still_applies_inside_a_guided_run(project):
+    add_feature(project)
+    flow(project, "where")
+    assert edit(project, "src/app.py")[0] == 2
+
+
+def test_workflow_file_calls_only_flow_steps_that_exist():
+    import re
+    root = SCRIPT.parents[2]
+    text = (root / "workflows" / "guide" / "workflow.yml").read_text()
+    calls = set(re.findall(r"guide\.py flow ([a-z-]+)", text))
+    assert calls == {"where", "require", "next-task", "check-task", "end"}
+
+
+def test_a_failed_check_leaves_its_reason_for_the_launcher(project):
+    add_feature(project, plan=True, tasks=TWO_OF_THREE)
+    for _attempt in range(2):
+        flow(project, "next-task")
+        flow(project, "check-task")
+    saved = json.loads((project / ".specify" / "guide" / "flow.json").read_text())
+    assert "did not tick" in saved["stopped_because"] and "--allow-commands" in saved["stopped_because"]
+    flow(project, "where")   # a new run starts clean
+    assert "stopped_because" not in json.loads((project / ".specify" / "guide" / "flow.json").read_text())
+
+
+def test_task_paths_relative_to_the_feature_folder_count_as_present(project):
+    feature = add_feature(project, plan=True, tasks="- [x] T001 Write contracts/cli.md\n")
+    assert status(project)["ticked_but_missing"] == ["contracts/cli.md"]
+    (feature / "contracts").mkdir()
+    (feature / "contracts" / "cli.md").write_text("")
+    assert status(project)["ticked_but_missing"] == []
+
+
+# ---- the launcher's interview ----------------------------------------------
+
+def load_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("guide_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def scripted(answers):
+    """Stand in for input(): hand back the next prepared answer."""
+    queue = list(answers)
+    return lambda _question: queue.pop(0)
+
+
+def test_interview_asks_once_and_remembers(project, capsys):
+    guide = load_module()
+    config = guide.load_config(project)
+    asked = scripted(["app", "an app that tracks plant watering", "", "2", "remind me", "", "y"])
+    answers = guide.interview(project, guide.read_status(project), config, {}, ask=asked)
+    assert answers == {"idea": "an app that tracks plant watering", "audience": "just me",
+                       "quality": "built to last", "must_haves": "remind me"}
+    out = capsys.readouterr().out
+    assert "Tell me a little more" in out      # the one-word first answer was not accepted
+    assert "how this goes" in out              # a first-timer gets the explanation
+    # Resuming a later stage reuses the saved answers and asks nothing.
+    add_feature(project)
+    again = guide.interview(project, guide.read_status(project), config, {}, ask=scripted([]))
+    assert again["idea"] == "an app that tracks plant watering"
+
+
+def test_interview_can_be_declined(project):
+    guide = load_module()
+    asked = scripted(["an app that tracks plant watering", "1", "1", "", "", "n"])
+    assert guide.interview(project, guide.read_status(project), guide.load_config(project), {}, ask=asked) == {}
+
+
+def test_inputs_on_the_command_line_skip_the_questions(project):
+    guide = load_module()
+    given = guide.provided_inputs(["--input", "idea=a small todo list tool", "--input=quality=built to last"])
+    assert given == {"idea": "a small todo list tool", "quality": "built to last"}
+    answers = guide.interview(project, guide.read_status(project), guide.load_config(project), given, ask=scripted([]))
+    assert answers["idea"] == "a small todo list tool"

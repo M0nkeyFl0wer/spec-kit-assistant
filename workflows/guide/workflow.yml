@@ -1,0 +1,200 @@
+schema_version: "1.0"
+workflow:
+  id: "guide"
+  name: "Guided Build"
+  version: "0.1.0"
+  author: "M0nkeyFl0wer"
+  description: "Say what you want to build. The run writes it down, plans it, checks each file exists, asks you to approve, then builds one task at a time."
+
+requires:
+  speckit_version: ">=1.4.0"
+  integrations:
+    any:
+      - "claude"
+
+# How this run keeps control
+# --------------------------
+# The workflow engine owns the order. The assistant is started for one job at
+# a time and never decides what comes next. After every job a shell step asks
+# the Guide extension's script what is actually on disk, and the run stops
+# with a plain message if the expected file is not there.
+#
+# Every stage is wrapped in an `if` on what the files say, so running this
+# again on a half-finished project picks up where it left off.
+#
+# Needs the `guide` extension installed (it provides guide.py).
+
+inputs:
+  idea:
+    type: string
+    required: true
+    prompt: "What do you want to build? A sentence or two is fine"
+  audience:
+    type: string
+    default: "just me"
+    enum: ["just me", "my team", "the public"]
+    prompt: "Who is it for? (just me / my team / the public)"
+  quality:
+    type: string
+    default: "quick experiment"
+    enum: ["quick experiment", "built to last"]
+    prompt: "Quick experiment or built to last?"
+  must_haves:
+    type: string
+    default: ""
+    prompt: "Two or three things it must do (optional)"
+  tech:
+    type: string
+    default: "no preference: pick simple, widely used defaults and say what you picked"
+    prompt: "Any technology to use or avoid? (optional)"
+  integration:
+    type: string
+    default: "auto"
+  # Gate verdicts, for approving a paused run without a terminal:
+  #   specify workflow resume <run_id> --input guide_spec_verdict=approve
+  guide_spec_verdict:
+    type: string
+    default: ""
+  guide_plan_verdict:
+    type: string
+    default: ""
+  guide_build_verdict:
+    type: string
+    default: ""
+
+steps:
+  # ---- Stage 1: ground rules (first run only) ----------------------------
+  - id: where-rules
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow where"
+    output_format: json
+
+  - id: rules-stage
+    type: if
+    condition: "{{ steps.where-rules.output.data.needs_rules }}"
+    then:
+      - id: rules
+        command: speckit.constitution
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "Write three to five short ground rules for this project. It is for: {{ inputs.audience }}. Ambition: {{ inputs.quality }}. The project: {{ inputs.idea }}. Keep each rule to one or two plain sentences. Do not ask questions; decide from this."
+      - id: check-rules
+        type: shell
+        run: "python3 .specify/extensions/guide/scripts/python/guide.py flow require rules"
+        output_format: json
+
+  # ---- Stage 2: the write-up of what to build ----------------------------
+  - id: where-spec
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow where"
+    output_format: json
+
+  - id: spec-stage
+    type: if
+    condition: "{{ steps.where-spec.output.data.stage in ['specify', 'done'] }}"
+    then:
+      - id: specify
+        command: speckit.specify
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "{{ inputs.idea }}. It is for: {{ inputs.audience }}. Ambition: {{ inputs.quality }}. It must: {{ inputs.must_haves | default('whatever the idea needs to be useful, and nothing more') }}."
+      - id: check-spec
+        type: shell
+        run: "python3 .specify/extensions/guide/scripts/python/guide.py flow require spec"
+        output_format: json
+      - id: review-spec
+        type: gate
+        verdict_input: guide_spec_verdict
+        show_file: "{{ steps.check-spec.output.data.file }}"
+        message: "This is the write-up of what will be built. Read it. Approve if it describes what you want. If not, reject, edit the file (or ask your assistant to change it), then resume this run."
+        options: [approve, reject]
+        on_reject: retry
+
+  # ---- Stage 3: the plan --------------------------------------------------
+  - id: where-plan
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow where"
+    output_format: json
+
+  - id: plan-stage
+    type: if
+    condition: "{{ steps.where-plan.output.data.stage == 'plan' }}"
+    then:
+      - id: plan
+        command: speckit.plan
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "Technology: {{ inputs.tech }}. Ambition: {{ inputs.quality }}. Where the write-up leaves a question open, choose the simplest reasonable answer and note it in the plan."
+      - id: check-plan
+        type: shell
+        run: "python3 .specify/extensions/guide/scripts/python/guide.py flow require plan"
+        output_format: json
+      - id: review-plan
+        type: gate
+        verdict_input: guide_plan_verdict
+        show_file: "{{ steps.check-plan.output.data.file }}"
+        message: "This is the plan for how it will be built. You do not need to follow every detail. Approve if nothing looks wrong to you."
+        options: [approve, reject]
+        on_reject: retry
+
+  # ---- Stage 4: the to-do list -------------------------------------------
+  - id: where-tasks
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow where"
+    output_format: json
+
+  - id: tasks-stage
+    type: if
+    condition: "{{ steps.where-tasks.output.data.stage == 'tasks' }}"
+    then:
+      - id: tasks
+        command: speckit.tasks
+        integration: "{{ inputs.integration }}"
+      - id: check-tasks
+        type: shell
+        run: "python3 .specify/extensions/guide/scripts/python/guide.py flow require tasks"
+        output_format: json
+
+  # ---- Stage 5: the build, one task per assistant run --------------------
+  - id: where-build
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow where"
+    output_format: json
+
+  - id: build-stage
+    type: if
+    condition: "{{ steps.where-build.output.data.stage == 'implement' }}"
+    then:
+      - id: review-build
+        type: gate
+        verdict_input: guide_build_verdict
+        message: "The to-do list is ready: {{ steps.where-build.output.data.remaining }} of {{ steps.where-build.output.data.tasks_total }} tasks left to build. Approve to start. The assistant gets one task at a time and each one is checked before the next."
+        options: [approve, reject]
+        on_reject: retry
+
+      # A fresh assistant for every task: nothing carries over to drift, and
+      # there is no long context to compact. check-task fails the run if the
+      # same task comes back unticked twice, so this cannot spin.
+      - id: build-loop
+        type: do-while
+        condition: "{{ steps.check-task.output.data.remaining > 0 }}"
+        max_iterations: 200
+        steps:
+          - id: next-task
+            type: shell
+            run: "python3 .specify/extensions/guide/scripts/python/guide.py flow next-task"
+            output_format: json
+          - id: do-task
+            type: prompt
+            integration: "{{ inputs.integration }}"
+            prompt: "You are building one task of a planned feature. Task {{ steps.next-task.output.data.number }} of {{ steps.next-task.output.data.total }}: {{ steps.next-task.output.data.task }}. First read {{ steps.next-task.output.data.feature }}/plan.md and {{ steps.next-task.output.data.feature }}/tasks.md so you know the design. Then do this one task only. When its code exists, tick this task's box in {{ steps.next-task.output.data.feature }}/tasks.md. Do not start any other task. Finish with one line saying what you did."
+          - id: check-task
+            type: shell
+            run: "python3 .specify/extensions/guide/scripts/python/guide.py flow check-task"
+            output_format: json
+
+  # ---- Finish -------------------------------------------------------------
+  - id: finish
+    type: shell
+    run: "python3 .specify/extensions/guide/scripts/python/guide.py flow end"
+    output_format: json
